@@ -5,6 +5,7 @@ import { useTheme } from '../../src/theme/ThemeProvider';
 import { Text } from './Text';
 import { Badge } from './Badge';
 import type { CatalogDestination } from '../../src/providers/AppProviders';
+import { lgbtqVibeLabel, lgbtqVibeVariant } from '../../src/lib/lgbtqVibe';
 
 interface DestinationCardProps {
   destination: CatalogDestination;
@@ -19,8 +20,8 @@ export function DestinationCard({ destination, compact = false, onPress }: Desti
   const handlePress = onPress ?? (() => router.push(`/destinations/${destination.slug}`));
 
   const legal = destination.lgbtqContext?.legalEqualityScore ?? 0;
-  const legalLabel = legal >= 85 ? 'Welcoming' : legal >= 60 ? 'Supportive' : legal >= 40 ? 'Variable' : 'Exercise care';
-  const legalVariant = legal >= 85 ? 'success' : legal >= 60 ? 'info' : legal >= 40 ? 'warning' : 'error';
+  const legalLabel = lgbtqVibeLabel(legal);
+  const legalVariant = lgbtqVibeVariant(legal);
 
   if (compact) {
     return (

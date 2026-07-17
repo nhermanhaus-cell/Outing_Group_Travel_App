@@ -17,6 +17,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
 import { PulseMeter } from '../../components/ui/PulseMeter';
 import { DataSourceBadge } from '../../components/ui/DataSourceBadge';
+import { lgbtqVibeLabel, lgbtqVibeVariant } from '../../src/lib/lgbtqVibe';
 import travelAdvisories from '../../assets/public/travel-advisories.json';
 
 type TabKey = 'overview' | 'lgbtq' | 'places' | 'events';
@@ -94,7 +95,7 @@ export default function DestinationDetailScreen() {
   const lgbtq = destination.lgbtqContext;
   const legal = lgbtq?.legalEqualityScore ?? 0;
   const opinion = lgbtq?.publicOpinionScore ?? 0;
-  const legalVariant = legal >= 85 ? 'success' : legal >= 60 ? 'info' : legal >= 40 ? 'warning' : 'error';
+  const legalVariant = lgbtqVibeVariant(legal);
 
   const TABS: Array<{ key: TabKey; label: string }> = [
     { key: 'overview', label: 'Overview' },
@@ -120,7 +121,7 @@ export default function DestinationDetailScreen() {
             <DataSourceBadge label={destination.sourceLabel ?? 'editorial_demo'} />
           </View>
           <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(15,13,10,0.55)', paddingHorizontal: spacing['2xl'], paddingVertical: spacing.xl }}>
-            <Badge label={legal >= 85 ? 'Welcoming' : legal >= 60 ? 'Supportive' : 'Variable'} variant={legalVariant as 'success' | 'info' | 'warning'} style={{ marginBottom: spacing.sm }} />
+            <Badge label={lgbtqVibeLabel(legal)} variant={legalVariant} style={{ marginBottom: spacing.sm }} />
             <Text variant="displayMd" style={{ color: colors.white }}>{destination.name}</Text>
             <Text variant="bodyLg" style={{ color: 'rgba(255,255,255,0.8)' }}>{destination.country}</Text>
           </View>
