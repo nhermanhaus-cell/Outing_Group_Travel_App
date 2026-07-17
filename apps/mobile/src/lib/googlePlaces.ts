@@ -1,28 +1,10 @@
-import Constants from 'expo-constants';
+import {
+  getGooglePlacesApiKey,
+  getViatorApiKey,
+  googlePlacePhotoUrl,
+} from './apiKeys';
 
-type Extra = {
-  googlePlacesApiKey?: string;
-  googleMapsApiKey?: string;
-  viatorApiKey?: string;
-  getYourGuideApiKey?: string;
-};
-
-function extra(): Extra {
-  return (Constants.expoConfig?.extra ?? {}) as Extra;
-}
-
-export function getGooglePlacesApiKey(): string | undefined {
-  const key =
-    extra().googlePlacesApiKey ||
-    process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ||
-    process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
-  return key?.trim() || undefined;
-}
-
-export function getViatorApiKey(): string | undefined {
-  const key = extra().viatorApiKey || process.env.EXPO_PUBLIC_VIATOR_API_KEY;
-  return key?.trim() || undefined;
-}
+export { getGooglePlacesApiKey, getViatorApiKey } from './apiKeys';
 
 export async function geocodeLodgingAddress(
   address: string,
@@ -61,6 +43,7 @@ export interface NearbyPlaceResult {
   rating?: number;
   userRatingsTotal?: number;
   vicinity?: string;
+  imageUrls: string[];
   source: 'google_places';
 }
 
@@ -104,23 +87,29 @@ export async function fetchNearbyHighlyRated(
             vicinity?: string;
             rating?: number;
             user_ratings_total?: number;
+            photos?: Array<{ photo_reference?: string }>;
             geometry?: { location: { lat: number; lng: number } };
           }>;
         };
         if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') return [];
         return (data.results ?? [])
           .filter((r) => r.geometry?.location && (r.rating ?? 0) >= 4.0)
-          .map((r) => ({
-            placeId: r.place_id,
-            name: r.name,
-            category: mapType(r.types),
-            lat: r.geometry!.location.lat,
-            lng: r.geometry!.location.lng,
-            rating: r.rating,
-            userRatingsTotal: r.user_ratings_total,
-            vicinity: r.vicinity,
-            source: 'google_places' as const,
-          }));
+          .map((r) => {
+            const photoRef = r.photos?.[0]?.photo_reference;
+            const photoUrl = photoRef ? googlePlacePhotoUrl(photoRef, 800) : undefined;
+            return {
+              placeId: r.place_id,
+              name: r.name,
+              category: mapType(r.types),
+              lat: r.geometry!.location.lat,
+              lng: r.geometry!.location.lng,
+              rating: r.rating,
+              userRatingsTotal: r.user_ratings_total,
+              vicinity: r.vicinity,
+              imageUrls: photoUrl ? [photoUrl] : [],
+              source: 'google_places' as const,
+            };
+          });
       } catch {
         return [];
       }

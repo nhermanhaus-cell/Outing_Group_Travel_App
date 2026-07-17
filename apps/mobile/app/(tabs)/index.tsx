@@ -160,6 +160,19 @@ export default function HomeScreen() {
 
         {places.map((spot) => {
           const dest = getBySlug(spot.destinationSlug);
+          const matchedPlace = (dest?.places ?? []).find(
+            (place: { name?: string }) =>
+              typeof place.name === 'string' &&
+              place.name.toLowerCase() === spot.placeName.toLowerCase(),
+          ) as
+            | { imageUrl?: string; imageUrls?: string[]; imageAttribution?: string }
+            | undefined;
+          const photo =
+            matchedPlace?.imageUrls?.[0] ??
+            matchedPlace?.imageUrl ??
+            dest?.heroImageUrl ??
+            null;
+
           return (
             <Pressable
               key={`${spot.destinationSlug}-${spot.placeName}`}
@@ -169,17 +182,25 @@ export default function HomeScreen() {
                 borderWidth: 1,
                 borderColor: colors.border,
                 backgroundColor: colors.backgroundSecondary,
-                padding: spacing.base,
-                gap: spacing.xs,
+                overflow: 'hidden',
               }}
             >
-              <Text variant="h3">{spot.placeName}</Text>
-              <Text variant="caption" style={{ color: colors.accent }}>
-                {dest?.name ?? spot.destinationSlug}
-              </Text>
-              <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-                {spot.blurb}
-              </Text>
+              {photo ? (
+                <Image
+                  source={{ uri: photo }}
+                  style={{ width: '100%', height: 160 }}
+                  resizeMode="cover"
+                />
+              ) : null}
+              <View style={{ padding: spacing.base, gap: spacing.xs }}>
+                <Text variant="h3">{spot.placeName}</Text>
+                <Text variant="caption" style={{ color: colors.accent }}>
+                  {dest?.name ?? spot.destinationSlug}
+                </Text>
+                <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+                  {spot.blurb}
+                </Text>
+              </View>
             </Pressable>
           );
         })}

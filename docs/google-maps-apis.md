@@ -7,8 +7,24 @@ Gay-i keeps maps, places, and travel times **inside the app**. Enable these APIs
 1. **Maps SDK for iOS** — in-app MapView  
 2. **Maps SDK for Android** — Android builds  
 3. **Geocoding API** — lodging address → lat/lng  
-4. **Places API** — nearby highly rated spots  
+4. **Places API** — nearby highly rated spots + Place Photos  
 5. **Distance Matrix API** — walk / transit / drive times between itinerary stops  
+
+## Env wiring
+
+Keys live in the **repo-root** `.env`. `apps/mobile/app.config.js` loads that file and injects:
+
+- `extra.googleMapsApiKey` / `extra.googlePlacesApiKey`
+- iOS `config.googleMapsApiKey`
+- Android `config.googleMaps.apiKey`
+
+After changing keys:
+
+```bash
+cd apps/mobile && npx expo start --go --clear
+```
+
+Confirm Metro prints `[gayi] API keys loaded — maps:true places:true …`.
 
 ## Key restrictions (iOS)
 

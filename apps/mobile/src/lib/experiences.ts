@@ -1,5 +1,5 @@
 import experiencesSeed from '../../assets/seed/experiences.json';
-import { getViatorApiKey } from './googlePlaces';
+import { getViatorApiKey } from './apiKeys';
 
 const PRODUCTS_SEARCH_URL = 'https://api.viator.com/partner/products/search';
 const DESTINATIONS_URL = 'https://api.viator.com/partner/destinations';
@@ -94,6 +94,45 @@ function editorial(destinationSlug: string, limit: number, asViator: boolean): M
     }));
 }
 
+function extractImageUrls(item: JsonRecord): string[] {
+  const urls: string[] = [];
+  const push = (value: unknown) => {
+    if (typeof value === 'string' && value.startsWith('http') && !urls.includes(value)) {
+      urls.push(value);
+    }
+  };
+
+  const images = item['images'];
+  if (Array.isArray(images)) {
+    for (const image of images) {
+      if (!isRecord(image)) {
+        push(image);
+        continue;
+      }
+      push(image['url']);
+      push(image['src']);
+      push(image['photoURL']);
+      const variants = image['variants'];
+      if (Array.isArray(variants)) {
+        // Prefer larger variants when present.
+        const sorted = [...variants].sort((a, b) => {
+          const aw = isRecord(a) && typeof a['width'] === 'number' ? a['width'] : 0;
+          const bw = isRecord(b) && typeof b['width'] === 'number' ? b['width'] : 0;
+          return bw - aw;
+        });
+        for (const variant of sorted) {
+          if (isRecord(variant)) push(variant['url']);
+        }
+      }
+    }
+  }
+
+  push(item['image']);
+  push(item['imageUrl']);
+  push(item['thumbnailURL']);
+  return urls.slice(0, 4);
+}
+
 function mapProducts(raw: unknown[], destinationSlug: string, limit: number): MobileExperience[] {
   const destinationName = slugToName(destinationSlug);
   return raw
@@ -110,12 +149,13 @@ function mapProducts(raw: unknown[], destinationSlug: string, limit: number): Mo
         pickString(item, ['productUrl', 'webURL', 'url']) ??
         `${FALLBACK_SEARCH_URL}${encodeURIComponent(`${destinationName} ${title}`)}`;
       const pricing = isRecord(item['pricing']) ? item['pricing'] : null;
+      const product = isRecord(item['product']) ? item['product'] : item;
       return {
         id: String(id),
         destinationSlug,
         title,
         summary,
-        imageUrls: [],
+        imageUrls: extractImageUrls(product),
         durationHours: pickNumber(item, ['durationHours', 'duration']),
         priceFrom:
           pickNumber(item, ['fromPrice', 'priceFrom', 'price']) ??

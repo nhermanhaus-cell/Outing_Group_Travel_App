@@ -187,7 +187,14 @@
         "summary": "Castro Theatre anchors the destination with history and a sense of why this place matters beyond nightlife.",
         "lgbtqRelevance": "A strong orientation point for understanding the neighborhood’s queer history or identity.",
         "estimatedCostUsd": 18,
-        "durationMinutes": 75
+        "durationMinutes": 75,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1521747116042-5a810fda9664?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000000000021",
@@ -199,7 +206,14 @@
         "summary": "Twin Peaks Bar keeps The Castro social without turning the whole evening into a marathon.",
         "lgbtqRelevance": "Part of the social glue that keeps this neighborhood legible to first-time visitors.",
         "estimatedCostUsd": 24,
-        "durationMinutes": 75
+        "durationMinutes": 75,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1521747116042-5a810fda9664?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1534050359320-81551a3eb7bb?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000000000022",
@@ -211,7 +225,14 @@
         "summary": "GLBT Historical Society Museum is a reliable daytime anchor when you want queer context alongside the city itself.",
         "lgbtqRelevance": "Helps connect the scene to the broader cultural story of the city.",
         "estimatedCostUsd": 10,
-        "durationMinutes": 60
+        "durationMinutes": 60,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1521747116042-5a810fda9664?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1534050359320-81551a3eb7bb?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1521747116042-5a810fda9664?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000000000023",
@@ -223,7 +244,14 @@
         "summary": "Dolores Park is best used as a reset button when the trip needs sunlight and space.",
         "lgbtqRelevance": "Good for seeing how the neighborhood socializes outside formal venues.",
         "estimatedCostUsd": 0,
-        "durationMinutes": 75
+        "durationMinutes": 75,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1534050359320-81551a3eb7bb?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1534050359320-81551a3eb7bb?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000000000024",
@@ -235,7 +263,14 @@
         "summary": "The Stud brings late-night momentum to SoMa, especially when the dance floor becomes the plan.",
         "lgbtqRelevance": "A nightlife anchor for travelers who plan around DJs, drag, or dancing.",
         "estimatedCostUsd": 28,
-        "durationMinutes": 135
+        "durationMinutes": 135,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1521747116042-5a810fda9664?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000000000025",
@@ -247,7 +282,14 @@
         "summary": "Anchor Oyster Bar fits neatly between sightseeing and a night out, especially if the group wants to sit down first.",
         "lgbtqRelevance": "Often chosen because it keeps you close to the scene without keeping you on your feet.",
         "estimatedCostUsd": 42,
-        "durationMinutes": 90
+        "durationMinutes": 90,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1521747116042-5a810fda9664?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1534050359320-81551a3eb7bb?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -299,6 +341,12 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1506146332389-18140dc7b2fb?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1521747116042-5a810fda9664?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1534050359320-81551a3eb7bb?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -490,7 +538,14 @@
         "summary": "Toucans Tiki Lounge brings late-night momentum to Arenas Road, especially when the dance floor becomes the plan.",
         "lgbtqRelevance": "A nightlife anchor for travelers who plan around DJs, drag, or dancing.",
         "estimatedCostUsd": 24,
-        "durationMinutes": 120
+        "durationMinutes": 120,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1518638150340-3dde83fc43b4?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1518638150340-3dde83fc43b4?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000100000021",
@@ -502,7 +557,14 @@
         "summary": "Hunters Palm Springs is an easy first stop in Downtown Village, with conversation-friendly energy before the night picks up.",
         "lgbtqRelevance": "A recognizable queer meeting point for travelers easing into the neighborhood.",
         "estimatedCostUsd": 24,
-        "durationMinutes": 100
+        "durationMinutes": 100,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1518638150340-3dde83fc43b4?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000100000022",
@@ -514,7 +576,14 @@
         "summary": "Warm Sands Neighborhood anchors the destination with history and a sense of why this place matters beyond nightlife.",
         "lgbtqRelevance": "A strong orientation point for understanding the neighborhood’s queer history or identity.",
         "estimatedCostUsd": 0,
-        "durationMinutes": 60
+        "durationMinutes": 60,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1518638150340-3dde83fc43b4?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -566,6 +635,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1518638150340-3dde83fc43b4?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -756,7 +830,14 @@
         "summary": "Mantamar Beach Club is where the day stretches out before the bars fill up again.",
         "lgbtqRelevance": "One of the easiest ways to experience the scene without buying another round.",
         "estimatedCostUsd": 45,
-        "durationMinutes": 150
+        "durationMinutes": 150,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000200000021",
@@ -768,7 +849,14 @@
         "summary": "Paco's Bar keeps Zona Romántica social without turning the whole evening into a marathon.",
         "lgbtqRelevance": "Part of the social glue that keeps this neighborhood legible to first-time visitors.",
         "estimatedCostUsd": 22,
-        "durationMinutes": 90
+        "durationMinutes": 90,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000200000022",
@@ -780,7 +868,14 @@
         "summary": "Los Muertos Beach is where the day stretches out before the bars fill up again.",
         "lgbtqRelevance": "One of the easiest ways to experience the scene without buying another round.",
         "estimatedCostUsd": 0,
-        "durationMinutes": 120
+        "durationMinutes": 120,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -832,6 +927,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -1021,7 +1121,14 @@
         "summary": "El Marrakech keeps Zona Rosa social without turning the whole evening into a marathon.",
         "lgbtqRelevance": "Part of the social glue that keeps this neighborhood legible to first-time visitors.",
         "estimatedCostUsd": 18,
-        "durationMinutes": 90
+        "durationMinutes": 90,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1518659526054-83363d59083b?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1518105779142-d975f22dec7d?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1518659526054-83363d59083b?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000300000021",
@@ -1033,7 +1140,14 @@
         "summary": "Kinky Bar gives Zona Rosa a louder, sweatier, stay-out-later edge.",
         "lgbtqRelevance": "One of the places that helps explain the destination’s after-hours reputation.",
         "estimatedCostUsd": 25,
-        "durationMinutes": 120
+        "durationMinutes": 120,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1518105779142-d975f22dec7d?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1518659526054-83363d59083b?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000300000022",
@@ -1045,7 +1159,14 @@
         "summary": "Museo del Chopo is a reliable daytime anchor when you want queer context alongside the city itself.",
         "lgbtqRelevance": "Helps connect the scene to the broader cultural story of the city.",
         "estimatedCostUsd": 5,
-        "durationMinutes": 75
+        "durationMinutes": 75,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1518105779142-d975f22dec7d?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1518659526054-83363d59083b?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1518105779142-d975f22dec7d?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -1097,6 +1218,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1518659526054-83363d59083b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1518105779142-d975f22dec7d?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -1288,7 +1414,14 @@
         "summary": "Stonewall Inn anchors the destination with history and a sense of why this place matters beyond nightlife.",
         "lgbtqRelevance": "A strong orientation point for understanding the neighborhood’s queer history or identity.",
         "estimatedCostUsd": 20,
-        "durationMinutes": 75
+        "durationMinutes": 75,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000400000021",
@@ -1300,7 +1433,14 @@
         "summary": "Cubbyhole works best when you want one strong drink and a quick read on the local crowd in Greenwich Village.",
         "lgbtqRelevance": "Useful for reading the room, meeting locals, and starting the night without overcommitting.",
         "estimatedCostUsd": 18,
-        "durationMinutes": 75
+        "durationMinutes": 75,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000400000022",
@@ -1312,7 +1452,14 @@
         "summary": "House of Yes is the kind of place that turns a casual evening in Bushwick into a proper night out.",
         "lgbtqRelevance": "Important when the local queer scene reveals itself most clearly after dark.",
         "estimatedCostUsd": 35,
-        "durationMinutes": 150
+        "durationMinutes": 150,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000400000023",
@@ -1324,7 +1471,14 @@
         "summary": "Leslie-Lohman Museum of Art adds cultural context to a New York City itinerary without feeling like homework.",
         "lgbtqRelevance": "Useful context for understanding the city’s queer history and present-day community.",
         "estimatedCostUsd": 0,
-        "durationMinutes": 75
+        "durationMinutes": 75,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -1376,6 +1530,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -1567,7 +1726,14 @@
         "summary": "Palace Bar keeps South Beach social without turning the whole evening into a marathon.",
         "lgbtqRelevance": "Part of the social glue that keeps this neighborhood legible to first-time visitors.",
         "estimatedCostUsd": 28,
-        "durationMinutes": 90
+        "durationMinutes": 90,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1533106497176-dc7950421224?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1514214240173-6b9a4d66c1c6?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1533106497176-dc7950421224?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000500000021",
@@ -1579,7 +1745,14 @@
         "summary": "Twist brings late-night momentum to South Beach, especially when the dance floor becomes the plan.",
         "lgbtqRelevance": "A nightlife anchor for travelers who plan around DJs, drag, or dancing.",
         "estimatedCostUsd": 26,
-        "durationMinutes": 135
+        "durationMinutes": 135,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1514214240173-6b9a4d66c1c6?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1533106497176-dc7950421224?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1514214240173-6b9a4d66c1c6?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000500000022",
@@ -1591,7 +1764,14 @@
         "summary": "Score Miami Beach is the kind of place that turns a casual evening in South Beach into a proper night out.",
         "lgbtqRelevance": "Important when the local queer scene reveals itself most clearly after dark.",
         "estimatedCostUsd": 30,
-        "durationMinutes": 135
+        "durationMinutes": 135,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1533106497176-dc7950421224?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1514214240173-6b9a4d66c1c6?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -1643,6 +1823,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1533106497176-dc7950421224?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1514214240173-6b9a4d66c1c6?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -1831,7 +2016,14 @@
         "summary": "Atlantic House keeps Commercial Street West End social without turning the whole evening into a marathon.",
         "lgbtqRelevance": "Part of the social glue that keeps this neighborhood legible to first-time visitors.",
         "estimatedCostUsd": 24,
-        "durationMinutes": 90
+        "durationMinutes": 90,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000600000021",
@@ -1843,7 +2035,14 @@
         "summary": "Boatslip Beach Club blends hotel energy with an unmistakably social, see-and-be-seen rhythm.",
         "lgbtqRelevance": "Useful when the lodging itself participates in the destination’s queer rhythm.",
         "estimatedCostUsd": 30,
-        "durationMinutes": 120
+        "durationMinutes": 120,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000600000022",
@@ -1855,7 +2054,14 @@
         "summary": "Herring Cove Beach is where the day stretches out before the bars fill up again.",
         "lgbtqRelevance": "One of the easiest ways to experience the scene without buying another round.",
         "estimatedCostUsd": 0,
-        "durationMinutes": 120
+        "durationMinutes": 120,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -1907,6 +2113,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -2095,7 +2306,14 @@
         "summary": "Cabaret Mado brings late-night momentum to Le Village, especially when the dance floor becomes the plan.",
         "lgbtqRelevance": "A nightlife anchor for travelers who plan around DJs, drag, or dancing.",
         "estimatedCostUsd": 26,
-        "durationMinutes": 110
+        "durationMinutes": 110,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1519178614-68673b201f36?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1514924013411-cbf25faa35bb?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1519178614-68673b201f36?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000700000021",
@@ -2107,7 +2325,14 @@
         "summary": "Unity Club brings late-night momentum to Le Village, especially when the dance floor becomes the plan.",
         "lgbtqRelevance": "A nightlife anchor for travelers who plan around DJs, drag, or dancing.",
         "estimatedCostUsd": 28,
-        "durationMinutes": 120
+        "durationMinutes": 120,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1514924013411-cbf25faa35bb?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1519178614-68673b201f36?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1514924013411-cbf25faa35bb?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000700000022",
@@ -2119,7 +2344,14 @@
         "summary": "Sky Club gives Le Village a louder, sweatier, stay-out-later edge.",
         "lgbtqRelevance": "One of the places that helps explain the destination’s after-hours reputation.",
         "estimatedCostUsd": 32,
-        "durationMinutes": 135
+        "durationMinutes": 135,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1519178614-68673b201f36?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1514924013411-cbf25faa35bb?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -2171,6 +2403,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1519178614-68673b201f36?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1514924013411-cbf25faa35bb?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -2365,7 +2602,14 @@
         "summary": "Royal Vauxhall Tavern works best when you want one strong drink and a quick read on the local crowd in Vauxhall.",
         "lgbtqRelevance": "Useful for reading the room, meeting locals, and starting the night without overcommitting.",
         "estimatedCostUsd": 24,
-        "durationMinutes": 90
+        "durationMinutes": 90,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1520986606214-8b456906c813?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1486290263857-0075e2e8e3b1?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000800000021",
@@ -2377,7 +2621,14 @@
         "summary": "G-A-Y Bar works best when you want one strong drink and a quick read on the local crowd in Soho.",
         "lgbtqRelevance": "Useful for reading the room, meeting locals, and starting the night without overcommitting.",
         "estimatedCostUsd": 22,
-        "durationMinutes": 90
+        "durationMinutes": 90,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1520986606214-8b456906c813?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1486290263857-0075e2e8e3b1?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1520986606214-8b456906c813?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000800000022",
@@ -2389,7 +2640,14 @@
         "summary": "Heaven gives Charing Cross a louder, sweatier, stay-out-later edge.",
         "lgbtqRelevance": "One of the places that helps explain the destination’s after-hours reputation.",
         "estimatedCostUsd": 30,
-        "durationMinutes": 140
+        "durationMinutes": 140,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1486290263857-0075e2e8e3b1?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1520986606214-8b456906c813?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1486290263857-0075e2e8e3b1?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000800000023",
@@ -2401,7 +2659,14 @@
         "summary": "Queer Britain Museum adds cultural context to a London itinerary without feeling like homework.",
         "lgbtqRelevance": "Useful context for understanding the city’s queer history and present-day community.",
         "estimatedCostUsd": 0,
-        "durationMinutes": 75
+        "durationMinutes": 75,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1520986606214-8b456906c813?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1486290263857-0075e2e8e3b1?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -2458,6 +2723,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1520986606214-8b456906c813?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1486290263857-0075e2e8e3b1?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -2652,7 +2922,14 @@
         "summary": "Berghain / Panorama Bar brings late-night momentum to Friedrichshain, especially when the dance floor becomes the plan.",
         "lgbtqRelevance": "A nightlife anchor for travelers who plan around DJs, drag, or dancing.",
         "estimatedCostUsd": 38,
-        "durationMinutes": 180
+        "durationMinutes": 180,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1528722325934-5c0f0d4f0c1c?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1599946347377-303664c627d4?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000900000021",
@@ -2664,7 +2941,14 @@
         "summary": "Möbel Olfe keeps Kreuzberg social without turning the whole evening into a marathon.",
         "lgbtqRelevance": "Part of the social glue that keeps this neighborhood legible to first-time visitors.",
         "estimatedCostUsd": 18,
-        "durationMinutes": 90
+        "durationMinutes": 90,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1528722325934-5c0f0d4f0c1c?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1599946347377-303664c627d4?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1528722325934-5c0f0d4f0c1c?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000900000022",
@@ -2676,7 +2960,14 @@
         "summary": "Hafen is an easy first stop in Schöneberg, with conversation-friendly energy before the night picks up.",
         "lgbtqRelevance": "A recognizable queer meeting point for travelers easing into the neighborhood.",
         "estimatedCostUsd": 20,
-        "durationMinutes": 85
+        "durationMinutes": 85,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1599946347377-303664c627d4?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1528722325934-5c0f0d4f0c1c?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1599946347377-303664c627d4?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-000900000023",
@@ -2688,7 +2979,14 @@
         "summary": "Schwuz is the kind of place that turns a casual evening in Neukölln into a proper night out.",
         "lgbtqRelevance": "Important when the local queer scene reveals itself most clearly after dark.",
         "estimatedCostUsd": 28,
-        "durationMinutes": 150
+        "durationMinutes": 150,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1528722325934-5c0f0d4f0c1c?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1599946347377-303664c627d4?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -2745,6 +3043,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1528722325934-5c0f0d4f0c1c?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1599946347377-303664c627d4?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -2938,7 +3241,14 @@
         "summary": "Boyberry works best when you want one strong drink and a quick read on the local crowd in Chueca.",
         "lgbtqRelevance": "Useful for reading the room, meeting locals, and starting the night without overcommitting.",
         "estimatedCostUsd": 18,
-        "durationMinutes": 80
+        "durationMinutes": 80,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001000000021",
@@ -2950,7 +3260,14 @@
         "summary": "Strong Center gives Chueca a louder, sweatier, stay-out-later edge.",
         "lgbtqRelevance": "One of the places that helps explain the destination’s after-hours reputation.",
         "estimatedCostUsd": 24,
-        "durationMinutes": 105
+        "durationMinutes": 105,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001000000022",
@@ -2962,7 +3279,14 @@
         "summary": "Plaza de Chueca anchors the destination with history and a sense of why this place matters beyond nightlife.",
         "lgbtqRelevance": "A strong orientation point for understanding the neighborhood’s queer history or identity.",
         "estimatedCostUsd": 0,
-        "durationMinutes": 45
+        "durationMinutes": 45,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -3019,6 +3343,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -3213,7 +3542,14 @@
         "summary": "Punto BCN works best when you want one strong drink and a quick read on the local crowd in Eixample (Gayxample).",
         "lgbtqRelevance": "Useful for reading the room, meeting locals, and starting the night without overcommitting.",
         "estimatedCostUsd": 20,
-        "durationMinutes": 80
+        "durationMinutes": 80,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1562883676-8c7feb83f09b?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1523531294919-4bcd7c65e216?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001100000021",
@@ -3225,7 +3561,14 @@
         "summary": "Axel Hotel Barcelona is as much a social base as a place to stay, with people flowing through before and after nights out.",
         "lgbtqRelevance": "Known as a gathering point that keeps queer travelers close to the scene.",
         "estimatedCostUsd": 36,
-        "durationMinutes": 120
+        "durationMinutes": 120,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1562883676-8c7feb83f09b?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1523531294919-4bcd7c65e216?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1562883676-8c7feb83f09b?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001100000022",
@@ -3237,7 +3580,14 @@
         "summary": "Bacon Bear Bar keeps Eixample social without turning the whole evening into a marathon.",
         "lgbtqRelevance": "Part of the social glue that keeps this neighborhood legible to first-time visitors.",
         "estimatedCostUsd": 22,
-        "durationMinutes": 90
+        "durationMinutes": 90,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1523531294919-4bcd7c65e216?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1562883676-8c7feb83f09b?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1523531294919-4bcd7c65e216?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -3294,6 +3644,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1562883676-8c7feb83f09b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1523531294919-4bcd7c65e216?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -3488,7 +3843,14 @@
         "summary": "Trumps Club brings late-night momentum to Príncipe Real, especially when the dance floor becomes the plan.",
         "lgbtqRelevance": "A nightlife anchor for travelers who plan around DJs, drag, or dancing.",
         "estimatedCostUsd": 22,
-        "durationMinutes": 120
+        "durationMinutes": 120,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1555881404645-edf925303269?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1513735492246-483525079872?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1555881404645-edf925303269?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001200000021",
@@ -3500,7 +3862,14 @@
         "summary": "Finalmente brings late-night momentum to Bairro Alto, especially when the dance floor becomes the plan.",
         "lgbtqRelevance": "A nightlife anchor for travelers who plan around DJs, drag, or dancing.",
         "estimatedCostUsd": 20,
-        "durationMinutes": 105
+        "durationMinutes": 105,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1513735492246-483525079872?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1555881404645-edf925303269?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001200000022",
@@ -3512,7 +3881,14 @@
         "summary": "Pensão Amor works best when you want one strong drink and a quick read on the local crowd in Cais do Sodré.",
         "lgbtqRelevance": "Useful for reading the room, meeting locals, and starting the night without overcommitting.",
         "estimatedCostUsd": 24,
-        "durationMinutes": 80
+        "durationMinutes": 80,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1513735492246-483525079872?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1555881404645-edf925303269?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1513735492246-483525079872?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -3569,6 +3945,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1555881404645-edf925303269?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1555881400-74d7eac42d06?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1513735492246-483525079872?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -3763,7 +4144,14 @@
         "summary": "Café 't Mandje keeps Zeedijk / De Wallen social without turning the whole evening into a marathon.",
         "lgbtqRelevance": "Part of the social glue that keeps this neighborhood legible to first-time visitors.",
         "estimatedCostUsd": 18,
-        "durationMinutes": 80
+        "durationMinutes": 80,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1534351590666-13e3c96a0842?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1576924542622-772281b13aa8?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1584005903727-9f8e0e6f6b1d?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1534351590666-13e3c96a0842?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001300000021",
@@ -3775,7 +4163,14 @@
         "summary": "Spijkerbar works best when you want one strong drink and a quick read on the local crowd in Reguliersdwarsstraat.",
         "lgbtqRelevance": "Useful for reading the room, meeting locals, and starting the night without overcommitting.",
         "estimatedCostUsd": 20,
-        "durationMinutes": 85
+        "durationMinutes": 85,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1576924542622-772281b13aa8?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1584005903727-9f8e0e6f6b1d?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1534351590666-13e3c96a0842?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1576924542622-772281b13aa8?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001300000022",
@@ -3787,7 +4182,14 @@
         "summary": "Club Church gives Warmoesstraat a louder, sweatier, stay-out-later edge.",
         "lgbtqRelevance": "One of the places that helps explain the destination’s after-hours reputation.",
         "estimatedCostUsd": 32,
-        "durationMinutes": 135
+        "durationMinutes": 135,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1584005903727-9f8e0e6f6b1d?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1534351590666-13e3c96a0842?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1576924542622-772281b13aa8?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1584005903727-9f8e0e6f6b1d?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -3844,6 +4246,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1534351590666-13e3c96a0842?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1576924542622-772281b13aa8?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1584005903727-9f8e0e6f6b1d?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -4033,7 +4440,14 @@
         "summary": "Advocates Bar is an easy first stop in Shinjuku Ni-chome, with conversation-friendly energy before the night picks up.",
         "lgbtqRelevance": "A recognizable queer meeting point for travelers easing into the neighborhood.",
         "estimatedCostUsd": 18,
-        "durationMinutes": 70
+        "durationMinutes": 70,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001400000021",
@@ -4045,7 +4459,14 @@
         "summary": "Bar Goldfinger keeps Shinjuku Ni-chome social without turning the whole evening into a marathon.",
         "lgbtqRelevance": "Part of the social glue that keeps this neighborhood legible to first-time visitors.",
         "estimatedCostUsd": 16,
-        "durationMinutes": 75
+        "durationMinutes": 75,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001400000022",
@@ -4057,7 +4478,14 @@
         "summary": "Code Bar keeps Shinjuku Ni-chome social without turning the whole evening into a marathon.",
         "lgbtqRelevance": "Part of the social glue that keeps this neighborhood legible to first-time visitors.",
         "estimatedCostUsd": 18,
-        "durationMinutes": 75
+        "durationMinutes": 75,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -4109,6 +4537,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -4297,7 +4730,14 @@
         "summary": "Rainbow Cattle Company keeps Downtown Guerneville social without turning the whole evening into a marathon.",
         "lgbtqRelevance": "Part of the social glue that keeps this neighborhood legible to first-time visitors.",
         "estimatedCostUsd": 18,
-        "durationMinutes": 90
+        "durationMinutes": 90,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001500000021",
@@ -4309,7 +4749,14 @@
         "summary": "Johnson's Beach turns a nightlife-heavy trip into something more balanced and a lot more beachy.",
         "lgbtqRelevance": "Useful when the destination’s queer energy shifts from bars to daylight and water.",
         "estimatedCostUsd": 10,
-        "durationMinutes": 120
+        "durationMinutes": 120,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001500000022",
@@ -4321,7 +4768,14 @@
         "summary": "Armstrong Redwoods State Natural Reserve opens up the day with room to walk, snack, and reset between venues.",
         "lgbtqRelevance": "Often woven into queer daytime routines, from meetups to slow recovery afternoons.",
         "estimatedCostUsd": 10,
-        "durationMinutes": 120
+        "durationMinutes": 120,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -4373,6 +4827,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -4562,7 +5021,14 @@
         "summary": "The Abbey works best when you want one strong drink and a quick read on the local crowd in West Hollywood.",
         "lgbtqRelevance": "Useful for reading the room, meeting locals, and starting the night without overcommitting.",
         "estimatedCostUsd": 26,
-        "durationMinutes": 100
+        "durationMinutes": 100,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1534190239940-9ccc78532e7b?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1515896769750-31548aa180ed?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001600000021",
@@ -4574,7 +5040,14 @@
         "summary": "Akbar keeps Silver Lake social without turning the whole evening into a marathon.",
         "lgbtqRelevance": "Part of the social glue that keeps this neighborhood legible to first-time visitors.",
         "estimatedCostUsd": 18,
-        "durationMinutes": 90
+        "durationMinutes": 90,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1534190239940-9ccc78532e7b?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1515896769750-31548aa180ed?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1534190239940-9ccc78532e7b?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001600000022",
@@ -4586,7 +5059,14 @@
         "summary": "Revolver Video Bar works best when you want one strong drink and a quick read on the local crowd in West Hollywood.",
         "lgbtqRelevance": "Useful for reading the room, meeting locals, and starting the night without overcommitting.",
         "estimatedCostUsd": 22,
-        "durationMinutes": 85
+        "durationMinutes": 85,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1515896769750-31548aa180ed?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1534190239940-9ccc78532e7b?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1515896769750-31548aa180ed?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -4638,6 +5118,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1534190239940-9ccc78532e7b?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1515896769750-31548aa180ed?auto=format&fit=crop&w=1200&q=80"
     ]
   },
   {
@@ -4825,7 +5310,14 @@
         "summary": "Piranha Nightclub gives Paradise Road a louder, sweatier, stay-out-later edge.",
         "lgbtqRelevance": "One of the places that helps explain the destination’s after-hours reputation.",
         "estimatedCostUsd": 30,
-        "durationMinutes": 150
+        "durationMinutes": 150,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1581351721010-8cf859cb14cb?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001700000021",
@@ -4837,7 +5329,14 @@
         "summary": "Flex Cocktail Lounge keeps Paradise Road social without turning the whole evening into a marathon.",
         "lgbtqRelevance": "Part of the social glue that keeps this neighborhood legible to first-time visitors.",
         "estimatedCostUsd": 20,
-        "durationMinutes": 90
+        "durationMinutes": 90,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1581351721010-8cf859cb14cb?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1581351721010-8cf859cb14cb?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       },
       {
         "id": "00000000-0000-4000-8000-001700000022",
@@ -4849,7 +5348,14 @@
         "summary": "Arts District gives travelers a clear starting point for the neighborhood story around it.",
         "lgbtqRelevance": "More than a photo stop; it helps explain why the area carries weight for LGBTQ+ travelers.",
         "estimatedCostUsd": 0,
-        "durationMinutes": 75
+        "durationMinutes": 75,
+        "imageUrls": [
+          "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
+          "https://images.unsplash.com/photo-1581351721010-8cf859cb14cb?auto=format&fit=crop&w=1200&q=80"
+        ],
+        "imageUrl": "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?auto=format&fit=crop&w=1200&q=80",
+        "imageAttribution": "Photo via Unsplash"
       }
     ],
     "events": [
@@ -4901,6 +5407,11 @@
         "label": "ILGA World",
         "url": "https://ilga.org"
       }
+    ],
+    "galleryImageUrls": [
+      "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1581351721010-8cf859cb14cb?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?auto=format&fit=crop&w=1200&q=80"
     ]
   }
 ]

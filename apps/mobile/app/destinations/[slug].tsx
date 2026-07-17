@@ -18,8 +18,10 @@ import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
 import { PulseMeter } from '../../components/ui/PulseMeter';
 import { DataSourceBadge } from '../../components/ui/DataSourceBadge';
+import { PhotoCarousel } from '../../components/ui/PhotoCarousel';
 import { lgbtqVibeLabel, lgbtqVibeVariant } from '../../src/lib/lgbtqVibe';
 import travelAdvisories from '../../assets/public/travel-advisories.json';
+import { getApiKeyStatus } from '../../src/lib/apiKeys';
 import {
   loadDestinationExperiences,
   type MobileExperience,
@@ -129,6 +131,8 @@ export default function DestinationDetailScreen() {
     [destinationExperiences],
   );
 
+  const apiKeys = getApiKeyStatus();
+
   if (!destination) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
@@ -197,6 +201,21 @@ export default function DestinationDetailScreen() {
                 {destination.editorialSummary}
               </Text>
 
+              {(destination.galleryImageUrls?.length > 0 || destination.heroImageUrl) && (
+                <>
+                  <SectionTitle>Look & feel</SectionTitle>
+                  <PhotoCarousel
+                    urls={
+                      (destination.galleryImageUrls?.length
+                        ? destination.galleryImageUrls
+                        : [destination.heroImageUrl].filter(Boolean)) as string[]
+                    }
+                    height={220}
+                    attribution="Photos via Unsplash"
+                  />
+                </>
+              )}
+
               <SectionTitle>Community Pulse</SectionTitle>
               {pulse ? (
                 <Card elevated padded>
@@ -227,12 +246,42 @@ export default function DestinationDetailScreen() {
                 ))}
               </View>
 
+              <SectionTitle>Live APIs</SectionTitle>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.sm }}>
+                <Badge
+                  label={apiKeys.places ? 'Places keyed' : 'Places offline'}
+                  variant={apiKeys.places ? 'success' : 'warning'}
+                />
+                <Badge
+                  label={apiKeys.viator ? 'Viator keyed' : 'Viator offline'}
+                  variant={apiKeys.viator ? 'success' : 'warning'}
+                />
+                <Badge
+                  label={
+                    experienceSource === 'viator_live' ? 'Experiences: live' : 'Experiences: editorial'
+                  }
+                  variant={experienceSource === 'viator_live' ? 'info' : 'default'}
+                />
+              </View>
+              {!apiKeys.places || !apiKeys.viator ? (
+                <Text variant="caption" style={{ color: colors.textTertiary, marginBottom: spacing.sm }}>
+                  Put keys in the repo-root `.env`, then restart with `npx expo start --go --clear`. Watch the Metro terminal for `[gayi] API keys loaded`.
+                </Text>
+              ) : null}
+
               {destinationExperiences.length > 0 && (
                 <>
                   <SectionTitle>Things to do</SectionTitle>
                   {destinationExperiences.map((experience) => (
                     <Card key={experience.id} elevated padded style={{ marginBottom: spacing.sm }}>
-                      <View style={{ gap: spacing.xs }}>
+                      <View style={{ gap: spacing.sm }}>
+                        <PhotoCarousel
+                          urls={experience.imageUrls ?? []}
+                          height={150}
+                          attribution={
+                            experience.provider === 'viator' ? undefined : 'Photo via Unsplash'
+                          }
+                        />
                         <Text variant="h4">{experience.title}</Text>
                         <Text variant="bodySm" style={{ color: colors.textSecondary }}>
                           {experience.summary}
@@ -455,9 +504,24 @@ export default function DestinationDetailScreen() {
               {(destination.places ?? []).length === 0 ? (
                 <Text variant="bodyMd" style={{ color: colors.textTertiary }}>No places listed.</Text>
               ) : (
-                (destination.places ?? []).map((p: { id: string; name: string; category: string; summary: string; lgbtqRelevance?: string; estimatedCostUsd?: number }) => (
+                (destination.places ?? []).map((p: {
+                  id: string;
+                  name: string;
+                  category: string;
+                  summary: string;
+                  lgbtqRelevance?: string;
+                  estimatedCostUsd?: number;
+                  imageUrl?: string;
+                  imageUrls?: string[];
+                  imageAttribution?: string;
+                }) => (
                   <Card key={p.id} elevated padded style={{ marginBottom: spacing.sm }}>
-                    <View style={{ gap: spacing.xs }}>
+                    <View style={{ gap: spacing.sm }}>
+                      <PhotoCarousel
+                        urls={p.imageUrls?.length ? p.imageUrls : p.imageUrl ? [p.imageUrl] : []}
+                        height={160}
+                        attribution={p.imageAttribution ?? 'Photo via Unsplash'}
+                      />
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                         <Text variant="h4" style={{ flex: 1 }}>{p.name}</Text>
                         <Badge label={p.category} variant="default" />

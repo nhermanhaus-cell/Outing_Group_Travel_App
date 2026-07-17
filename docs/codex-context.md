@@ -112,20 +112,26 @@ docs/
 
 ## Env / secrets
 
-- Local secrets live in **`.env`** (gitignored). Template: `.env.example`
-- `apps/mobile/app.config.js` reads keys at bundle time into `expo.extra` and iOS/Android Maps config
-- Same Google key can serve Maps SDK + Places + Geocoding + Distance Matrix if all APIs are enabled and allowed on the key
+- Local secrets live in **repo-root `.env`** (gitignored). Template: `.env.example`
+- `apps/mobile/app.config.js` **manually loads** root `.env` (Expo does not auto-load parent dirs), then injects into `expo.extra` + iOS/Android Maps config
+- On `expo start`, look for `[gayi] API keys loaded — maps:… places:… viator:…` (booleans only)
+- Settings → Integrations shows the same runtime key status
+- Same Google key can serve Maps SDK + Places + Geocoding + Distance Matrix + Place Photos if all APIs are enabled and allowed on the key
 
 | Variable | Use |
 |----------|-----|
 | `VIATOR_API_KEY` | Viator affiliate |
-| `GOOGLE_MAPS_API_KEY` / `GOOGLE_PLACES_API_KEY` | Maps + Places + Geocode + Distance Matrix |
+| `GOOGLE_MAPS_API_KEY` / `GOOGLE_PLACES_API_KEY` | Maps + Places + Geocode + Distance Matrix + Place Photos |
 | `EXPO_PUBLIC_*` mirrors | Optional; `app.config.js` also reads non-prefixed |
 | `EXPO_PUBLIC_SUPABASE_URL` | Project URL `https://<id>.supabase.co` |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase **publishable** key (`sb_publishable_…`) |
 | `GETYOURGUIDE_API_KEY` | Optional GYG shell |
 
 **Never commit `.env` or paste real keys into git/chat.**
+
+### Place photos
+- Editorial places: Unsplash URLs attached via `pnpm seed:photos` → `seed:score` → `seed:sync`
+- Live Google Nearby: Place Photo URLs when Places key is present
 
 ### Google Cloud — enable
 1. Maps SDK for iOS  

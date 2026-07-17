@@ -24,6 +24,7 @@ import { Text } from '../../../components/ui/Text';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
+import { PhotoCarousel } from '../../../components/ui/PhotoCarousel';
 import { GlamourSelector } from '../../../components/ui/GlamourSelector';
 import { ProgressBar } from '../../../components/ui/ProgressBar';
 import type { GlamourLevel } from '@gayi/shared';
@@ -46,6 +47,7 @@ import {
   getGooglePlacesApiKey,
   type NearbyPlaceResult,
 } from '../../../src/lib/googlePlaces';
+import { getApiKeyStatus } from '../../../src/lib/apiKeys';
 import {
   loadDestinationExperiences,
   type MobileExperience,
@@ -84,6 +86,8 @@ type MergedNearStayPlace = {
   userRatingsTotal?: number;
   vicinity?: string;
   lgbtqRelevance?: string;
+  imageUrls?: string[];
+  imageAttribution?: string;
 };
 
 type MarkerItem = {
@@ -202,6 +206,7 @@ export default function TripHubScreen() {
   const trip = getTrip(tripId ?? '');
   const hasLodgingCoords = hasNumericCoords(trip?.lodgingLat, trip?.lodgingLng);
   const hasGooglePlacesApiKey = Boolean(getGooglePlacesApiKey());
+  const apiKeys = getApiKeyStatus();
 
   const fetchAndSetLiveNearby = useCallback(async (lat: number, lng: number) => {
     const nearby = await fetchNearbyHighlyRated(lat, lng, 6);
@@ -442,6 +447,25 @@ export default function TripHubScreen() {
     );
   }, [catalogPlaces, hasLodgingCoords, trip?.lodgingLat, trip?.lodgingLng]);
 
+  const catalogPlacePhotos = useMemo(() => {
+    const byId = new Map<string, { imageUrls: string[]; imageAttribution?: string }>();
+    for (const place of catalogPlaces) {
+      const id = String(place.id ?? '');
+      if (!id) continue;
+      const imageUrls = Array.isArray(place.imageUrls)
+        ? place.imageUrls.filter((url): url is string => typeof url === 'string')
+        : typeof place.imageUrl === 'string'
+          ? [place.imageUrl]
+          : [];
+      byId.set(id, {
+        imageUrls,
+        imageAttribution:
+          typeof place.imageAttribution === 'string' ? place.imageAttribution : undefined,
+      });
+    }
+    return byId;
+  }, [catalogPlaces]);
+
   const mergedNearStayPlaces = useMemo<MergedNearStayPlace[]>(() => {
     const seen = new Set<string>();
     const merged: MergedNearStayPlace[] = [];
@@ -462,6 +486,7 @@ export default function TripHubScreen() {
         rating: place.rating,
         userRatingsTotal: place.userRatingsTotal,
         vicinity: place.vicinity,
+        imageUrls: place.imageUrls ?? [],
       });
     });
 
@@ -469,6 +494,7 @@ export default function TripHubScreen() {
       const key = place.name.trim().toLowerCase();
       if (!key || seen.has(key)) return;
       seen.add(key);
+      const photos = catalogPlacePhotos.get(String(place.id));
       merged.push({
         id: `editorial-${place.id}`,
         name: place.name,
@@ -478,11 +504,13 @@ export default function TripHubScreen() {
         saveKey: String(place.id),
         distanceKm: place.distanceKm,
         lgbtqRelevance: place.lgbtqRelevance,
+        imageUrls: photos?.imageUrls ?? [],
+        imageAttribution: photos?.imageAttribution,
       });
     });
 
     return merged;
-  }, [liveNearbyPlaces, nearStayPlaces]);
+  }, [catalogPlacePhotos, liveNearbyPlaces, nearStayPlaces]);
 
   const hasExternalExperienceBookings = useMemo(
     () =>
@@ -964,9 +992,30 @@ export default function TripHubScreen() {
             {destinationExperiences.length > 0 ? (
               <View style={{ gap: spacing.sm }}>
                 <Text variant="h3">Suggested experiences</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+                  <Badge
+                    label={apiKeys.viator ? 'Viator keyed' : 'Viator offline'}
+                    variant={apiKeys.viator ? 'success' : 'warning'}
+                  />
+                  <Badge
+                    label={
+                      destinationExperienceSource === 'viator_live'
+                        ? 'Live results'
+                        : 'Editorial fallback'
+                    }
+                    variant={destinationExperienceSource === 'viator_live' ? 'info' : 'default'}
+                  />
+                </View>
                 {destinationExperiences.map((experience) => (
                   <Card key={experience.id} elevated>
-                    <View style={{ gap: spacing.xs }}>
+                    <View style={{ gap: spacing.sm }}>
+                      <PhotoCarousel
+                        urls={experience.imageUrls ?? []}
+                        height={140}
+                        attribution={
+                          experience.provider === 'editorial' ? 'Photo via Unsplash' : undefined
+                        }
+                      />
                       <Text variant="labelLg">{experience.title}</Text>
                       <Text variant="bodySm" style={{ color: colors.textSecondary }}>
                         {experience.summary}
@@ -1336,9 +1385,19 @@ export default function TripHubScreen() {
             <Text variant="caption" style={{ color: colors.textTertiary }}>
               Suggestions highlight queer venue density and neighborhood vibe tags. They are not a universal safety claim.
             </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+              <Badge
+                label={apiKeys.places ? 'Places API keyed' : 'Places API offline'}
+                variant={apiKeys.places ? 'success' : 'warning'}
+              />
+              <Badge
+                label={liveNearbyPlaces.length > 0 ? `${liveNearbyPlaces.length} live nearby` : 'Editorial nearby'}
+                variant={liveNearbyPlaces.length > 0 ? 'info' : 'default'}
+              />
+            </View>
             {trip.lodgingStatus === 'booked' && !hasGooglePlacesApiKey ? (
               <Text variant="caption" style={{ color: colors.textTertiary }}>
-                Add EXPO_PUBLIC_GOOGLE_PLACES_API_KEY (or set app.config extra) to enable live nearby ratings.
+                Add GOOGLE_PLACES_API_KEY (or EXPO_PUBLIC_*) to the repo-root `.env`, then restart Expo with `--clear`.
               </Text>
             ) : null}
 
@@ -1356,7 +1415,16 @@ export default function TripHubScreen() {
                 ) : (
                   mergedNearStayPlaces.map((place) => (
                     <Card key={place.id} elevated>
-                      <View style={{ gap: spacing.xs }}>
+                      <View style={{ gap: spacing.sm }}>
+                        <PhotoCarousel
+                          urls={place.imageUrls ?? []}
+                          height={140}
+                          attribution={
+                            place.source === 'editorial'
+                              ? place.imageAttribution ?? 'Photo via Unsplash'
+                              : undefined
+                          }
+                        />
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm }}>
                           <Text variant="labelLg" style={{ flex: 1 }}>
                             {place.name}
@@ -1411,6 +1479,35 @@ export default function TripHubScreen() {
                       : 'Add or confirm your stay address to unlock live nearby and map markers.'}
                 </Text>
               </Card>
+            ) : null}
+
+            {catalogPlaces.length > 0 ? (
+              <View style={{ gap: spacing.sm }}>
+                <Text variant="labelLg">Destination highlights</Text>
+                {catalogPlaces.map((place) => {
+                  const photos = catalogPlacePhotos.get(String(place.id ?? ''));
+                  return (
+                    <Card key={String(place.id ?? place.name)} elevated>
+                      <View style={{ gap: spacing.sm }}>
+                        <PhotoCarousel
+                          urls={photos?.imageUrls ?? []}
+                          height={140}
+                          attribution={photos?.imageAttribution ?? 'Photo via Unsplash'}
+                        />
+                        <Text variant="labelLg">{String(place.name ?? 'Place')}</Text>
+                        <Text variant="caption" style={{ color: colors.textSecondary }}>
+                          {formatTokenLabel(String(place.category ?? 'other'))}
+                        </Text>
+                        {typeof place.summary === 'string' ? (
+                          <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                            {place.summary}
+                          </Text>
+                        ) : null}
+                      </View>
+                    </Card>
+                  );
+                })}
+              </View>
             ) : null}
 
             {neighborhoodSuggestions.length > 0 ? (

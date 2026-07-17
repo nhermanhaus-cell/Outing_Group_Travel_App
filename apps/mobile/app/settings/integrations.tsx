@@ -4,9 +4,9 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { Text } from '../../components/ui/Text';
-import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { useIntegrations } from '../../src/providers/AppProviders';
+import { getApiKeyStatus } from '../../src/lib/apiKeys';
 
 const PROVIDER_SLOTS = [
   {
@@ -42,6 +42,7 @@ export default function IntegrationsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { overrides, setOverride, clearOverride } = useIntegrations();
+  const apiKeys = getApiKeyStatus();
 
   const getActive = (slot: string, defaultId: string) => {
     const override = overrides.find((o) => o.slot === slot);
@@ -75,7 +76,39 @@ export default function IntegrationsScreen() {
           paddingBottom: insets.bottom + spacing['4xl'],
         }}
       >
-        {/* Env hint */}
+        <View
+          style={{
+            backgroundColor: colors.backgroundSecondary,
+            borderRadius: radius.lg,
+            borderWidth: 1,
+            borderColor: colors.border,
+            padding: spacing.base,
+            gap: spacing.sm,
+          }}
+        >
+          <Text variant="labelLg">API keys (runtime)</Text>
+          <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+            Keys load from the monorepo-root `.env` via `apps/mobile/app.config.js`. After editing keys, restart with `npx expo start --go --clear` and confirm Metro logs `[gayi] API keys loaded — maps:true places:true viator:true`.
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+            <Badge
+              label={apiKeys.maps ? 'Google Maps keyed' : 'Google Maps missing'}
+              variant={apiKeys.maps ? 'success' : 'warning'}
+            />
+            <Badge
+              label={apiKeys.places ? 'Places keyed' : 'Places missing'}
+              variant={apiKeys.places ? 'success' : 'warning'}
+            />
+            <Badge
+              label={apiKeys.viator ? 'Viator keyed' : 'Viator missing'}
+              variant={apiKeys.viator ? 'success' : 'warning'}
+            />
+          </View>
+          <Text variant="caption" style={{ color: colors.textTertiary }}>
+            Expected vars: GOOGLE_MAPS_API_KEY / GOOGLE_PLACES_API_KEY / VIATOR_API_KEY (EXPO_PUBLIC_* mirrors also work).
+          </Text>
+        </View>
+
         <View
           style={{
             backgroundColor: colors.backgroundSecondary,
@@ -86,14 +119,13 @@ export default function IntegrationsScreen() {
             gap: spacing.xs,
           }}
         >
-          <Text variant="labelLg">Environment</Text>
+          <Text variant="labelLg">Supabase</Text>
           <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-            Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to your .env to enable live data.
+            Add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to your `.env` to enable live data.
           </Text>
           <Badge label="Offline / Sample mode" variant="warning" />
         </View>
 
-        {/* Slots */}
         {PROVIDER_SLOTS.map((slot) => {
           const activeId = getActive(slot.slot, slot.options.find((o) => o.active)?.id ?? '');
           return (
