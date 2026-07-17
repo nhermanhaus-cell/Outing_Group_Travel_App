@@ -1,5 +1,5 @@
 import type { Destination, Place, TravelPreferences } from '@gayi/shared';
-import type { ItineraryItem } from '../types.js';
+import type { ItineraryItem } from '../types';
 
 // ─── Time-slot scaffolding ────────────────────────────────────────────────────
 

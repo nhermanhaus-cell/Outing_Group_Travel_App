@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { PlacesReq, PlacesRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { PlacesReq, PlacesRes } from '../../interfaces';
 
 export const placesGoogleShell = defineProviderPlugin<PlacesReq, PlacesRes>({
   id: 'places:google-places',

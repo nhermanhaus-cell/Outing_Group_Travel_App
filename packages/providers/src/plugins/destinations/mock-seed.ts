@@ -1,153 +1,1105 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { DestinationsReq, DestinationsRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { DestinationsReq, DestinationsRes } from '../../interfaces';
 import type { Destination } from '@gayi/shared';
 
+/** Full MVP seed catalog (15 destinations) — sample/editorial data. */
 const SEED: Destination[] = [
   {
-    slug: 'barcelona-es',
-    name: 'Barcelona',
-    country: 'Spain',
-    continentCode: 'EU',
-    nearestAirportCodes: ['BCN'],
-    legalStatus: 'marriage_equality',
-    safetyScore: 90,
-    communityScore: 88,
-    nightlifeScore: 92,
-    bestMonths: [5, 6, 9, 10],
-    avgTempCByMonth: {
-      1: 14, 2: 15, 3: 17, 4: 19, 5: 22, 6: 26,
-      7: 29, 8: 29, 9: 26, 10: 22, 11: 17, 12: 14,
+    "slug": "san-francisco",
+    "name": "San Francisco",
+    "country": "United States",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "SFO",
+      "OAK"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 88,
+    "communityScore": 98,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
     },
-    interests: ['nightlife', 'beach', 'culture', 'food', 'lgbtq_venues'],
-    upcomingEvents: [{ name: 'Barcelona Pride', month: 6, type: 'pride', url: 'https://pridebarcelona.org' }],
-    accessibility: { wheelchairFriendly: true, brailleAvailable: false, notes: 'Eixample is accessible.' },
-    costPerDay: { budget: 80, mid: 140, luxury: 300 },
-    lastUpdated: '2026-01-01',
-    reviewScore: 4.7,
-    reviewCount: 1203,
-    typicalStayDays: { min: 4, max: 8 },
+    "interests": [
+      "nightlife",
+      "food",
+      "art",
+      "pride",
+      "hiking",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "San Francisco Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 120,
+      "mid": 220,
+      "luxury": 450
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 120,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
   },
   {
-    slug: 'amsterdam-nl',
-    name: 'Amsterdam',
-    country: 'Netherlands',
-    continentCode: 'EU',
-    nearestAirportCodes: ['AMS'],
-    legalStatus: 'marriage_equality',
-    safetyScore: 93,
-    communityScore: 91,
-    nightlifeScore: 84,
-    bestMonths: [5, 6, 7, 8],
-    avgTempCByMonth: {
-      1: 5, 2: 6, 3: 9, 4: 13, 5: 17, 6: 20,
-      7: 22, 8: 22, 9: 19, 10: 14, 11: 9, 12: 6,
+    "slug": "palm-springs",
+    "name": "Palm Springs",
+    "country": "United States",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "PSP"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 90,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
     },
-    interests: ['culture', 'nightlife', 'history', 'art', 'lgbtq_venues'],
-    upcomingEvents: [{ name: 'Amsterdam Pride', month: 8, type: 'pride', url: 'https://amsterdampride.nl' }],
-    accessibility: { wheelchairFriendly: true, brailleAvailable: true, notes: 'Canal-side cobblestones can be challenging.' },
-    costPerDay: { budget: 90, mid: 160, luxury: 380 },
-    lastUpdated: '2026-01-01',
-    reviewScore: 4.6,
-    reviewCount: 987,
-    typicalStayDays: { min: 3, max: 7 },
+    "interests": [
+      "wellness",
+      "shopping",
+      "lgbtq_venues",
+      "culture",
+      "nightlife"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Palm Springs Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 100,
+      "mid": 200,
+      "luxury": 400
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
   },
   {
-    slug: 'mexico-city-mx',
-    name: 'Mexico City',
-    country: 'Mexico',
-    continentCode: 'NA',
-    nearestAirportCodes: ['MEX'],
-    legalStatus: 'marriage_equality',
-    safetyScore: 72,
-    communityScore: 83,
-    nightlifeScore: 88,
-    bestMonths: [3, 4, 10, 11, 12],
-    avgTempCByMonth: {
-      1: 21, 2: 23, 3: 26, 4: 27, 5: 26, 6: 24,
-      7: 22, 8: 22, 9: 22, 10: 22, 11: 21, 12: 20,
+    "slug": "puerto-vallarta",
+    "name": "Puerto Vallarta",
+    "country": "Mexico",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "PVR"
+    ],
+    "legalStatus": "civil_union",
+    "safetyScore": 82,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      11,
+      12,
+      1,
+      2,
+      3,
+      4
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
     },
-    interests: ['food', 'culture', 'nightlife', 'art', 'lgbtq_venues'],
-    upcomingEvents: [{ name: 'Mexico City Pride', month: 6, type: 'pride' }],
-    accessibility: { wheelchairFriendly: false, brailleAvailable: false, notes: 'Centro Histórico has uneven streets.' },
-    costPerDay: { budget: 40, mid: 90, luxury: 220 },
-    lastUpdated: '2026-01-01',
-    reviewScore: 4.5,
-    reviewCount: 743,
-    typicalStayDays: { min: 4, max: 10 },
+    "interests": [
+      "beach",
+      "nightlife",
+      "food",
+      "lgbtq_venues"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Puerto Vallarta Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 60,
+      "mid": 140,
+      "luxury": 280
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
   },
   {
-    slug: 'bangkok-th',
-    name: 'Bangkok',
-    country: 'Thailand',
-    continentCode: 'AS',
-    nearestAirportCodes: ['BKK', 'DMK'],
-    legalStatus: 'limited_protections',
-    safetyScore: 78,
-    communityScore: 79,
-    nightlifeScore: 90,
-    bestMonths: [11, 12, 1, 2],
-    avgTempCByMonth: {
-      1: 32, 2: 33, 3: 35, 4: 36, 5: 34, 6: 33,
-      7: 32, 8: 32, 9: 32, 10: 31, 11: 31, 12: 31,
+    "slug": "mexico-city",
+    "name": "Mexico City",
+    "country": "Mexico",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "MEX"
+    ],
+    "legalStatus": "civil_union",
+    "safetyScore": 75,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
     },
-    interests: ['nightlife', 'food', 'culture', 'shopping', 'wellness'],
-    upcomingEvents: [],
-    accessibility: { wheelchairFriendly: false, brailleAvailable: false, notes: 'BTS skytrain is accessible.' },
-    costPerDay: { budget: 35, mid: 80, luxury: 200 },
-    lastUpdated: '2026-01-01',
-    reviewScore: 4.4,
-    reviewCount: 1122,
-    typicalStayDays: { min: 4, max: 10 },
+    "interests": [
+      "food",
+      "art",
+      "history",
+      "nightlife",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Mexico City Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 50,
+      "mid": 120,
+      "luxury": 250
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
   },
   {
-    slug: 'berlin-de',
-    name: 'Berlin',
-    country: 'Germany',
-    continentCode: 'EU',
-    nearestAirportCodes: ['BER'],
-    legalStatus: 'marriage_equality',
-    safetyScore: 88,
-    communityScore: 92,
-    nightlifeScore: 98,
-    bestMonths: [6, 7, 8],
-    avgTempCByMonth: {
-      1: 2, 2: 3, 3: 8, 4: 13, 5: 18, 6: 22,
-      7: 24, 8: 24, 9: 20, 10: 13, 11: 7, 12: 3,
+    "slug": "new-york-city",
+    "name": "New York City",
+    "country": "United States",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "JFK",
+      "LGA",
+      "EWR"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 85,
+    "communityScore": 98,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
     },
-    interests: ['nightlife', 'culture', 'art', 'music', 'lgbtq_venues', 'history'],
-    upcomingEvents: [{ name: 'Berlin Pride (CSD)', month: 7, type: 'pride', url: 'https://csd-berlin.de' }],
-    accessibility: { wheelchairFriendly: true, brailleAvailable: true, notes: 'Good public transport accessibility.' },
-    costPerDay: { budget: 70, mid: 130, luxury: 280 },
-    lastUpdated: '2026-01-01',
-    reviewScore: 4.8,
-    reviewCount: 1540,
-    typicalStayDays: { min: 4, max: 10 },
+    "interests": [
+      "nightlife",
+      "art",
+      "food",
+      "pride",
+      "shopping",
+      "culture",
+      "music"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "New York City Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 130,
+      "mid": 250,
+      "luxury": 500
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 120,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
   },
+  {
+    "slug": "miami",
+    "name": "Miami",
+    "country": "United States",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "MIA",
+      "FLL"
+    ],
+    "legalStatus": "civil_union",
+    "safetyScore": 80,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "shopping",
+      "music",
+      "food",
+      "art"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Miami Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 110,
+      "mid": 220,
+      "luxury": 450
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
+  },
+  {
+    "slug": "provincetown",
+    "name": "Provincetown",
+    "country": "United States",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "PVC",
+      "BOS"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 95,
+    "communityScore": 26,
+    "nightlifeScore": 55,
+    "bestMonths": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "beach",
+      "lgbtq_venues",
+      "art",
+      "wellness",
+      "pride"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Provincetown Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 140,
+      "mid": 250,
+      "luxury": 450
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
+  },
+  {
+    "slug": "montreal",
+    "name": "Montréal",
+    "country": "Canada",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "YUL"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 90,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "music",
+      "art",
+      "pride",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Montréal Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 90,
+      "mid": 180,
+      "luxury": 350
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
+  },
+  {
+    "slug": "london",
+    "name": "London",
+    "country": "United Kingdom",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "LHR",
+      "LGW"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 80,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "nightlife",
+      "art",
+      "history",
+      "food",
+      "shopping",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "London Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 110,
+      "mid": 220,
+      "luxury": 450
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
+  },
+  {
+    "slug": "berlin",
+    "name": "Berlin",
+    "country": "Germany",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "BER"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 88,
+    "communityScore": 98,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "nightlife",
+      "art",
+      "lgbtq_venues",
+      "history",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Berlin Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 70,
+      "mid": 150,
+      "luxury": 300
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 120,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
+  },
+  {
+    "slug": "madrid",
+    "name": "Madrid",
+    "country": "Spain",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "MAD"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 86,
+    "communityScore": 98,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "pride",
+      "art",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Madrid Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 70,
+      "mid": 150,
+      "luxury": 300
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 120,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
+  },
+  {
+    "slug": "barcelona",
+    "name": "Barcelona",
+    "country": "Spain",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "BCN"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 85,
+    "communityScore": 98,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "culture",
+      "food",
+      "art",
+      "music"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Barcelona Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 80,
+      "mid": 170,
+      "luxury": 350
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 120,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
+  },
+  {
+    "slug": "lisbon",
+    "name": "Lisbon",
+    "country": "Portugal",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "LIS"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 82,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "food",
+      "nightlife",
+      "culture",
+      "lgbtq_venues",
+      "hiking"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Lisbon Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 65,
+      "mid": 140,
+      "luxury": 280
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
+  },
+  {
+    "slug": "amsterdam",
+    "name": "Amsterdam",
+    "country": "Netherlands",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "AMS"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 92,
+    "communityScore": 98,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "nightlife",
+      "art",
+      "pride",
+      "history",
+      "lgbtq_venues",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Amsterdam Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 100,
+      "mid": 200,
+      "luxury": 400
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 120,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
+  },
+  {
+    "slug": "tokyo",
+    "name": "Tokyo",
+    "country": "Japan",
+    "continentCode": "AS",
+    "nearestAirportCodes": [
+      "HND",
+      "NRT"
+    ],
+    "legalStatus": "limited_protections",
+    "safetyScore": 60,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "food",
+      "nightlife",
+      "art",
+      "shopping",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Tokyo Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 80,
+      "mid": 180,
+      "luxury": 400
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
+  }
 ];
 
 export const destinationsMockSeed = defineProviderPlugin<DestinationsReq, DestinationsRes>({
   id: 'destinations:mock-seed',
   slot: 'destinations',
-  label: 'Mock Seed Destinations',
-  description: 'In-memory seed data for development and testing.',
+  label: 'Mock Destination Seed',
+  description: 'Bundled sample destinations for offline MVP demos.',
   isMock: true,
   create() {
     return {
-      async call(req) {
-        let results = SEED;
+      async call(req): Promise<DestinationsRes> {
+        let items = [...SEED];
         if (req.slugs?.length) {
-          results = results.filter((d) => req.slugs!.includes(d.slug));
+          const set = new Set(req.slugs);
+          items = items.filter((d) => set.has(d.slug));
         }
         if (req.filter?.continentCode) {
-          results = results.filter((d) => d.continentCode === req.filter!.continentCode);
-        }
-        if (req.filter?.legalStatuses?.length) {
-          results = results.filter((d) => req.filter!.legalStatuses!.includes(d.legalStatus));
+          items = items.filter((d) => d.continentCode === req.filter!.continentCode);
         }
         if (req.filter?.minSafetyScore != null) {
-          results = results.filter((d) => d.safetyScore >= req.filter!.minSafetyScore!);
+          items = items.filter((d) => d.safetyScore >= req.filter!.minSafetyScore!);
         }
-        return { destinations: req.limit != null ? results.slice(0, req.limit) : results };
+        if (req.filter?.legalStatuses?.length) {
+          const set = new Set(req.filter.legalStatuses);
+          items = items.filter((d) => set.has(d.legalStatus));
+        }
+        if (req.limit != null) items = items.slice(0, req.limit);
+        return { destinations: items };
       },
     };
   },

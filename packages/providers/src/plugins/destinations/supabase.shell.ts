@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { DestinationsReq, DestinationsRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { DestinationsReq, DestinationsRes } from '../../interfaces';
 
 export const destinationsSupabaseShell = defineProviderPlugin<DestinationsReq, DestinationsRes>({
   id: 'destinations:supabase',

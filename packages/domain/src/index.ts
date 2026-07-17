@@ -18,10 +18,10 @@ export type {
   TripPublicPayload,
   WeightConfig,
   WeightKey,
-} from './types.js';
+} from './types';
 
 // ─── Recommendation ───────────────────────────────────────────────────────────
-export { DEFAULT_WEIGHTS, scoreDestinations } from './recommendation/engine.js';
+export { DEFAULT_WEIGHTS, scoreDestinations } from './recommendation/engine';
 
 export {
   findOptimalTravelWindow,
@@ -35,21 +35,21 @@ export {
   tempBand,
   weatherMatchScore,
   WEATHER_PREF_RANGES,
-} from './recommendation/seasons.js';
+} from './recommendation/seasons';
 
 // ─── Community Pulse ──────────────────────────────────────────────────────────
-export { computePulse, PULSE_MIN_THRESHOLDS } from './pulse/engine.js';
+export { computePulse, PULSE_MIN_THRESHOLDS } from './pulse/engine';
 
 // ─── Glamour Budget ───────────────────────────────────────────────────────────
-export { estimateBudget } from './budget/engine.js';
-export type { BudgetEngineInput } from './budget/engine.js';
+export { estimateBudget } from './budget/engine';
+export type { BudgetEngineInput } from './budget/engine';
 
 // ─── Itinerary ────────────────────────────────────────────────────────────────
-export { generateItinerary } from './itinerary/engine.js';
-export type { ItineraryInput } from './itinerary/engine.js';
+export { generateItinerary } from './itinerary/engine';
+export type { ItineraryInput } from './itinerary/engine';
 
 // ─── Privacy ─────────────────────────────────────────────────────────────────
-export { isSafePublicPayload, toTripPublicPayload } from './privacy/tripPublicPayload.js';
+export { isSafePublicPayload, toTripPublicPayload } from './privacy/tripPublicPayload';
 
 // ─── Invite tokens ────────────────────────────────────────────────────────────
 export {
@@ -57,5 +57,5 @@ export {
   generateSignedInviteToken,
   validateInviteToken,
   verifySignedInviteToken,
-} from './invites/tokens.js';
-export type { SignedToken } from './invites/tokens.js';
+} from './invites/tokens';
+export type { SignedToken } from './invites/tokens';

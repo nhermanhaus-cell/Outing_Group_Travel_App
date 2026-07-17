@@ -1,15 +1,24 @@
 {
-  "name": "gayi-monorepo",
-  "version": "0.1.0",
+  "name": "gayi-travel-planner",
   "private": true,
-  "type": "module",
+  "packageManager": "pnpm@10.33.3",
   "scripts": {
+    "dev": "pnpm --filter mobile start",
+    "mobile": "pnpm --filter mobile start",
+    "typecheck": "pnpm -r --filter '@gayi/*' typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 0 || true",
+    "db:seed": "node scripts/print-seed-info.mjs"
   },
   "devDependencies": {
-    "typescript": "^5.5.0",
-    "vitest": "^2.0.0"
+    "typescript": "^5.8.2",
+    "vitest": "^2.1.9",
+    "@types/node": "^22.13.10"
+  },
+  "pnpm": {
+    "overrides": {
+      "react-native-gesture-handler": "~2.32.0"
+    }
   }
 }

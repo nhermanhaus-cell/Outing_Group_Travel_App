@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { EventsReq, EventsRes, LocalEvent } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { EventsReq, EventsRes, LocalEvent } from '../../interfaces';
 
 const SEED: LocalEvent[] = [
   {

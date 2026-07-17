@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { WeatherReq, WeatherRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { WeatherReq, WeatherRes } from '../../interfaces';
 
 export const weatherApiShell = defineProviderPlugin<WeatherReq, WeatherRes>({
   id: 'weather:weather-api',

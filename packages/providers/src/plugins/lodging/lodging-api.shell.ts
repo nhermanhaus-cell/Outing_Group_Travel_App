@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { LodgingReq, LodgingRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { LodgingReq, LodgingRes } from '../../interfaces';
 
 export const lodgingApiShell = defineProviderPlugin<LodgingReq, LodgingRes>({
   id: 'lodging:lodging-api',

@@ -5,12 +5,12 @@ import type {
   RecommendationResult,
   WeightConfig,
   WeightKey,
-} from '../types.js';
+} from '../types';
 import {
   findOptimalTravelWindow,
   overlapScore,
   weatherMatchScore,
-} from './seasons.js';
+} from './seasons';
 
 // ─── Default weights (sum = 1.0) ─────────────────────────────────────────────
 

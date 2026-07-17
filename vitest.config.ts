@@ -1,19 +1,21 @@
+import path from 'node:path';
 import { defineConfig } from 'vitest/config';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  test: {
+    include: [
+      'tests/unit/**/*.test.ts',
+      'packages/**/tests/**/*.test.ts',
+      'packages/domain/**/*.test.ts',
+    ],
+    environment: 'node',
+  },
   resolve: {
     alias: {
-      '@gayi/domain': path.resolve(__dirname, 'packages/domain/src/index.ts'),
-      '@gayi/shared': path.resolve(__dirname, 'packages/shared/src/index.ts'),
-      '@gayi/providers': path.resolve(__dirname, 'packages/providers/src/index.ts'),
+      '@gayi/shared': path.resolve(__dirname, 'packages/shared/src'),
+      '@gayi/domain': path.resolve(__dirname, 'packages/domain/src'),
+      '@gayi/providers': path.resolve(__dirname, 'packages/providers/src'),
+      '@gayi/db': path.resolve(__dirname, 'packages/db/src'),
     },
-  },
-  test: {
-    include: ['tests/unit/**/*.test.ts'],
-    globals: false,
   },
 });

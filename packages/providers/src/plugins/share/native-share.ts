@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { ShareReq, ShareRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { ShareReq, ShareRes } from '../../interfaces';
 
 /**
  * Calls the React Native Share API when available; gracefully degrades in
@@ -21,7 +21,10 @@ export const shareNativeShare = defineProviderPlugin<ShareReq, ShareRes>({
           'navigator' in globalThis &&
           typeof (globalThis as { navigator?: { share?: unknown } }).navigator?.share === 'function'
         ) {
-          await (globalThis as { navigator: { share: (d: Record<string, string>) => Promise<void> } }).navigator.share({
+          const nav = (globalThis as unknown as {
+            navigator: { share: (d: Record<string, string>) => Promise<void> };
+          }).navigator;
+          await nav.share({
             title: req.title,
             text: req.message,
             url: req.url ?? '',

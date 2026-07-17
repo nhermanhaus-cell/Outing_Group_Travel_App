@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { ImagesReq, ImagesRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { ImagesReq, ImagesRes } from '../../interfaces';
 
 const PLACEHOLDER_BASE = 'https://placehold.co';
 

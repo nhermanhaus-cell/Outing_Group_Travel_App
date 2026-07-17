@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { EventsReq, EventsRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { EventsReq, EventsRes } from '../../interfaces';
 
 export const eventsSupabaseShell = defineProviderPlugin<EventsReq, EventsRes>({
   id: 'events:supabase',

@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { NotificationsReq, NotificationsRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { NotificationsReq, NotificationsRes } from '../../interfaces';
 
 export const notificationsExpoShell = defineProviderPlugin<NotificationsReq, NotificationsRes>({
   id: 'notifications:expo',

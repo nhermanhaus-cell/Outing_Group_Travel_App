@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { AnalyticsReq, AnalyticsRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { AnalyticsReq, AnalyticsRes } from '../../interfaces';
 
 export const analyticsNoop = defineProviderPlugin<AnalyticsReq, AnalyticsRes>({
   id: 'analytics:noop',

@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { CurrencyReq, CurrencyRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { CurrencyReq, CurrencyRes } from '../../interfaces';
 
 /** Static rates relative to USD for illustration. */
 const RATES: Record<string, number> = {
@@ -29,15 +29,16 @@ export const currencyMockRates = defineProviderPlugin<CurrencyReq, CurrencyRes>(
   isMock: true,
   create() {
     return {
-      async call(req) {
+      async call(req): Promise<CurrencyRes> {
         const rate = getRate(req.from, req.to);
-        return {
+        const res: CurrencyRes = {
           rate,
-          convertedAmount: req.amount != null ? req.amount * rate : undefined,
           from: req.from.toUpperCase(),
           to: req.to.toUpperCase(),
           updatedAt: '2026-01-01T00:00:00Z',
         };
+        if (req.amount != null) res.convertedAmount = req.amount * rate;
+        return res;
       },
     };
   },

@@ -28,7 +28,7 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon label={focused ? '◈' : '◇'} color={color} />
+            <TabIcon label={focused ? '◈' : '◇'} color={String(color)} />
           ),
         }}
       />
@@ -37,7 +37,7 @@ export default function TabsLayout() {
         options={{
           title: 'Discover',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon label={focused ? '⊕' : '⊙'} color={color} />
+            <TabIcon label={focused ? '⊕' : '⊙'} color={String(color)} />
           ),
         }}
       />
@@ -46,7 +46,7 @@ export default function TabsLayout() {
         options={{
           title: 'Trips',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon label={focused ? '⊠' : '⊡'} color={color} />
+            <TabIcon label={focused ? '⊠' : '⊡'} color={String(color)} />
           ),
         }}
       />
@@ -55,7 +55,7 @@ export default function TabsLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon label={focused ? '◉' : '○'} color={color} />
+            <TabIcon label={focused ? '◉' : '○'} color={String(color)} />
           ),
         }}
       />

@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { AuthReq, AuthRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { AuthReq, AuthRes } from '../../interfaces';
 
 export const authSupabaseShell = defineProviderPlugin<AuthReq, AuthRes>({
   id: 'auth:supabase',

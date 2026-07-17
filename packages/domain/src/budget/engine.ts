@@ -6,7 +6,7 @@ import type {
   BudgetResult,
   CategoryOverrides,
   PersonBudget,
-} from '../types.js';
+} from '../types';
 
 // ─── Glamour-level cost multipliers ──────────────────────────────────────────
 

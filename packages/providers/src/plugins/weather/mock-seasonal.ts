@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { WeatherReq, WeatherRes, WeatherData } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { WeatherReq, WeatherRes, WeatherData } from '../../interfaces';
 
 /** Seasonal averages keyed by month (1-12) for a selection of destinations. */
 const SEASONAL: Record<string, Partial<Record<number, Omit<WeatherData, 'destinationSlug' | 'month'>>>> = {

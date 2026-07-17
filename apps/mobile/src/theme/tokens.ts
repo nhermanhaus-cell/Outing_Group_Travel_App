@@ -45,7 +45,40 @@ export const palette = {
   transparent: 'transparent',
 } as const;
 
-export const lightColors = {
+export type ThemeColors = {
+  background: string;
+  backgroundSecondary: string;
+  backgroundTertiary: string;
+  surface: string;
+  surfaceElevated: string;
+  border: string;
+  borderSubtle: string;
+  textPrimary: string;
+  textSecondary: string;
+  textTertiary: string;
+  textInverse: string;
+  textOnAccent: string;
+  accent: string;
+  accentLight: string;
+  accentMuted: string;
+  tabBar: string;
+  tabBarBorder: string;
+  tabBarActive: string;
+  tabBarInactive: string;
+  cardBackground: string;
+  cardBorder: string;
+  skeletonBase: string;
+  skeletonHighlight: string;
+  overlay: string;
+  error: string;
+  warning: string;
+  warningLight: string;
+  coral300: string;
+  ink700: string;
+  white: string;
+};
+
+export const lightColors: ThemeColors = {
   background: palette.parchment50,
   backgroundSecondary: palette.parchment100,
   backgroundTertiary: palette.parchment200,
@@ -84,9 +117,9 @@ export const lightColors = {
   coral300: palette.coral300,
   ink700: palette.ink700,
   white: palette.white,
-} as const;
+};
 
-export const darkColors: typeof lightColors = {
+export const darkColors: ThemeColors = {
   background: palette.ink900,
   backgroundSecondary: palette.ink800,
   backgroundTertiary: palette.ink700,
@@ -125,7 +158,7 @@ export const darkColors: typeof lightColors = {
   coral300: palette.coral300,
   ink700: palette.ink700,
   white: palette.white,
-} as const;
+};
 
 export const spacing = {
   xxs: 2,

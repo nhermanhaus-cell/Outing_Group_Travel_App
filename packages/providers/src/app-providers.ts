@@ -1,4 +1,4 @@
-import type { ProviderRegistry, PluginHandle } from './registry.js';
+import type { ProviderRegistry, PluginHandle } from './registry';
 import type {
   DestinationsReq, DestinationsRes,
   PlacesReq, PlacesRes,
@@ -18,43 +18,43 @@ import type {
   EventInvitationReq, EventInvitationRes,
   ImagesReq, ImagesRes,
   NotificationsReq, NotificationsRes,
-} from './interfaces.js';
+} from './interfaces';
 
 // ── Plugin imports ─────────────────────────────────────────────────────────────
 
-import { destinationsMockSeed }           from './plugins/destinations/mock-seed.js';
-import { destinationsSupabaseShell }      from './plugins/destinations/supabase.shell.js';
-import { placesMockSeed }                 from './plugins/places/mock-seed.js';
-import { placesSupabaseShell }            from './plugins/places/supabase.shell.js';
-import { placesGoogleShell }              from './plugins/places/google-places.shell.js';
-import { eventsMockSeed }                 from './plugins/events/mock-seed.js';
-import { eventsSupabaseShell }            from './plugins/events/supabase.shell.js';
-import { eventsTicketmasterShell }        from './plugins/events/ticketmaster.shell.js';
-import { lgbtqContextMockEditorial }      from './plugins/lgbtqContext/mock-editorial.js';
-import { communitySignalsMockSeed }       from './plugins/communitySignals/mock-seed.js';
-import { communitySignalsSupabaseShell }  from './plugins/communitySignals/supabase.shell.js';
-import { weatherMockSeasonal }            from './plugins/weather/mock-seasonal.js';
-import { weatherApiShell }               from './plugins/weather/weather-api.shell.js';
-import { flightsMockBands }              from './plugins/flights/mock-bands.js';
-import { flightsAmadeusShell }           from './plugins/flights/amadeus.shell.js';
-import { lodgingMockBands }              from './plugins/lodging/mock-bands.js';
-import { lodgingApiShell }               from './plugins/lodging/lodging-api.shell.js';
-import { currencyMockRates }             from './plugins/currency/mock-rates.js';
-import { currencyFxApiShell }            from './plugins/currency/fx-api.shell.js';
-import { mapsRnMapsStub }                from './plugins/maps/rn-maps.stub.js';
-import { tripsLocalDraft }               from './plugins/trips/local-draft.js';
-import { tripsSupabaseShell }            from './plugins/trips/supabase.shell.js';
-import { authMock }                      from './plugins/auth/mock.js';
-import { authSupabaseShell }             from './plugins/auth/supabase.shell.js';
-import { aiTemplateSummary }             from './plugins/ai/template-summary.js';
-import { aiOpenAiShell }                 from './plugins/ai/openai-compatible.shell.js';
-import { analyticsNoop }                 from './plugins/analytics/noop.js';
-import { analyticsPosthogShell }         from './plugins/analytics/posthog.shell.js';
-import { shareNativeShare }              from './plugins/share/native-share.js';
-import { eventInvitationPartifulHandoff } from './plugins/eventInvitation/partiful-handoff.js';
-import { imagesRemotePlaceholder }       from './plugins/images/remote-placeholder.js';
-import { notificationsNoop }             from './plugins/notifications/noop.js';
-import { notificationsExpoShell }        from './plugins/notifications/expo-notifications.shell.js';
+import { destinationsMockSeed }           from './plugins/destinations/mock-seed';
+import { destinationsSupabaseShell }      from './plugins/destinations/supabase.shell';
+import { placesMockSeed }                 from './plugins/places/mock-seed';
+import { placesSupabaseShell }            from './plugins/places/supabase.shell';
+import { placesGoogleShell }              from './plugins/places/google-places.shell';
+import { eventsMockSeed }                 from './plugins/events/mock-seed';
+import { eventsSupabaseShell }            from './plugins/events/supabase.shell';
+import { eventsTicketmasterShell }        from './plugins/events/ticketmaster.shell';
+import { lgbtqContextMockEditorial }      from './plugins/lgbtqContext/mock-editorial';
+import { communitySignalsMockSeed }       from './plugins/communitySignals/mock-seed';
+import { communitySignalsSupabaseShell }  from './plugins/communitySignals/supabase.shell';
+import { weatherMockSeasonal }            from './plugins/weather/mock-seasonal';
+import { weatherApiShell }               from './plugins/weather/weather-api.shell';
+import { flightsMockBands }              from './plugins/flights/mock-bands';
+import { flightsAmadeusShell }           from './plugins/flights/amadeus.shell';
+import { lodgingMockBands }              from './plugins/lodging/mock-bands';
+import { lodgingApiShell }               from './plugins/lodging/lodging-api.shell';
+import { currencyMockRates }             from './plugins/currency/mock-rates';
+import { currencyFxApiShell }            from './plugins/currency/fx-api.shell';
+import { mapsRnMapsStub }                from './plugins/maps/rn-maps.stub';
+import { tripsLocalDraft }               from './plugins/trips/local-draft';
+import { tripsSupabaseShell }            from './plugins/trips/supabase.shell';
+import { authMock }                      from './plugins/auth/mock';
+import { authSupabaseShell }             from './plugins/auth/supabase.shell';
+import { aiTemplateSummary }             from './plugins/ai/template-summary';
+import { aiOpenAiShell }                 from './plugins/ai/openai-compatible.shell';
+import { analyticsNoop }                 from './plugins/analytics/noop';
+import { analyticsPosthogShell }         from './plugins/analytics/posthog.shell';
+import { shareNativeShare }              from './plugins/share/native-share';
+import { eventInvitationPartifulHandoff } from './plugins/eventInvitation/partiful-handoff';
+import { imagesRemotePlaceholder }       from './plugins/images/remote-placeholder';
+import { notificationsNoop }             from './plugins/notifications/noop';
+import { notificationsExpoShell }        from './plugins/notifications/expo-notifications.shell';
 
 // ── App providers facade ───────────────────────────────────────────────────────
 

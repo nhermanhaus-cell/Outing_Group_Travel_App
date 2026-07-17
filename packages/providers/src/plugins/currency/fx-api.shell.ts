@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { CurrencyReq, CurrencyRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { CurrencyReq, CurrencyRes } from '../../interfaces';
 
 export const currencyFxApiShell = defineProviderPlugin<CurrencyReq, CurrencyRes>({
   id: 'currency:fx-api',

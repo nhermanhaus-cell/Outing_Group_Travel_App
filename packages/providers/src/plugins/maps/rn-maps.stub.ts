@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { MapsReq, MapsRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { MapsReq, MapsRes } from '../../interfaces';
 
 /**
  * Stub that builds a geo: URI suitable for React Native MapView or a deep-link

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Destination",
+  "type": "object",
+  "required": ["slug", "name", "country", "bestMonths", "costPerDay"],
+  "properties": {
+    "slug": { "type": "string" },
+    "name": { "type": "string" },
+    "country": { "type": "string" },
+    "continentCode": { "type": "string" },
+    "nearestAirportCodes": { "type": "array", "items": { "type": "string" } },
+    "legalStatus": { "type": "string" },
+    "safetyScore": { "type": "number" },
+    "communityScore": { "type": "number" },
+    "nightlifeScore": { "type": "number" },
+    "bestMonths": { "type": "array", "items": { "type": "integer" } },
+    "costPerDay": {
+      "type": "object",
+      "properties": {
+        "budget": { "type": "number" },
+        "mid": { "type": "number" },
+        "luxury": { "type": "number" }
+      }
+    }
+  }
+}

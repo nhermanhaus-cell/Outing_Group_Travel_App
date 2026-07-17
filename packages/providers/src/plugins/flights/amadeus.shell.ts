@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { FlightsReq, FlightsRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { FlightsReq, FlightsRes } from '../../interfaces';
 
 export const flightsAmadeusShell = defineProviderPlugin<FlightsReq, FlightsRes>({
   id: 'flights:amadeus',

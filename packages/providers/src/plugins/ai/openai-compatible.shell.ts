@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { AiReq, AiRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { AiReq, AiRes } from '../../interfaces';
 
 export const aiOpenAiShell = defineProviderPlugin<AiReq, AiRes>({
   id: 'ai:openai-compatible',

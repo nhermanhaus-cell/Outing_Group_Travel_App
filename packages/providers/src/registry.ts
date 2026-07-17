@@ -1,4 +1,4 @@
-import type { Slot } from './slots.js';
+import type { Slot } from './slots';
 
 // ── Core types ────────────────────────────────────────────────────────────────
 

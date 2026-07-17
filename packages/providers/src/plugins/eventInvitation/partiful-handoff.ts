@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { EventInvitationReq, EventInvitationRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { EventInvitationReq, EventInvitationRes } from '../../interfaces';
 
 /**
  * Partiful handoff: builds a deep-link URL to a pre-filled Partiful event

@@ -1,11 +1,10 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { AuthReq, AuthRes, AuthUser } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { AuthReq, AuthRes, AuthUser } from '../../interfaces';
 
 const MOCK_USER: AuthUser = {
   userId: 'mock-user-001',
   email: 'demo@gayi.app',
   displayName: 'Demo Traveller',
-  avatarUrl: undefined,
 };
 
 let session: AuthUser | null = MOCK_USER;

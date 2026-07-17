@@ -3,7 +3,7 @@ import type {
   PulseInputs,
   PulseLabel,
   PulseResult,
-} from '../types.js';
+} from '../types';
 
 // ─── Minimum aggregation thresholds (k-anonymity protection) ─────────────────
 

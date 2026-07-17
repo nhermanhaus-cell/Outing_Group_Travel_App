@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { CommunitySignalsReq, CommunitySignalsRes, CommunitySignals } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { CommunitySignalsReq, CommunitySignalsRes, CommunitySignals } from '../../interfaces';
 
 function mockSignals(destinationSlug: string): CommunitySignals {
   const hash = destinationSlug.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);

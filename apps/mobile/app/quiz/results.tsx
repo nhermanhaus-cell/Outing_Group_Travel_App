@@ -50,7 +50,11 @@ export default function QuizResultsScreen() {
 
   const results = useMemo<RecommendationResult[]>(() => {
     if (!scoring.length) return [];
-    return scoreDestinations(prefs, scoring as Destination[]).slice(0, 10);
+    const destinations = scoring.map((row) => {
+      const { catalog: _catalog, ...dest } = row as Destination & { catalog?: unknown };
+      return dest;
+    });
+    return scoreDestinations(prefs, destinations).slice(0, 10);
   }, [scoring, prefs]);
 
   const [expanded, setExpanded] = useState<string | null>(results[0]?.slug ?? null);

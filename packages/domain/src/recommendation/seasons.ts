@@ -1,5 +1,5 @@
 import { MONTH_NAMES, MONTH_SHORT } from '@gayi/shared';
-import type { TravelWindow } from '../types.js';
+import type { TravelWindow } from '../types';
 
 // ─── Month helpers ────────────────────────────────────────────────────────────
 

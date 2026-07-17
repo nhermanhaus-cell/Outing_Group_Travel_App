@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { TripsReq, TripsRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { TripsReq, TripsRes } from '../../interfaces';
 import type { Trip } from '@gayi/shared';
 
 /**

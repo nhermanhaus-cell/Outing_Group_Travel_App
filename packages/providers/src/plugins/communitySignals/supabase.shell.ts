@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { CommunitySignalsReq, CommunitySignalsRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { CommunitySignalsReq, CommunitySignalsRes } from '../../interfaces';
 
 export const communitySignalsSupabaseShell = defineProviderPlugin<CommunitySignalsReq, CommunitySignalsRes>({
   id: 'communitySignals:supabase',

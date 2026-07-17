@@ -1,5 +1,5 @@
 import type { Trip } from '@gayi/shared';
-import type { TripPublicPayload } from '../types.js';
+import type { TripPublicPayload } from '../types';
 
 /**
  * The keys of a Trip object that must never appear in a public payload.

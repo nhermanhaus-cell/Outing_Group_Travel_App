@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { FlightsReq, FlightsRes, FlightBand } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { FlightsReq, FlightsRes, FlightBand } from '../../interfaces';
 
 const BANDS: FlightBand[] = [
   { label: 'Budget', minUsd: 200,  maxUsd: 450,  typicalDurationHours: 10, airlines: ['Ryanair', 'easyJet', 'Vueling'],       stopCount: 1 },

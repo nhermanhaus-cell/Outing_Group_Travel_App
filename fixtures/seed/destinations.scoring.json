@@ -1,0 +1,4705 @@
+[
+  {
+    "slug": "san-francisco",
+    "name": "San Francisco",
+    "country": "United States",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "SFO",
+      "OAK"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 88,
+    "communityScore": 98,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "art",
+      "pride",
+      "hiking",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "San Francisco Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 120,
+      "mid": 220,
+      "luxury": 450
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 120,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "slug": "san-francisco",
+      "name": "San Francisco",
+      "country": "United States",
+      "countryCode": "US",
+      "lat": 37.7749,
+      "lng": -122.4194,
+      "timezone": "America/Los_Angeles",
+      "currency": "USD",
+      "editorialSummary": "Foggy hills, fierce queer history, and neighborhoods that still feel like home. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 120,
+            "high": 180
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 220,
+            "high": 350
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 450,
+            "high": 800
+          }
+        }
+      },
+      "interests": [
+        "nightlife",
+        "food",
+        "art_culture",
+        "pride",
+        "outdoors",
+        "architecture"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 92,
+        "publicOpinionScore": 88,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 18,
+        "upcomingEvents90d": 45,
+        "venueDensity": 42,
+        "recentReviews": 120,
+        "activeContributors": 35,
+        "publicTrips": 22,
+        "aggregateCheckins": 400,
+        "questionResponseRate": 0.72
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-000000000010",
+          "name": "San Francisco Queer District",
+          "slug": "san-francisco-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in San Francisco.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 37.7849,
+          "lng": -122.40939999999999
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "name": "San Francisco Culture Core",
+          "slug": "san-francisco-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 37.764900000000004,
+          "lng": -122.4294
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-000000000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, San Francisco",
+          "lat": 37.7749,
+          "lng": -122.4194,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, San Francisco",
+          "lat": 37.779900000000005,
+          "lng": -122.4144,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, San Francisco",
+          "lat": 37.7699,
+          "lng": -122.4174,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, San Francisco",
+          "lat": 37.782900000000005,
+          "lng": -122.4224,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, San Francisco",
+          "lat": 37.776900000000005,
+          "lng": -122.4114,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, San Francisco",
+          "lat": 37.7719,
+          "lng": -122.41539999999999,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-000000000030",
+          "title": "San Francisco Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in San Francisco.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "palm-springs",
+    "name": "Palm Springs",
+    "country": "United States",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "PSP"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 90,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "wellness",
+      "shopping",
+      "lgbtq_venues",
+      "culture",
+      "nightlife"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Palm Springs Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 100,
+      "mid": 200,
+      "luxury": 400
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-000100000001",
+      "slug": "palm-springs",
+      "name": "Palm Springs",
+      "country": "United States",
+      "countryCode": "US",
+      "lat": 33.8303,
+      "lng": -116.5453,
+      "timezone": "America/Los_Angeles",
+      "currency": "USD",
+      "editorialSummary": "Desert modernism, poolside calm, and a welcoming queer resort rhythm. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1518638150340-3dde83fc43b4?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        1,
+        2,
+        3,
+        4,
+        10,
+        11,
+        12
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 100,
+            "high": 160
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 200,
+            "high": 320
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 400,
+            "high": 700
+          }
+        }
+      },
+      "interests": [
+        "wellness",
+        "wellness",
+        "luxury",
+        "relaxed_queer",
+        "architecture",
+        "nightlife"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 90,
+        "publicOpinionScore": 90,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 6,
+        "upcomingEvents90d": 14,
+        "venueDensity": 12,
+        "recentReviews": 28,
+        "activeContributors": 8,
+        "publicTrips": 5,
+        "aggregateCheckins": 60,
+        "questionResponseRate": 0.45
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-000100000010",
+          "name": "Palm Springs Queer District",
+          "slug": "palm-springs-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in Palm Springs.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 33.8403,
+          "lng": -116.53529999999999
+        },
+        {
+          "id": "00000000-0000-4000-8000-000100000011",
+          "name": "Palm Springs Culture Core",
+          "slug": "palm-springs-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 33.8203,
+          "lng": -116.5553
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-000100000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, Palm Springs",
+          "lat": 33.8303,
+          "lng": -116.5453,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-000100000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, Palm Springs",
+          "lat": 33.835300000000004,
+          "lng": -116.5403,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-000100000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, Palm Springs",
+          "lat": 33.8253,
+          "lng": -116.5433,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-000100000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, Palm Springs",
+          "lat": 33.838300000000004,
+          "lng": -116.5483,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-000100000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, Palm Springs",
+          "lat": 33.832300000000004,
+          "lng": -116.5373,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-000100000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, Palm Springs",
+          "lat": 33.8273,
+          "lng": -116.54129999999999,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-000100000030",
+          "title": "Palm Springs Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-000100000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in Palm Springs.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "puerto-vallarta",
+    "name": "Puerto Vallarta",
+    "country": "Mexico",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "PVR"
+    ],
+    "legalStatus": "civil_union",
+    "safetyScore": 82,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      11,
+      12,
+      1,
+      2,
+      3,
+      4
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "food",
+      "lgbtq_venues"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Puerto Vallarta Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 60,
+      "mid": 140,
+      "luxury": 280
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-000200000001",
+      "slug": "puerto-vallarta",
+      "name": "Puerto Vallarta",
+      "country": "Mexico",
+      "countryCode": "MX",
+      "lat": 20.6534,
+      "lng": -105.2253,
+      "timezone": "America/Mexico_City",
+      "currency": "MXN",
+      "editorialSummary": "Zona Romántica warmth, Pacific sunsets, and an easygoing queer beach scene. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        11,
+        12,
+        1,
+        2,
+        3,
+        4
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 60,
+            "high": 100
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 140,
+            "high": 220
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 280,
+            "high": 500
+          }
+        }
+      },
+      "interests": [
+        "beach",
+        "nightlife",
+        "food",
+        "romance",
+        "relaxed_queer",
+        "tropical_escape"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 78,
+        "publicOpinionScore": 82,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 6,
+        "upcomingEvents90d": 14,
+        "venueDensity": 12,
+        "recentReviews": 28,
+        "activeContributors": 8,
+        "publicTrips": 5,
+        "aggregateCheckins": 60,
+        "questionResponseRate": 0.45
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-000200000010",
+          "name": "Puerto Vallarta Queer District",
+          "slug": "puerto-vallarta-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in Puerto Vallarta.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 20.663400000000003,
+          "lng": -105.2153
+        },
+        {
+          "id": "00000000-0000-4000-8000-000200000011",
+          "name": "Puerto Vallarta Culture Core",
+          "slug": "puerto-vallarta-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 20.6434,
+          "lng": -105.23530000000001
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-000200000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, Puerto Vallarta",
+          "lat": 20.6534,
+          "lng": -105.2253,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-000200000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, Puerto Vallarta",
+          "lat": 20.6584,
+          "lng": -105.22030000000001,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-000200000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, Puerto Vallarta",
+          "lat": 20.648400000000002,
+          "lng": -105.22330000000001,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-000200000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, Puerto Vallarta",
+          "lat": 20.6614,
+          "lng": -105.2283,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-000200000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, Puerto Vallarta",
+          "lat": 20.6554,
+          "lng": -105.21730000000001,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-000200000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, Puerto Vallarta",
+          "lat": 20.6504,
+          "lng": -105.2213,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-000200000030",
+          "title": "Puerto Vallarta Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-000200000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in Puerto Vallarta.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "mexico-city",
+    "name": "Mexico City",
+    "country": "Mexico",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "MEX"
+    ],
+    "legalStatus": "civil_union",
+    "safetyScore": 75,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "food",
+      "art",
+      "history",
+      "nightlife",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Mexico City Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 50,
+      "mid": 120,
+      "luxury": 250
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-000300000001",
+      "slug": "mexico-city",
+      "name": "Mexico City",
+      "country": "Mexico",
+      "countryCode": "MX",
+      "lat": 19.4326,
+      "lng": -99.1332,
+      "timezone": "America/Mexico_City",
+      "currency": "MXN",
+      "editorialSummary": "Endless culture, world-class dining, and a vibrant LGBTQ+ creative community. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1518659526054-83363d59083b?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        3,
+        4,
+        5,
+        10,
+        11
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 50,
+            "high": 90
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 120,
+            "high": 200
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 250,
+            "high": 450
+          }
+        }
+      },
+      "interests": [
+        "food",
+        "art_culture",
+        "history",
+        "nightlife",
+        "local_immersion",
+        "architecture"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 80,
+        "publicOpinionScore": 75,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 6,
+        "upcomingEvents90d": 14,
+        "venueDensity": 12,
+        "recentReviews": 28,
+        "activeContributors": 8,
+        "publicTrips": 5,
+        "aggregateCheckins": 60,
+        "questionResponseRate": 0.45
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-000300000010",
+          "name": "Mexico City Queer District",
+          "slug": "mexico-city-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in Mexico City.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 19.442600000000002,
+          "lng": -99.1232
+        },
+        {
+          "id": "00000000-0000-4000-8000-000300000011",
+          "name": "Mexico City Culture Core",
+          "slug": "mexico-city-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 19.4226,
+          "lng": -99.14320000000001
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-000300000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, Mexico City",
+          "lat": 19.4326,
+          "lng": -99.1332,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-000300000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, Mexico City",
+          "lat": 19.4376,
+          "lng": -99.1282,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-000300000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, Mexico City",
+          "lat": 19.4276,
+          "lng": -99.1312,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-000300000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, Mexico City",
+          "lat": 19.4406,
+          "lng": -99.1362,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-000300000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, Mexico City",
+          "lat": 19.4346,
+          "lng": -99.1252,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-000300000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, Mexico City",
+          "lat": 19.4296,
+          "lng": -99.1292,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-000300000030",
+          "title": "Mexico City Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-000300000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in Mexico City.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "new-york-city",
+    "name": "New York City",
+    "country": "United States",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "JFK",
+      "LGA",
+      "EWR"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 85,
+    "communityScore": 98,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "nightlife",
+      "art",
+      "food",
+      "pride",
+      "shopping",
+      "culture",
+      "music"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "New York City Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 130,
+      "mid": 250,
+      "luxury": 500
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 120,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-000400000001",
+      "slug": "new-york-city",
+      "name": "New York City",
+      "country": "United States",
+      "countryCode": "US",
+      "lat": 40.7128,
+      "lng": -74.006,
+      "timezone": "America/New_York",
+      "currency": "USD",
+      "editorialSummary": "Unmatched energy, historic queer neighborhoods, and every kind of night out. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 130,
+            "high": 200
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 250,
+            "high": 400
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 500,
+            "high": 900
+          }
+        }
+      },
+      "interests": [
+        "nightlife",
+        "art_culture",
+        "food",
+        "pride",
+        "shopping",
+        "architecture",
+        "festivals"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 91,
+        "publicOpinionScore": 85,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 18,
+        "upcomingEvents90d": 45,
+        "venueDensity": 42,
+        "recentReviews": 120,
+        "activeContributors": 35,
+        "publicTrips": 22,
+        "aggregateCheckins": 400,
+        "questionResponseRate": 0.72
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-000400000010",
+          "name": "New York City Queer District",
+          "slug": "new-york-city-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in New York City.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 40.7228,
+          "lng": -73.996
+        },
+        {
+          "id": "00000000-0000-4000-8000-000400000011",
+          "name": "New York City Culture Core",
+          "slug": "new-york-city-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 40.7028,
+          "lng": -74.016
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-000400000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, New York City",
+          "lat": 40.7128,
+          "lng": -74.006,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-000400000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, New York City",
+          "lat": 40.717800000000004,
+          "lng": -74.001,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-000400000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, New York City",
+          "lat": 40.7078,
+          "lng": -74.004,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-000400000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, New York City",
+          "lat": 40.720800000000004,
+          "lng": -74.009,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-000400000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, New York City",
+          "lat": 40.714800000000004,
+          "lng": -73.998,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-000400000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, New York City",
+          "lat": 40.7098,
+          "lng": -74.002,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-000400000030",
+          "title": "New York City Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-000400000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in New York City.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "miami",
+    "name": "Miami",
+    "country": "United States",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "MIA",
+      "FLL"
+    ],
+    "legalStatus": "civil_union",
+    "safetyScore": 80,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "shopping",
+      "music",
+      "food",
+      "art"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Miami Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 110,
+      "mid": 220,
+      "luxury": 450
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-000500000001",
+      "slug": "miami",
+      "name": "Miami",
+      "country": "United States",
+      "countryCode": "US",
+      "lat": 25.7617,
+      "lng": -80.1918,
+      "timezone": "America/New_York",
+      "currency": "USD",
+      "editorialSummary": "Sun, art deco glow, and a glamorous queer social calendar. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1533106497176-dc7950421224?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        1,
+        2,
+        3,
+        4,
+        11,
+        12
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 110,
+            "high": 170
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 220,
+            "high": 360
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 450,
+            "high": 850
+          }
+        }
+      },
+      "interests": [
+        "beach",
+        "nightlife",
+        "luxury",
+        "festivals",
+        "circuit_parties",
+        "food",
+        "art_culture"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 82,
+        "publicOpinionScore": 80,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 6,
+        "upcomingEvents90d": 14,
+        "venueDensity": 12,
+        "recentReviews": 28,
+        "activeContributors": 8,
+        "publicTrips": 5,
+        "aggregateCheckins": 60,
+        "questionResponseRate": 0.45
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-000500000010",
+          "name": "Miami Queer District",
+          "slug": "miami-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in Miami.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 25.771700000000003,
+          "lng": -80.1818
+        },
+        {
+          "id": "00000000-0000-4000-8000-000500000011",
+          "name": "Miami Culture Core",
+          "slug": "miami-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 25.7517,
+          "lng": -80.2018
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-000500000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, Miami",
+          "lat": 25.7617,
+          "lng": -80.1918,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-000500000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, Miami",
+          "lat": 25.7667,
+          "lng": -80.1868,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-000500000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, Miami",
+          "lat": 25.756700000000002,
+          "lng": -80.1898,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-000500000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, Miami",
+          "lat": 25.7697,
+          "lng": -80.1948,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-000500000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, Miami",
+          "lat": 25.7637,
+          "lng": -80.1838,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-000500000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, Miami",
+          "lat": 25.7587,
+          "lng": -80.1878,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-000500000030",
+          "title": "Miami Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-000500000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in Miami.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "provincetown",
+    "name": "Provincetown",
+    "country": "United States",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "PVC",
+      "BOS"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 95,
+    "communityScore": 26,
+    "nightlifeScore": 55,
+    "bestMonths": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "beach",
+      "lgbtq_venues",
+      "art",
+      "wellness",
+      "pride"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Provincetown Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 140,
+      "mid": 250,
+      "luxury": 450
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-000600000001",
+      "slug": "provincetown",
+      "name": "Provincetown",
+      "country": "United States",
+      "countryCode": "US",
+      "lat": 42.0584,
+      "lng": -70.1786,
+      "timezone": "America/New_York",
+      "currency": "USD",
+      "editorialSummary": "A storied queer haven at the tip of Cape Cod—creative, coastal, and close-knit. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 140,
+            "high": 200
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 250,
+            "high": 380
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 450,
+            "high": 750
+          }
+        }
+      },
+      "interests": [
+        "beach",
+        "relaxed_queer",
+        "art_culture",
+        "romance",
+        "quiet_retreat",
+        "pride"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 93,
+        "publicOpinionScore": 95,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 6,
+        "upcomingEvents90d": 14,
+        "venueDensity": 12,
+        "recentReviews": 28,
+        "activeContributors": 8,
+        "publicTrips": 5,
+        "aggregateCheckins": 60,
+        "questionResponseRate": 0.45
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-000600000010",
+          "name": "Provincetown Queer District",
+          "slug": "provincetown-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in Provincetown.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 42.0684,
+          "lng": -70.1686
+        },
+        {
+          "id": "00000000-0000-4000-8000-000600000011",
+          "name": "Provincetown Culture Core",
+          "slug": "provincetown-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 42.0484,
+          "lng": -70.18860000000001
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-000600000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, Provincetown",
+          "lat": 42.0584,
+          "lng": -70.1786,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-000600000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, Provincetown",
+          "lat": 42.0634,
+          "lng": -70.17360000000001,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-000600000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, Provincetown",
+          "lat": 42.053399999999996,
+          "lng": -70.17660000000001,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-000600000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, Provincetown",
+          "lat": 42.0664,
+          "lng": -70.1816,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-000600000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, Provincetown",
+          "lat": 42.0604,
+          "lng": -70.17060000000001,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-000600000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, Provincetown",
+          "lat": 42.0554,
+          "lng": -70.1746,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-000600000030",
+          "title": "Provincetown Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-000600000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in Provincetown.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "montreal",
+    "name": "Montréal",
+    "country": "Canada",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "YUL"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 90,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "music",
+      "art",
+      "pride",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Montréal Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 90,
+      "mid": 180,
+      "luxury": 350
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-000700000001",
+      "slug": "montreal",
+      "name": "Montréal",
+      "country": "Canada",
+      "countryCode": "CA",
+      "lat": 45.5017,
+      "lng": -73.5673,
+      "timezone": "America/Toronto",
+      "currency": "CAD",
+      "editorialSummary": "Bilingual charm, Village nightlife, and festival seasons with real heart. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1519178614-68673b201f36?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 90,
+            "high": 140
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 180,
+            "high": 280
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 350,
+            "high": 600
+          }
+        }
+      },
+      "interests": [
+        "nightlife",
+        "food",
+        "festivals",
+        "art_culture",
+        "pride",
+        "local_immersion"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 94,
+        "publicOpinionScore": 90,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 6,
+        "upcomingEvents90d": 14,
+        "venueDensity": 12,
+        "recentReviews": 28,
+        "activeContributors": 8,
+        "publicTrips": 5,
+        "aggregateCheckins": 60,
+        "questionResponseRate": 0.45
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-000700000010",
+          "name": "Montréal Queer District",
+          "slug": "montreal-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in Montréal.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 45.5117,
+          "lng": -73.5573
+        },
+        {
+          "id": "00000000-0000-4000-8000-000700000011",
+          "name": "Montréal Culture Core",
+          "slug": "montreal-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 45.4917,
+          "lng": -73.57730000000001
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-000700000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, Montréal",
+          "lat": 45.5017,
+          "lng": -73.5673,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-000700000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, Montréal",
+          "lat": 45.5067,
+          "lng": -73.56230000000001,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-000700000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, Montréal",
+          "lat": 45.4967,
+          "lng": -73.56530000000001,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-000700000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, Montréal",
+          "lat": 45.5097,
+          "lng": -73.5703,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-000700000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, Montréal",
+          "lat": 45.5037,
+          "lng": -73.55930000000001,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-000700000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, Montréal",
+          "lat": 45.4987,
+          "lng": -73.5633,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-000700000030",
+          "title": "Montréal Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-000700000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in Montréal.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "london",
+    "name": "London",
+    "country": "United Kingdom",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "LHR",
+      "LGW"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 80,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "nightlife",
+      "art",
+      "history",
+      "food",
+      "shopping",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "London Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 110,
+      "mid": 220,
+      "luxury": 450
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-000800000001",
+      "slug": "london",
+      "name": "London",
+      "country": "United Kingdom",
+      "countryCode": "GB",
+      "lat": 51.5074,
+      "lng": -0.1278,
+      "timezone": "Europe/London",
+      "currency": "GBP",
+      "editorialSummary": "Layered queer history, world-class culture, and nightlife that rewards curiosity. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 110,
+            "high": 170
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 220,
+            "high": 350
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 450,
+            "high": 800
+          }
+        }
+      },
+      "interests": [
+        "nightlife",
+        "art_culture",
+        "history",
+        "food",
+        "shopping",
+        "architecture"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 88,
+        "publicOpinionScore": 80,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 6,
+        "upcomingEvents90d": 14,
+        "venueDensity": 12,
+        "recentReviews": 28,
+        "activeContributors": 8,
+        "publicTrips": 5,
+        "aggregateCheckins": 60,
+        "questionResponseRate": 0.45
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-000800000010",
+          "name": "London Queer District",
+          "slug": "london-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in London.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 51.517399999999995,
+          "lng": -0.1178
+        },
+        {
+          "id": "00000000-0000-4000-8000-000800000011",
+          "name": "London Culture Core",
+          "slug": "london-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 51.4974,
+          "lng": -0.1378
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-000800000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, London",
+          "lat": 51.5074,
+          "lng": -0.1278,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-000800000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, London",
+          "lat": 51.5124,
+          "lng": -0.12279999999999999,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-000800000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, London",
+          "lat": 51.502399999999994,
+          "lng": -0.1258,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-000800000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, London",
+          "lat": 51.5154,
+          "lng": -0.1308,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-000800000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, London",
+          "lat": 51.5094,
+          "lng": -0.11979999999999999,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-000800000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, London",
+          "lat": 51.5044,
+          "lng": -0.1238,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-000800000030",
+          "title": "London Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-000800000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in London.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "berlin",
+    "name": "Berlin",
+    "country": "Germany",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "BER"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 88,
+    "communityScore": 98,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "nightlife",
+      "art",
+      "lgbtq_venues",
+      "history",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Berlin Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 70,
+      "mid": 150,
+      "luxury": 300
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 120,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-000900000001",
+      "slug": "berlin",
+      "name": "Berlin",
+      "country": "Germany",
+      "countryCode": "DE",
+      "lat": 52.52,
+      "lng": 13.405,
+      "timezone": "Europe/Berlin",
+      "currency": "EUR",
+      "editorialSummary": "Open-minded nights, creative days, and a queer scene that sets the pace. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 70,
+            "high": 120
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 150,
+            "high": 250
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 300,
+            "high": 550
+          }
+        }
+      },
+      "interests": [
+        "nightlife",
+        "art_culture",
+        "sex_positive",
+        "history",
+        "local_immersion",
+        "architecture"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 90,
+        "publicOpinionScore": 88,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 18,
+        "upcomingEvents90d": 45,
+        "venueDensity": 42,
+        "recentReviews": 120,
+        "activeContributors": 35,
+        "publicTrips": 22,
+        "aggregateCheckins": 400,
+        "questionResponseRate": 0.72
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-000900000010",
+          "name": "Berlin Queer District",
+          "slug": "berlin-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in Berlin.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 52.53,
+          "lng": 13.415
+        },
+        {
+          "id": "00000000-0000-4000-8000-000900000011",
+          "name": "Berlin Culture Core",
+          "slug": "berlin-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 52.510000000000005,
+          "lng": 13.395
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-000900000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, Berlin",
+          "lat": 52.52,
+          "lng": 13.405,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-000900000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, Berlin",
+          "lat": 52.525000000000006,
+          "lng": 13.41,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-000900000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, Berlin",
+          "lat": 52.515,
+          "lng": 13.407,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-000900000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, Berlin",
+          "lat": 52.528000000000006,
+          "lng": 13.402,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-000900000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, Berlin",
+          "lat": 52.522000000000006,
+          "lng": 13.412999999999998,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-000900000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, Berlin",
+          "lat": 52.517,
+          "lng": 13.408999999999999,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-000900000030",
+          "title": "Berlin Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-000900000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in Berlin.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "madrid",
+    "name": "Madrid",
+    "country": "Spain",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "MAD"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 86,
+    "communityScore": 98,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "pride",
+      "art",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Madrid Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 70,
+      "mid": 150,
+      "luxury": 300
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 120,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-001000000001",
+      "slug": "madrid",
+      "name": "Madrid",
+      "country": "Spain",
+      "countryCode": "ES",
+      "lat": 40.4168,
+      "lng": -3.7038,
+      "timezone": "Europe/Madrid",
+      "currency": "EUR",
+      "editorialSummary": "Late dinners, Chueca energy, and sunny plazas made for lingering. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        4,
+        5,
+        6,
+        9,
+        10
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 70,
+            "high": 110
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 150,
+            "high": 240
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 300,
+            "high": 520
+          }
+        }
+      },
+      "interests": [
+        "nightlife",
+        "food",
+        "pride",
+        "art_culture",
+        "local_immersion"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 92,
+        "publicOpinionScore": 86,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 18,
+        "upcomingEvents90d": 45,
+        "venueDensity": 42,
+        "recentReviews": 120,
+        "activeContributors": 35,
+        "publicTrips": 22,
+        "aggregateCheckins": 400,
+        "questionResponseRate": 0.72
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-001000000010",
+          "name": "Madrid Queer District",
+          "slug": "madrid-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in Madrid.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 40.4268,
+          "lng": -3.6938000000000004
+        },
+        {
+          "id": "00000000-0000-4000-8000-001000000011",
+          "name": "Madrid Culture Core",
+          "slug": "madrid-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 40.406800000000004,
+          "lng": -3.7138
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-001000000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, Madrid",
+          "lat": 40.4168,
+          "lng": -3.7038,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-001000000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, Madrid",
+          "lat": 40.421800000000005,
+          "lng": -3.6988000000000003,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-001000000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, Madrid",
+          "lat": 40.4118,
+          "lng": -3.7018000000000004,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-001000000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, Madrid",
+          "lat": 40.424800000000005,
+          "lng": -3.7068000000000003,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-001000000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, Madrid",
+          "lat": 40.418800000000005,
+          "lng": -3.6958,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-001000000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, Madrid",
+          "lat": 40.4138,
+          "lng": -3.6998,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-001000000030",
+          "title": "Madrid Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-001000000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in Madrid.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "barcelona",
+    "name": "Barcelona",
+    "country": "Spain",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "BCN"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 85,
+    "communityScore": 98,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "culture",
+      "food",
+      "art",
+      "music"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Barcelona Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 80,
+      "mid": 170,
+      "luxury": 350
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 120,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-001100000001",
+      "slug": "barcelona",
+      "name": "Barcelona",
+      "country": "Spain",
+      "countryCode": "ES",
+      "lat": 41.3874,
+      "lng": 2.1686,
+      "timezone": "Europe/Madrid",
+      "currency": "EUR",
+      "editorialSummary": "Mediterranean light, Gaudí silhouettes, and a playful queer social scene. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 80,
+            "high": 130
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 170,
+            "high": 280
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 350,
+            "high": 600
+          }
+        }
+      },
+      "interests": [
+        "beach",
+        "nightlife",
+        "architecture",
+        "food",
+        "art_culture",
+        "festivals"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 91,
+        "publicOpinionScore": 85,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 18,
+        "upcomingEvents90d": 45,
+        "venueDensity": 42,
+        "recentReviews": 120,
+        "activeContributors": 35,
+        "publicTrips": 22,
+        "aggregateCheckins": 400,
+        "questionResponseRate": 0.72
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-001100000010",
+          "name": "Barcelona Queer District",
+          "slug": "barcelona-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in Barcelona.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 41.3974,
+          "lng": 2.1786
+        },
+        {
+          "id": "00000000-0000-4000-8000-001100000011",
+          "name": "Barcelona Culture Core",
+          "slug": "barcelona-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 41.3774,
+          "lng": 2.1586000000000003
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-001100000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, Barcelona",
+          "lat": 41.3874,
+          "lng": 2.1686,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-001100000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, Barcelona",
+          "lat": 41.3924,
+          "lng": 2.1736,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-001100000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, Barcelona",
+          "lat": 41.3824,
+          "lng": 2.1706,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-001100000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, Barcelona",
+          "lat": 41.3954,
+          "lng": 2.1656,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-001100000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, Barcelona",
+          "lat": 41.3894,
+          "lng": 2.1766,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-001100000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, Barcelona",
+          "lat": 41.3844,
+          "lng": 2.1726,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-001100000030",
+          "title": "Barcelona Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-001100000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in Barcelona.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "lisbon",
+    "name": "Lisbon",
+    "country": "Portugal",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "LIS"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 82,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "food",
+      "nightlife",
+      "culture",
+      "lgbtq_venues",
+      "hiking"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Lisbon Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 65,
+      "mid": 140,
+      "luxury": 280
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-001200000001",
+      "slug": "lisbon",
+      "name": "Lisbon",
+      "country": "Portugal",
+      "countryCode": "PT",
+      "lat": 38.7223,
+      "lng": -9.1393,
+      "timezone": "Europe/Lisbon",
+      "currency": "EUR",
+      "editorialSummary": "Hills, azulejos, and a growing queer community with easy weekend energy. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1555881404645-edf925303269?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        4,
+        5,
+        6,
+        9,
+        10
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 65,
+            "high": 110
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 140,
+            "high": 230
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 280,
+            "high": 500
+          }
+        }
+      },
+      "interests": [
+        "food",
+        "nightlife",
+        "local_immersion",
+        "architecture",
+        "relaxed_queer",
+        "outdoors"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 89,
+        "publicOpinionScore": 82,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 6,
+        "upcomingEvents90d": 14,
+        "venueDensity": 12,
+        "recentReviews": 28,
+        "activeContributors": 8,
+        "publicTrips": 5,
+        "aggregateCheckins": 60,
+        "questionResponseRate": 0.45
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-001200000010",
+          "name": "Lisbon Queer District",
+          "slug": "lisbon-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in Lisbon.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 38.732299999999995,
+          "lng": -9.1293
+        },
+        {
+          "id": "00000000-0000-4000-8000-001200000011",
+          "name": "Lisbon Culture Core",
+          "slug": "lisbon-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 38.7123,
+          "lng": -9.1493
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-001200000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, Lisbon",
+          "lat": 38.7223,
+          "lng": -9.1393,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-001200000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, Lisbon",
+          "lat": 38.7273,
+          "lng": -9.1343,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-001200000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, Lisbon",
+          "lat": 38.717299999999994,
+          "lng": -9.1373,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-001200000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, Lisbon",
+          "lat": 38.7303,
+          "lng": -9.1423,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-001200000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, Lisbon",
+          "lat": 38.7243,
+          "lng": -9.131300000000001,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-001200000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, Lisbon",
+          "lat": 38.7193,
+          "lng": -9.1353,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-001200000030",
+          "title": "Lisbon Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-001200000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in Lisbon.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "amsterdam",
+    "name": "Amsterdam",
+    "country": "Netherlands",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "AMS"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 92,
+    "communityScore": 98,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "nightlife",
+      "art",
+      "pride",
+      "history",
+      "lgbtq_venues",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Amsterdam Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 100,
+      "mid": 200,
+      "luxury": 400
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 120,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-001300000001",
+      "slug": "amsterdam",
+      "name": "Amsterdam",
+      "country": "Netherlands",
+      "countryCode": "NL",
+      "lat": 52.3676,
+      "lng": 4.9041,
+      "timezone": "Europe/Amsterdam",
+      "currency": "EUR",
+      "editorialSummary": "Canal-side calm by day, legendary queer nightlife by night—and strong legal protections. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1534351590666-13e3c96a0842?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 100,
+            "high": 150
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 200,
+            "high": 320
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 400,
+            "high": 700
+          }
+        }
+      },
+      "interests": [
+        "nightlife",
+        "art_culture",
+        "pride",
+        "history",
+        "relaxed_queer",
+        "architecture"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 96,
+        "publicOpinionScore": 92,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": true,
+        "antiDiscrimination": true,
+        "genderRecognitionNotes": "Legal gender recognition pathways exist; local healthcare access varies by region.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 18,
+        "upcomingEvents90d": 45,
+        "venueDensity": 42,
+        "recentReviews": 120,
+        "activeContributors": 35,
+        "publicTrips": 22,
+        "aggregateCheckins": 400,
+        "questionResponseRate": 0.72
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-001300000010",
+          "name": "Amsterdam Queer District",
+          "slug": "amsterdam-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in Amsterdam.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 52.3776,
+          "lng": 4.9140999999999995
+        },
+        {
+          "id": "00000000-0000-4000-8000-001300000011",
+          "name": "Amsterdam Culture Core",
+          "slug": "amsterdam-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 52.357600000000005,
+          "lng": 4.8941
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-001300000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, Amsterdam",
+          "lat": 52.3676,
+          "lng": 4.9041,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-001300000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, Amsterdam",
+          "lat": 52.372600000000006,
+          "lng": 4.9091,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-001300000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, Amsterdam",
+          "lat": 52.3626,
+          "lng": 4.9060999999999995,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-001300000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, Amsterdam",
+          "lat": 52.375600000000006,
+          "lng": 4.9011,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-001300000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, Amsterdam",
+          "lat": 52.369600000000005,
+          "lng": 4.9121,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-001300000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, Amsterdam",
+          "lat": 52.3646,
+          "lng": 4.908099999999999,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-001300000030",
+          "title": "Amsterdam Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-001300000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in Amsterdam.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  },
+  {
+    "slug": "tokyo",
+    "name": "Tokyo",
+    "country": "Japan",
+    "continentCode": "AS",
+    "nearestAirportCodes": [
+      "HND",
+      "NRT"
+    ],
+    "legalStatus": "limited_protections",
+    "safetyScore": 60,
+    "communityScore": 26,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 17,
+      "2": 18,
+      "3": 20,
+      "4": 21,
+      "5": 23,
+      "6": 24,
+      "7": 26,
+      "8": 27,
+      "9": 29,
+      "10": 12,
+      "11": 14,
+      "12": 15
+    },
+    "interests": [
+      "food",
+      "nightlife",
+      "art",
+      "shopping",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Tokyo Pride Weekend",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Culture Night",
+        "month": 9,
+        "type": "other"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": true,
+      "brailleAvailable": false,
+      "notes": "Varies by venue; check accessibility notes on places."
+    },
+    "costPerDay": {
+      "budget": 80,
+      "mid": 180,
+      "luxury": 400
+    },
+    "lastUpdated": "2026-06-01",
+    "reviewScore": 4.4,
+    "reviewCount": 28,
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    },
+    "catalog": {
+      "id": "00000000-0000-4000-8000-001400000001",
+      "slug": "tokyo",
+      "name": "Tokyo",
+      "country": "Japan",
+      "countryCode": "JP",
+      "lat": 35.6762,
+      "lng": 139.6503,
+      "timezone": "Asia/Tokyo",
+      "currency": "JPY",
+      "editorialSummary": "Neighborhood intimacy in Shinjuku Ni-chōme, exquisite food, and quiet discovery. Gay-i highlights welcoming neighborhoods, public events, and traveler-relevant context—never a one-size-fits-all safety claim.",
+      "heroImageUrl": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1600&q=80",
+      "bestMonths": [
+        3,
+        4,
+        5,
+        10,
+        11
+      ],
+      "weatherProfile": {
+        "avgHighByMonth": [
+          17,
+          18,
+          20,
+          21,
+          23,
+          24,
+          26,
+          27,
+          29,
+          12,
+          14,
+          15
+        ],
+        "avgLowByMonth": [
+          9,
+          10,
+          12,
+          13,
+          15,
+          16,
+          18,
+          19,
+          21,
+          4,
+          6,
+          7
+        ]
+      },
+      "priceBands": {
+        "shoestring": {
+          "perPersonPerDayUsd": {
+            "low": 80,
+            "high": 130
+          }
+        },
+        "mid": {
+          "perPersonPerDayUsd": {
+            "low": 180,
+            "high": 300
+          }
+        },
+        "luxury": {
+          "perPersonPerDayUsd": {
+            "low": 400,
+            "high": 750
+          }
+        }
+      },
+      "interests": [
+        "food",
+        "nightlife",
+        "art_culture",
+        "shopping",
+        "local_immersion",
+        "architecture"
+      ],
+      "lgbtqContext": {
+        "legalEqualityScore": 55,
+        "publicOpinionScore": 60,
+        "criminalizationStatus": "none",
+        "sameSexRecognition": false,
+        "antiDiscrimination": false,
+        "genderRecognitionNotes": "Limited national recognition; neighborhood experience varies—review current guidance.",
+        "expressionRestrictions": null,
+        "localVariation": "Acceptance and nightlife density vary by neighborhood; check local notes below.",
+        "neighborhoodNotes": [
+          "Queer venues cluster in well-known districts.",
+          "Daytime culture and evenings can feel different—plan accordingly."
+        ],
+        "recentChanges": null,
+        "emergencyResources": [
+          {
+            "name": "ILGA World resources",
+            "url": "https://ilga.org"
+          }
+        ],
+        "embassyGuidanceUrl": null,
+        "sources": [
+          {
+            "title": "Editorial demo compilation",
+            "url": "https://example.com/gayi-sources",
+            "accessedAt": "2026-06-01"
+          }
+        ],
+        "lastReviewedAt": "2026-06-01T00:00:00.000Z",
+        "dataLabel": "editorial_demo"
+      },
+      "communityPulseComponents": {
+        "upcomingEvents30d": 6,
+        "upcomingEvents90d": 14,
+        "venueDensity": 12,
+        "recentReviews": 28,
+        "activeContributors": 8,
+        "publicTrips": 5,
+        "aggregateCheckins": 60,
+        "questionResponseRate": 0.45
+      },
+      "neighborhoods": [
+        {
+          "id": "00000000-0000-4000-8000-001400000010",
+          "name": "Tokyo Queer District",
+          "slug": "tokyo-queer-district",
+          "summary": "The primary social and nightlife corridor for LGBTQ+ travelers in Tokyo.",
+          "vibeTags": [
+            "nightlife",
+            "community"
+          ],
+          "lat": 35.6862,
+          "lng": 139.66029999999998
+        },
+        {
+          "id": "00000000-0000-4000-8000-001400000011",
+          "name": "Tokyo Culture Core",
+          "slug": "tokyo-culture",
+          "summary": "Museums, cafés, and daytime exploration with welcoming venues.",
+          "vibeTags": [
+            "culture",
+            "food"
+          ],
+          "lat": 35.6662,
+          "lng": 139.6403
+        }
+      ],
+      "places": [
+        {
+          "id": "00000000-0000-4000-8000-001400000020",
+          "name": "Harbor Light Café",
+          "category": "cafe",
+          "address": "12 Main St, Tokyo",
+          "lat": 35.6762,
+          "lng": 139.6503,
+          "summary": "Daytime hangout popular with locals and travelers.",
+          "lgbtqRelevance": "Community bulletin board and welcoming staff.",
+          "estimatedCostUsd": 15,
+          "durationMinutes": 60
+        },
+        {
+          "id": "00000000-0000-4000-8000-001400000021",
+          "name": "Atlas Bar",
+          "category": "bar",
+          "address": "44 Rainbow Ave, Tokyo",
+          "lat": 35.681200000000004,
+          "lng": 139.65529999999998,
+          "summary": "Classic queer bar with a friendly mixed crowd.",
+          "lgbtqRelevance": "Longtime LGBTQ+ venue.",
+          "estimatedCostUsd": 35,
+          "durationMinutes": 120
+        },
+        {
+          "id": "00000000-0000-4000-8000-001400000022",
+          "name": "Civic Museum",
+          "category": "museum",
+          "address": "1 Museum Rd, Tokyo",
+          "lat": 35.6712,
+          "lng": 139.6523,
+          "summary": "Local history with occasional queer heritage exhibits.",
+          "lgbtqRelevance": "Cultural context for the city.",
+          "estimatedCostUsd": 20,
+          "durationMinutes": 90
+        },
+        {
+          "id": "00000000-0000-4000-8000-001400000023",
+          "name": "Greenway Park",
+          "category": "park",
+          "address": "Park Entrance, Tokyo",
+          "lat": 35.684200000000004,
+          "lng": 139.6473,
+          "summary": "Easy outdoor time between plans.",
+          "lgbtqRelevance": "Popular daytime meetup spot.",
+          "estimatedCostUsd": 0,
+          "durationMinutes": 75
+        },
+        {
+          "id": "00000000-0000-4000-8000-001400000024",
+          "name": "Night Circuit Club",
+          "category": "club",
+          "address": "9 Beat St, Tokyo",
+          "lat": 35.678200000000004,
+          "lng": 139.6583,
+          "summary": "Late-night dance floor; intensity varies by night.",
+          "lgbtqRelevance": "Queer nightlife anchor.",
+          "estimatedCostUsd": 40,
+          "durationMinutes": 180
+        },
+        {
+          "id": "00000000-0000-4000-8000-001400000025",
+          "name": "Kitchen Table",
+          "category": "restaurant",
+          "address": "22 Feast Ln, Tokyo",
+          "lat": 35.6732,
+          "lng": 139.65429999999998,
+          "summary": "Celebrated local restaurant with inclusive hospitality.",
+          "lgbtqRelevance": "Popular with couples and friend groups.",
+          "estimatedCostUsd": 55,
+          "durationMinutes": 105
+        }
+      ],
+      "events": [
+        {
+          "id": "00000000-0000-4000-8000-001400000030",
+          "title": "Tokyo Pride Weekend",
+          "startDate": "2026-06-20",
+          "endDate": "2026-06-22",
+          "category": "pride",
+          "summary": "Sample calendar highlight—verify live dates before travel.",
+          "estimatedCostUsd": 0
+        },
+        {
+          "id": "00000000-0000-4000-8000-001400000031",
+          "title": "Queer Culture Night",
+          "startDate": "2026-09-12",
+          "endDate": "2026-09-12",
+          "category": "arts",
+          "summary": "Demo community event for Community Pulse estimates.",
+          "estimatedCostUsd": 15
+        }
+      ],
+      "sampleItineraryHint": "Blend a neighborhood walk, a café, a cultural stop, and an evening at a known queer venue in Tokyo.",
+      "dataFreshness": "2026-06-01T00:00:00.000Z",
+      "sourceLabel": "sample_seed"
+    }
+  }
+]

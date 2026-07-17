@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { AiReq, AiRes } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { AiReq, AiRes } from '../../interfaces';
 
 /** Simple template-based response builder for common Gay-i prompts. */
 function buildSummary(req: AiReq): string {

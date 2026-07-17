@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { LodgingReq, LodgingRes, LodgingBand } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { LodgingReq, LodgingRes, LodgingBand } from '../../interfaces';
 
 const BANDS: LodgingBand[] = [
   {

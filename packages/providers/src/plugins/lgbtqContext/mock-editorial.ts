@@ -1,5 +1,5 @@
-import { defineProviderPlugin } from '../../registry.js';
-import type { LgbtqContextReq, LgbtqContextRes, LgbtqContext } from '../../interfaces.js';
+import { defineProviderPlugin } from '../../registry';
+import type { LgbtqContextReq, LgbtqContextRes, LgbtqContext } from '../../interfaces';
 
 const EDITORIAL: Record<string, LgbtqContext> = {
   'barcelona-es': {

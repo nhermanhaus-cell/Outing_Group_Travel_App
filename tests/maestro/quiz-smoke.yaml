@@ -1,0 +1,6 @@
+appId: com.gayi.app
+---
+- launchApp
+- assertVisible: "Gay-i"
+- tapOn: "Find my trip"
+- assertVisible: "Quiz"
