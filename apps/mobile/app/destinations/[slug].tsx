@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   Linking,
@@ -20,12 +20,12 @@ import { PulseMeter } from '../../components/ui/PulseMeter';
 import { DataSourceBadge } from '../../components/ui/DataSourceBadge';
 import { lgbtqVibeLabel, lgbtqVibeVariant } from '../../src/lib/lgbtqVibe';
 import travelAdvisories from '../../assets/public/travel-advisories.json';
-import experiencesSeed from '../../assets/seed/experiences.json';
+import {
+  loadDestinationExperiences,
+  type MobileExperience,
+} from '../../src/lib/experiences';
 
 type TabKey = 'overview' | 'lgbtq' | 'places' | 'events';
-type DestinationExperience = (typeof experiencesSeed)[number] & {
-  affiliateUrl?: string;
-};
 
 const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -59,8 +59,40 @@ export default function DestinationDetailScreen() {
   const insets = useSafeAreaInsets();
 
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
+  const [destinationExperiences, setDestinationExperiences] = useState<MobileExperience[]>(
+    [],
+  );
+  const [experienceSource, setExperienceSource] = useState<
+    'viator_live' | 'editorial_fallback'
+  >('editorial_fallback');
 
   const destination = useMemo(() => getBySlug(slug ?? ''), [slug, getBySlug]);
+
+  useEffect(() => {
+    if (!slug) {
+      setDestinationExperiences([]);
+      setExperienceSource('editorial_fallback');
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { experiences, source } = await loadDestinationExperiences(slug);
+        if (cancelled) return;
+        setDestinationExperiences(experiences);
+        setExperienceSource(source);
+      } catch {
+        if (cancelled) return;
+        setDestinationExperiences([]);
+        setExperienceSource('editorial_fallback');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
 
   const pulse = useMemo(() => {
     if (!destination?.communityPulseComponents) return null;
@@ -88,14 +120,13 @@ export default function DestinationDetailScreen() {
     return match?.links ?? [];
   }, [destination]);
 
-  const destinationExperiences = useMemo<DestinationExperience[]>(
+  const hasExternalExperienceBookings = useMemo(
     () =>
-      destination
-        ? (experiencesSeed as DestinationExperience[])
-            .filter((experience) => experience.destinationSlug === destination.slug)
-            .slice(0, 3)
-        : [],
-    [destination],
+      destinationExperiences.some(
+        (experience) =>
+          experience.bookingMode === 'external' || Boolean(experience.affiliateUrl),
+      ),
+    [destinationExperiences],
   );
 
   if (!destination) {
@@ -207,6 +238,9 @@ export default function DestinationDetailScreen() {
                           {experience.summary}
                         </Text>
                         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+                          {experienceSource === 'viator_live' || experience.provider === 'viator' ? (
+                            <Badge label="Viator" variant="warning" />
+                          ) : null}
                           {experience.tags?.slice(0, 4).map((tag) => (
                             <Badge key={tag} label={tag} variant="default" />
                           ))}
@@ -228,6 +262,11 @@ export default function DestinationDetailScreen() {
                       </View>
                     </Card>
                   ))}
+                  {hasExternalExperienceBookings ? (
+                    <Text variant="caption" style={{ color: colors.textTertiary, marginBottom: spacing.sm }}>
+                      Partner bookings open on Viator. Gay-i may earn a commission.
+                    </Text>
+                  ) : null}
                 </>
               )}
 

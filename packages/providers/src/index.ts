@@ -63,6 +63,11 @@ export { destinationsSupabaseShell }      from './plugins/destinations/supabase.
 export { placesMockSeed }                 from './plugins/places/mock-seed';
 export { placesSupabaseShell }            from './plugins/places/supabase.shell';
 export { placesGoogleShell }              from './plugins/places/google-places.shell';
+export {
+  geocodeAddress,
+  nearbySearch,
+  mergePlaces,
+} from './plugins/places/google-places.shell';
 export { placesOsmOverpass }              from './plugins/places/osm-overpass';
 export { eventsMockSeed }                 from './plugins/events/mock-seed';
 export { eventsSupabaseShell }            from './plugins/events/supabase.shell';

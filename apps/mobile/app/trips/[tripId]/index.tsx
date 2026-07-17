@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Linking,
@@ -36,11 +36,20 @@ import type {
   Place,
   TravelPreferences,
 } from '@gayi/shared';
-import experiencesSeed from '../../../assets/seed/experiences.json';
 import {
   googleMapsMultiStopUrl,
   googleMapsPlaceUrl,
 } from '../../../src/lib/mapsLinks';
+import {
+  fetchNearbyHighlyRated,
+  geocodeLodgingAddress,
+  getGooglePlacesApiKey,
+  type NearbyPlaceResult,
+} from '../../../src/lib/googlePlaces';
+import {
+  loadDestinationExperiences,
+  type MobileExperience,
+} from '../../../src/lib/experiences';
 
 type SectionKey =
   | 'overview'
@@ -52,10 +61,22 @@ type SectionKey =
   | 'map'
   | 'comments';
 
-type ExperienceSeed = (typeof experiencesSeed)[number] & {
-  affiliateUrl?: string;
+type GeocodeStatus = 'idle' | 'locating' | 'located' | 'failed';
+
+type MergedNearStayPlace = {
+  id: string;
+  name: string;
+  category: string;
+  source: 'google_places' | 'editorial';
+  sourceLabel: 'Google Places' | 'Gay-i editorial';
+  saveKey: string;
   lat?: number;
   lng?: number;
+  distanceKm?: number;
+  rating?: number;
+  userRatingsTotal?: number;
+  vicinity?: string;
+  lgbtqRelevance?: string;
 };
 
 type MarkerItem = {
@@ -63,7 +84,7 @@ type MarkerItem = {
   label: string;
   lat: number;
   lng: number;
-  kind: 'lodging' | 'itinerary' | 'experience';
+  kind: 'lodging' | 'itinerary' | 'experience' | 'nearby';
   detail?: string;
   saveKey?: string;
 };
@@ -157,15 +178,132 @@ export default function TripHubScreen() {
   );
   const [memberPaceDraft, setMemberPaceDraft] = useState<ActivityPace>('balanced');
   const [memberInterestsDraft, setMemberInterestsDraft] = useState<Interest[]>([]);
+  const [lodgingGeocodeStatus, setLodgingGeocodeStatus] = useState<GeocodeStatus>('idle');
+  const [liveNearbyPlaces, setLiveNearbyPlaces] = useState<NearbyPlaceResult[]>([]);
+  const [destinationExperiences, setDestinationExperiences] = useState<MobileExperience[]>(
+    [],
+  );
+  const [destinationExperienceSource, setDestinationExperienceSource] = useState<
+    'viator_live' | 'editorial_fallback'
+  >('editorial_fallback');
+  const lastGeocodeAttemptKeyRef = useRef<string | null>(null);
+  const lastNearbyFetchKeyRef = useRef<string | null>(null);
 
   const trip = getTrip(tripId ?? '');
   const hasLodgingCoords = hasNumericCoords(trip?.lodgingLat, trip?.lodgingLng);
+  const hasGooglePlacesApiKey = Boolean(getGooglePlacesApiKey());
+
+  const fetchAndSetLiveNearby = useCallback(async (lat: number, lng: number) => {
+    const nearby = await fetchNearbyHighlyRated(lat, lng, 6);
+    lastNearbyFetchKeyRef.current = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+    setLiveNearbyPlaces(nearby);
+    return nearby;
+  }, []);
 
   useEffect(() => {
     if (!trip) return;
     setLodgingAddressDraft(trip.lodgingAddress ?? '');
     setLodgingStatusDraft(trip.lodgingStatus ?? 'none');
   }, [trip?.tripId, trip?.lodgingAddress, trip?.lodgingStatus]);
+
+  useEffect(() => {
+    const destinationSlug = trip?.destinationSlug;
+    if (!destinationSlug) {
+      setDestinationExperiences([]);
+      setDestinationExperienceSource('editorial_fallback');
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { experiences, source } = await loadDestinationExperiences(destinationSlug, 3);
+        if (cancelled) return;
+        setDestinationExperiences(experiences);
+        setDestinationExperienceSource(source);
+      } catch {
+        if (cancelled) return;
+        setDestinationExperiences([]);
+        setDestinationExperienceSource('editorial_fallback');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [trip?.destinationSlug]);
+
+  useEffect(() => {
+    const address = trip?.lodgingAddress?.trim();
+    if (!trip?.tripId || !address) {
+      setLodgingGeocodeStatus('idle');
+      lastGeocodeAttemptKeyRef.current = null;
+      return;
+    }
+    if (hasLodgingCoords) return;
+
+    const geocodeAttemptKey = `${trip.tripId}:${address.toLowerCase()}`;
+    if (lastGeocodeAttemptKeyRef.current === geocodeAttemptKey) return;
+    lastGeocodeAttemptKeyRef.current = geocodeAttemptKey;
+
+    let cancelled = false;
+    void (async () => {
+      setLodgingGeocodeStatus('locating');
+      try {
+        const geocoded = await geocodeLodgingAddress(address);
+        if (cancelled) return;
+        if (!geocoded) {
+          setLodgingGeocodeStatus('failed');
+          return;
+        }
+        await updateTrip(trip.tripId, {
+          lodgingAddress: geocoded.formattedAddress || address,
+          lodgingLat: geocoded.lat,
+          lodgingLng: geocoded.lng,
+        });
+        if (cancelled) return;
+        setLodgingGeocodeStatus('located');
+        await fetchAndSetLiveNearby(geocoded.lat, geocoded.lng);
+      } catch {
+        if (!cancelled) setLodgingGeocodeStatus('failed');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    fetchAndSetLiveNearby,
+    hasLodgingCoords,
+    trip?.lodgingAddress,
+    trip?.tripId,
+    updateTrip,
+  ]);
+
+  useEffect(() => {
+    if (!hasLodgingCoords) {
+      setLiveNearbyPlaces([]);
+      lastNearbyFetchKeyRef.current = null;
+      return;
+    }
+
+    const lat = Number(trip?.lodgingLat);
+    const lng = Number(trip?.lodgingLng);
+    const nearbyKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+    if (lastNearbyFetchKeyRef.current === nearbyKey) return;
+
+    let cancelled = false;
+    void (async () => {
+      const nearby = await fetchNearbyHighlyRated(lat, lng, 6);
+      if (cancelled) return;
+      lastNearbyFetchKeyRef.current = nearbyKey;
+      setLiveNearbyPlaces(nearby);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasLodgingCoords, trip?.lodgingLat, trip?.lodgingLng]);
 
   const destScoring = useMemo(
     () => (trip?.destinationSlug ? getScoringBySlug(trip.destinationSlug) : null),
@@ -247,16 +385,6 @@ export default function TripHubScreen() {
     }
   }, [blendedPreferences, destination, domainPlaces, trip]);
 
-  const destinationExperiences = useMemo<ExperienceSeed[]>(
-    () =>
-      trip?.destinationSlug
-        ? (experiencesSeed as ExperienceSeed[])
-            .filter((experience) => experience.destinationSlug === trip.destinationSlug)
-            .slice(0, 3)
-        : [],
-    [trip?.destinationSlug],
-  );
-
   const nearStayPlaces = useMemo(() => {
     if (!hasLodgingCoords || catalogPlaces.length === 0) {
       return [];
@@ -279,6 +407,57 @@ export default function TripHubScreen() {
       6,
     );
   }, [catalogPlaces, hasLodgingCoords, trip?.lodgingLat, trip?.lodgingLng]);
+
+  const mergedNearStayPlaces = useMemo<MergedNearStayPlace[]>(() => {
+    const seen = new Set<string>();
+    const merged: MergedNearStayPlace[] = [];
+
+    liveNearbyPlaces.forEach((place) => {
+      const key = place.name.trim().toLowerCase();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      merged.push({
+        id: `google-${place.placeId}`,
+        name: place.name,
+        category: place.category,
+        source: 'google_places',
+        sourceLabel: 'Google Places',
+        saveKey: place.placeId,
+        lat: place.lat,
+        lng: place.lng,
+        rating: place.rating,
+        userRatingsTotal: place.userRatingsTotal,
+        vicinity: place.vicinity,
+      });
+    });
+
+    nearStayPlaces.forEach((place) => {
+      const key = place.name.trim().toLowerCase();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      merged.push({
+        id: `editorial-${place.id}`,
+        name: place.name,
+        category: place.category ?? 'other',
+        source: 'editorial',
+        sourceLabel: 'Gay-i editorial',
+        saveKey: String(place.id),
+        distanceKm: place.distanceKm,
+        lgbtqRelevance: place.lgbtqRelevance,
+      });
+    });
+
+    return merged;
+  }, [liveNearbyPlaces, nearStayPlaces]);
+
+  const hasExternalExperienceBookings = useMemo(
+    () =>
+      destinationExperiences.some(
+        (experience) =>
+          experience.bookingMode === 'external' || Boolean(experience.affiliateUrl),
+      ),
+    [destinationExperiences],
+  );
 
   const neighborhoodSuggestions = useMemo(() => {
     const neighborhoods = (catalogDestination?.neighborhoods ??
@@ -345,18 +524,53 @@ export default function TripHubScreen() {
 
   const experienceMarkers = useMemo<MarkerItem[]>(
     () =>
-      hasNumericCoords(catalogDestination?.lat, catalogDestination?.lng)
-        ? destinationExperiences.map((experience) => ({
-            id: `experience-${experience.id}`,
-            label: experience.title,
-            lat: Number(catalogDestination?.lat),
-            lng: Number(catalogDestination?.lng),
-            kind: 'experience' as const,
-            detail: experience.summary,
-            saveKey: experience.id,
-          }))
-        : [],
+      destinationExperiences.flatMap((experience) => {
+        if (hasNumericCoords(experience.lat, experience.lng)) {
+          return [
+            {
+              id: `experience-${experience.id}`,
+              label: experience.title,
+              lat: Number(experience.lat),
+              lng: Number(experience.lng),
+              kind: 'experience' as const,
+              detail: experience.summary,
+              saveKey: experience.id,
+            },
+          ];
+        }
+        if (hasNumericCoords(catalogDestination?.lat, catalogDestination?.lng)) {
+          return [
+            {
+              id: `experience-${experience.id}`,
+              label: experience.title,
+              lat: Number(catalogDestination?.lat),
+              lng: Number(catalogDestination?.lng),
+              kind: 'experience' as const,
+              detail: experience.summary,
+              saveKey: experience.id,
+            },
+          ];
+        }
+        return [];
+      }),
     [catalogDestination?.lat, catalogDestination?.lng, destinationExperiences],
+  );
+
+  const liveNearbyMarkers = useMemo<MarkerItem[]>(
+    () =>
+      liveNearbyPlaces.map((place) => ({
+        id: `nearby-${place.placeId}`,
+        label: place.name,
+        lat: place.lat,
+        lng: place.lng,
+        kind: 'nearby' as const,
+        detail:
+          typeof place.rating === 'number'
+            ? `Google Places · ${place.rating.toFixed(1)}★${place.vicinity ? ` · ${place.vicinity}` : ''}`
+            : place.vicinity,
+        saveKey: place.placeId,
+      })),
+    [liveNearbyPlaces],
   );
 
   const lodgingMarker = useMemo<MarkerItem | null>(() => {
@@ -374,14 +588,16 @@ export default function TripHubScreen() {
   const mapMarkers = useMemo(
     () => [
       ...(lodgingMarker ? [lodgingMarker] : []),
+      ...liveNearbyMarkers,
       ...itineraryMarkers,
       ...experienceMarkers,
     ],
-    [experienceMarkers, itineraryMarkers, lodgingMarker],
+    [experienceMarkers, itineraryMarkers, liveNearbyMarkers, lodgingMarker],
   );
 
   const exportStops = useMemo(() => {
     const stops = [
+      ...liveNearbyMarkers.map(({ lat, lng, label }) => ({ lat, lng, label })),
       ...itineraryMarkers.map(({ lat, lng, label }) => ({ lat, lng, label })),
       ...experienceMarkers.map(({ lat, lng, label }) => ({ lat, lng, label })),
     ];
@@ -393,7 +609,7 @@ export default function TripHubScreen() {
       });
     }
     return stops;
-  }, [experienceMarkers, itineraryMarkers, lodgingMarker]);
+  }, [experienceMarkers, itineraryMarkers, liveNearbyMarkers, lodgingMarker]);
 
   const savedPlaces = new Set(trip?.savedPlaces ?? []);
 
@@ -414,10 +630,43 @@ export default function TripHubScreen() {
 
   const saveLodging = async () => {
     if (!trip) return;
+    const trimmedAddress = lodgingAddressDraft.trim();
+
     await updateTrip(trip.tripId, {
-      lodgingAddress: lodgingAddressDraft.trim() || undefined,
+      lodgingAddress: trimmedAddress || undefined,
       lodgingStatus: lodgingStatusDraft,
+      lodgingLat: undefined,
+      lodgingLng: undefined,
     });
+
+    if (!trimmedAddress) {
+      lastGeocodeAttemptKeyRef.current = null;
+      lastNearbyFetchKeyRef.current = null;
+      setLodgingGeocodeStatus('idle');
+      setLiveNearbyPlaces([]);
+      return;
+    }
+
+    const geocodeAttemptKey = `${trip.tripId}:${trimmedAddress.toLowerCase()}`;
+    lastGeocodeAttemptKeyRef.current = geocodeAttemptKey;
+    setLodgingGeocodeStatus('locating');
+    try {
+      const geocoded = await geocodeLodgingAddress(trimmedAddress);
+      if (!geocoded) {
+        setLodgingGeocodeStatus('failed');
+        return;
+      }
+      await updateTrip(trip.tripId, {
+        lodgingAddress: geocoded.formattedAddress || trimmedAddress,
+        lodgingStatus: lodgingStatusDraft,
+        lodgingLat: geocoded.lat,
+        lodgingLng: geocoded.lng,
+      });
+      setLodgingGeocodeStatus('located');
+      await fetchAndSetLiveNearby(geocoded.lat, geocoded.lng);
+    } catch {
+      setLodgingGeocodeStatus('failed');
+    }
   };
 
   const addMemberPreference = async () => {
@@ -624,9 +873,13 @@ export default function TripHubScreen() {
                   <Button size="sm" variant="secondary" onPress={saveLodging}>
                     Save stay details
                   </Button>
-                  {trip.lodgingAddress && !hasLodgingCoords ? (
+                  {lodgingGeocodeStatus !== 'idle' ? (
                     <Text variant="caption" style={{ color: colors.textTertiary }}>
-                      Geocoding lands in Phase 2. For now, the address still helps guide neighborhood suggestions.
+                      {lodgingGeocodeStatus === 'locating'
+                        ? 'Locating stay…'
+                        : lodgingGeocodeStatus === 'located'
+                          ? 'Stay located'
+                          : "Couldn't geocode — check address"}
                     </Text>
                   ) : null}
                 </View>
@@ -661,6 +914,10 @@ export default function TripHubScreen() {
                         {experience.summary}
                       </Text>
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+                        {destinationExperienceSource === 'viator_live' ||
+                        experience.provider === 'viator' ? (
+                          <Badge label="Viator" variant="warning" />
+                        ) : null}
                         {experience.tags?.slice(0, 4).map((tag) => (
                           <Badge key={tag} label={tag} variant="default" />
                         ))}
@@ -677,6 +934,11 @@ export default function TripHubScreen() {
                     </View>
                   </Card>
                 ))}
+                {hasExternalExperienceBookings ? (
+                  <Text variant="caption" style={{ color: colors.textTertiary }}>
+                    Partner bookings open on Viator. Gay-i may earn a commission.
+                  </Text>
+                ) : null}
               </View>
             ) : null}
           </View>
@@ -937,6 +1199,11 @@ export default function TripHubScreen() {
             <Text variant="caption" style={{ color: colors.textTertiary }}>
               Suggestions highlight queer venue density and neighborhood vibe tags. They are not a universal safety claim.
             </Text>
+            {trip.lodgingStatus === 'booked' && !hasGooglePlacesApiKey ? (
+              <Text variant="caption" style={{ color: colors.textTertiary }}>
+                Add EXPO_PUBLIC_GOOGLE_PLACES_API_KEY (or set app.config extra) to enable live nearby ratings.
+              </Text>
+            ) : null}
 
             {!catalogDestination ? (
               <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
@@ -945,26 +1212,48 @@ export default function TripHubScreen() {
             ) : hasLodgingCoords ? (
               <View style={{ gap: spacing.sm }}>
                 <Text variant="labelLg">Near your stay</Text>
-                {nearStayPlaces.length === 0 ? (
+                {mergedNearStayPlaces.length === 0 ? (
                   <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-                    No nearby seed places with coordinates yet.
+                    No live or editorial nearby suggestions yet.
                   </Text>
                 ) : (
-                  nearStayPlaces.map((place) => (
+                  mergedNearStayPlaces.map((place) => (
                     <Card key={place.id} elevated>
                       <View style={{ gap: spacing.xs }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm }}>
                           <Text variant="labelLg" style={{ flex: 1 }}>
                             {place.name}
                           </Text>
-                          <Badge
-                            label={`${place.distanceKm.toFixed(1)} km`}
-                            variant="info"
-                          />
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, justifyContent: 'flex-end' }}>
+                            {typeof place.rating === 'number' ? (
+                              <Badge label={`${place.rating.toFixed(1)}★`} variant="success" />
+                            ) : null}
+                            {typeof place.distanceKm === 'number' ? (
+                              <Badge
+                                label={`${place.distanceKm.toFixed(1)} km`}
+                                variant="info"
+                              />
+                            ) : null}
+                          </View>
                         </View>
-                        <Text variant="caption" style={{ color: colors.textSecondary }}>
-                          {formatTokenLabel(place.category ?? 'other')}
-                        </Text>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+                          <Badge
+                            label={place.sourceLabel}
+                            variant={place.source === 'google_places' ? 'info' : 'default'}
+                          />
+                          <Badge
+                            label={formatTokenLabel(place.category ?? 'other')}
+                            variant="outline"
+                          />
+                          {typeof place.userRatingsTotal === 'number' ? (
+                            <Badge label={`${place.userRatingsTotal} ratings`} variant="outline" />
+                          ) : null}
+                        </View>
+                        {place.vicinity ? (
+                          <Text variant="caption" style={{ color: colors.textSecondary }}>
+                            {place.vicinity}
+                          </Text>
+                        ) : null}
                         {place.lgbtqRelevance ? (
                           <Text variant="bodySm" style={{ color: colors.textSecondary }}>
                             {place.lgbtqRelevance}
@@ -978,7 +1267,11 @@ export default function TripHubScreen() {
             ) : trip.lodgingAddress ? (
               <Card>
                 <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-                  We have your stay address, but not coordinates yet. Geocoding lands in Phase 2, so neighborhood guidance below is still destination-level for now.
+                  {lodgingGeocodeStatus === 'locating'
+                    ? 'Locating your stay for live nearby recommendations.'
+                    : lodgingGeocodeStatus === 'failed'
+                      ? "Couldn't geocode this stay yet — check the address to unlock live nearby and map markers."
+                      : 'Add or confirm your stay address to unlock live nearby and map markers.'}
                 </Text>
               </Card>
             ) : null}
@@ -1056,7 +1349,15 @@ export default function TripHubScreen() {
                         </View>
                         <Badge
                           label={formatTokenLabel(marker.kind)}
-                          variant={marker.kind === 'lodging' ? 'info' : marker.kind === 'experience' ? 'warning' : 'default'}
+                          variant={
+                            marker.kind === 'lodging'
+                              ? 'info'
+                              : marker.kind === 'experience'
+                                ? 'warning'
+                                : marker.kind === 'nearby'
+                                  ? 'success'
+                                  : 'default'
+                          }
                         />
                       </View>
                       {marker.detail ? (

@@ -24,8 +24,8 @@ All integrations are **fixture-first**. Live adapters run only when keyed / onli
 | **Weather** | `weather:mock-seasonal` / `weather:weather-api` | Provider-specific | Fixture default; live when `WEATHER_API_KEY` set |
 | **FX / currency** | `currency:mock-rates` / `currency:fx-api` | Provider-specific | Static rates default; live when `FX_API_KEY` set |
 | **Equaldex Equality Index** | `lgbtqContext:equaldex-cited` | Credit Equaldex page URLs | **Editorial cited snapshot only** (`fixtures/public/equaldex-cited-scores.json`). Live `lgbtqContext:equaldex-api` stays **OFF** until a commercial license |
-| **Experiences (excursions)** | `experiences:mock-editorial` / `viator` / `getyourguide` | Affiliate disclosure when linked | Editorial seed in `fixtures/seed/experiences.json`. Viator live when `VIATOR_API_KEY` set (falls back to editorial + Viator search URL). GetYourGuide similar with `GETYOURGUIDE_API_KEY` |
-| **Google Maps** | in-app markers + deep links | Google Maps | **Cannot** create collaborative Saved Lists via API. Export uses place/multi-stop Maps URLs. Places Nearby / geocode is Phase 2 with `GOOGLE_PLACES_API_KEY` / `GOOGLE_MAPS_API_KEY` |
+| **Experiences (excursions)** | `experiences:mock-editorial` / `viator` / `getyourguide` | Affiliate disclosure when linked | Editorial seed + **live Viator** `POST /partner/products/search` when `VIATOR_API_KEY` / `EXPO_PUBLIC_VIATOR_API_KEY` set (destination taxonomy → search → freetext fallback) |
+| **Google Maps / Places** | `places:google-places` + in-app deep links | Google | Geocode lodging + Nearby Search (rating ≥ 4.0), merge/dedupe with editorial. **Cannot** create collaborative Saved Lists via API. |
 
 ### Equaldex license gate
 

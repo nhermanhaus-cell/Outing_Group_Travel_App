@@ -26,6 +26,8 @@ export interface PlacesReq {
   categories?: PlaceCategory[];
   limit?: number;
   searchQuery?: string;
+  /** When set, Nearby Search ranks around lodging coords */
+  lodging?: { lat: number; lng: number };
 }
 export interface PlacesRes {
   places: Place[];
