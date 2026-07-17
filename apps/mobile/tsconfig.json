@@ -1,0 +1,18 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@/*": ["./*"],
+      "@gayi/shared": ["../../packages/shared/src/index.ts"],
+      "@gayi/domain": ["../../packages/domain/src/index.ts"],
+      "@gayi/providers": ["../../packages/providers/src/index.ts"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
+}
