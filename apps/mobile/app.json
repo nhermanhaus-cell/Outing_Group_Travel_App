@@ -41,6 +41,18 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1f156c64-1779-4117-9855-bd0800c987cf"
+      }
+    },
+    "owner": "noah-herman",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1f156c64-1779-4117-9855-bd0800c987cf"
     }
   }
 }
