@@ -9,6 +9,7 @@ export default defineConfig({
     alias: {
       '@gayi/domain': path.resolve(__dirname, 'packages/domain/src/index.ts'),
       '@gayi/shared': path.resolve(__dirname, 'packages/shared/src/index.ts'),
+      '@gayi/providers': path.resolve(__dirname, 'packages/providers/src/index.ts'),
     },
   },
   test: {
