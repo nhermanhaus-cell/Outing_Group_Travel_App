@@ -16,12 +16,12 @@ Gay-i helps travelers answer where to go, when, how welcoming it may feel, what 
 
 ```bash
 pnpm install
-pnpm db:seed          # prints seed info
-pnpm test             # domain + provider unit tests
-pnpm --filter mobile start
+pnpm db:seed
+pnpm test
+cd apps/mobile && npx expo start --go
 ```
 
-Then open iOS Simulator, Android emulator, Expo Go, or web.
+The app targets **Expo SDK 54** so it works with App Store Expo Go on a physical iPhone.
 
 No paid API keys required. Destinations load from seed fixtures. Auth and trips use local mock storage until Supabase is configured.
 
