@@ -33,6 +33,9 @@ function mapAnswersToPrefs(answers: QuizAnswers): TravelPreferences {
     lgbtqSafetyPriority: 0.8,
     soloTravel: answers.groupType === 'solo',
     lookingFor: answers.socialPrefs as TravelPreferences['lookingFor'],
+    activityPace: answers.activityPace ?? 'balanced',
+    lodgingStatus: answers.lodgingStatus ?? 'none',
+    lodgingAddress: answers.lodgingAddress || undefined,
   };
 }
 

@@ -3,6 +3,7 @@ import type {
   DestinationsReq, DestinationsRes,
   PlacesReq, PlacesRes,
   EventsReq, EventsRes,
+  ExperiencesReq, ExperiencesRes,
   LgbtqContextReq, LgbtqContextRes,
   CommunitySignalsReq, CommunitySignalsRes,
   WeatherReq, WeatherRes,
@@ -32,6 +33,9 @@ import { eventsMockSeed }                 from './plugins/events/mock-seed';
 import { eventsSupabaseShell }            from './plugins/events/supabase.shell';
 import { eventsTicketmasterShell }        from './plugins/events/ticketmaster.shell';
 import { eventsWikidata }                 from './plugins/events/wikidata';
+import { experiencesMockEditorial }       from './plugins/experiences/mock-editorial';
+import { experiencesViatorShell }         from './plugins/experiences/viator.shell';
+import { experiencesGetYourGuideShell }   from './plugins/experiences/getyourguide.shell';
 import { lgbtqContextMockEditorial }      from './plugins/lgbtqContext/mock-editorial';
 import { lgbtqContextIlgaEurope }         from './plugins/lgbtqContext/ilga-europe';
 import { lgbtqContextIlgaWorld }          from './plugins/lgbtqContext/ilga-world';
@@ -69,6 +73,7 @@ export interface AppProviders {
   destinations:     PluginHandle<DestinationsReq,     DestinationsRes>;
   places:           PluginHandle<PlacesReq,           PlacesRes>;
   events:           PluginHandle<EventsReq,           EventsRes>;
+  experiences:      PluginHandle<ExperiencesReq,      ExperiencesRes>;
   lgbtqContext:     PluginHandle<LgbtqContextReq,     LgbtqContextRes>;
   communitySignals: PluginHandle<CommunitySignalsReq, CommunitySignalsRes>;
   weather:          PluginHandle<WeatherReq,          WeatherRes>;
@@ -110,6 +115,10 @@ export async function createAppProviders(registry: ProviderRegistry): Promise<Ap
   registry.register(eventsTicketmasterShell);
   registry.register(eventsWikidata);
   registry.register(eventsMockSeed);
+
+  registry.register(experiencesViatorShell);
+  registry.register(experiencesGetYourGuideShell);
+  registry.register(experiencesMockEditorial);
 
   // Equaldex live API is registered but healthCheck stays false until commercial license.
   registry.register(lgbtqContextEqualdexApiShell);
@@ -155,13 +164,14 @@ export async function createAppProviders(registry: ProviderRegistry): Promise<Ap
   registry.register(notificationsNoop);
 
   const [
-    destinations, places, events, lgbtqContext, communitySignals,
+    destinations, places, events, experiences, lgbtqContext, communitySignals,
     weather, flights, lodging, currency, maps, trips, auth, ai,
     analytics, share, eventInvitation, images, notifications,
   ] = await Promise.all([
     registry.resolve<DestinationsReq,     DestinationsRes>    ('destinations'),
     registry.resolve<PlacesReq,           PlacesRes>          ('places'),
     registry.resolve<EventsReq,           EventsRes>          ('events'),
+    registry.resolve<ExperiencesReq,      ExperiencesRes>     ('experiences'),
     registry.resolve<LgbtqContextReq,     LgbtqContextRes>    ('lgbtqContext'),
     registry.resolve<CommunitySignalsReq, CommunitySignalsRes>('communitySignals'),
     registry.resolve<WeatherReq,          WeatherRes>         ('weather'),
@@ -180,7 +190,7 @@ export async function createAppProviders(registry: ProviderRegistry): Promise<Ap
   ]);
 
   return {
-    destinations, places, events, lgbtqContext, communitySignals,
+    destinations, places, events, experiences, lgbtqContext, communitySignals,
     weather, flights, lodging, currency, maps, trips, auth, ai,
     analytics, share, eventInvitation, images, notifications,
   };

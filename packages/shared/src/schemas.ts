@@ -49,6 +49,9 @@ export const LookingForSchema = z.enum([
   'activism',
 ]);
 
+export const ActivityPaceSchema = z.enum(['packed', 'balanced', 'downtime']);
+export const LodgingStatusSchema = z.enum(['none', 'booked']);
+
 export const PlaceCategorySchema = z.enum([
   'bar',
   'club',
@@ -81,6 +84,11 @@ export const TravelPreferencesSchema = z.object({
   lgbtqSafetyPriority: z.number().min(0).max(1),
   soloTravel: z.boolean(),
   lookingFor: z.array(LookingForSchema),
+  activityPace: ActivityPaceSchema.optional(),
+  lodgingStatus: LodgingStatusSchema.optional(),
+  lodgingAddress: z.string().optional(),
+  lodgingLat: z.number().optional(),
+  lodgingLng: z.number().optional(),
 });
 
 // ─── Destinations ────────────────────────────────────────────────────────────

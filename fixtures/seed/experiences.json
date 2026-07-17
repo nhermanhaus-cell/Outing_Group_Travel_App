@@ -1,0 +1,506 @@
+[
+  {
+    "id": "sf-castro-history-walk",
+    "destinationSlug": "san-francisco",
+    "title": "Castro to Civic Center queer history walk",
+    "summary": "Trace protest landmarks, murals, and nightlife crossroads on a self-guided route that connects the Castro with the city’s activist backbone.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 3,
+    "tags": ["history", "walking", "lgbtq", "neighborhoods"],
+    "lgbtqRelevance": "Pairs visitor orientation with key sites tied to Harvey Milk, Pride, and modern community life.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "sf-dolores-to-waterfront-evening",
+    "destinationSlug": "san-francisco",
+    "title": "Dolores Park picnic and waterfront night",
+    "summary": "Start with a relaxed Mission picnic, then ride the evening energy toward the Embarcadero or a late Castro bar stop depending on your pace.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["outdoors", "food", "nightlife", "sunset"],
+    "lgbtqRelevance": "Reflects how many local queer itineraries blend neighborhood hang time with nightlife instead of treating them as separate trips.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "ps-midcentury-design-loop",
+    "destinationSlug": "palm-springs",
+    "title": "Mid-century design loop with pool break",
+    "summary": "Spend a dry-desert afternoon between preserved architecture, breezy hotel patios, and a deliberate cooldown before the evening starts.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["architecture", "design", "leisure", "poolside"],
+    "lgbtqRelevance": "Palm Springs travel often centers on resort culture and chosen-family downtime as much as nightlife.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "ps-canyons-to-drag-brunch",
+    "destinationSlug": "palm-springs",
+    "title": "Canyon morning and drag brunch afternoon",
+    "summary": "Balance a shaded nature outing with an easy return to town for brunch, conversation, and whatever social plans unfold later.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["outdoors", "brunch", "drag", "desert"],
+    "lgbtqRelevance": "Matches the city’s rhythm of early outdoor plans followed by highly social daytime queer spaces.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "pvr-zona-romantica-food-walk",
+    "destinationSlug": "puerto-vallarta",
+    "title": "Zona Romántica food and gallery wander",
+    "summary": "Thread through cobblestone streets, taco counters, and small galleries before the beach promenade turns into an evening social scene.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1512813195386-6cf811ad3542?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["food", "walking", "art", "beach"],
+    "lgbtqRelevance": "Keeps the focus on the neighborhood that anchors much of the destination’s queer nightlife and visitor flow.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "pvr-bay-sunset-sail-evening",
+    "destinationSlug": "puerto-vallarta",
+    "title": "Banderas Bay sunset and late dinner pairing",
+    "summary": "Use the water as the reset point in your day, then come back ashore for a slower dinner before committing to club plans.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1512813195386-6cf811ad3542?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["sunset", "beach", "romance", "nightlife"],
+    "lgbtqRelevance": "Reflects how many queer trips here blend scenic downtime with a nightlife-heavy second half.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "cdmx-roma-condesa-queer-circuit",
+    "destinationSlug": "mexico-city",
+    "title": "Roma and Condesa queer culture circuit",
+    "summary": "Spend the day between coffee, bookstores, design stops, and a flexible handoff into bars or dance floors once the city switches tempo.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["culture", "coffee", "nightlife", "design"],
+    "lgbtqRelevance": "Helps visitors understand how the city’s queer social life overlaps with broader creative neighborhoods.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "cdmx-coyoacan-art-day",
+    "destinationSlug": "mexico-city",
+    "title": "Coyoacán museums and long lunch day",
+    "summary": "Build an art-forward day with museum time, shaded plazas, and a meal that leaves space for either rest or a second evening out.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 6,
+    "tags": ["art", "museums", "food", "daytrip"],
+    "lgbtqRelevance": "Adds a calmer counterpoint to Zona Rosa and keeps the destination from reading as nightlife only.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "nyc-village-history-night",
+    "destinationSlug": "new-york-city",
+    "title": "Village history route into downtown cocktails",
+    "summary": "Start with movement-era landmarks and end with the kind of low-commitment evening plan that can expand into a full night if the group wants.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1499092346589-b9b6be3e94b2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["history", "walking", "cocktails", "lgbtq"],
+    "lgbtqRelevance": "Connects Stonewall-era history with present-day nightlife choices rather than treating them as separate travel categories.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "nyc-brooklyn-rooftops-and-galleries",
+    "destinationSlug": "new-york-city",
+    "title": "Brooklyn galleries, dinner, and rooftop drift",
+    "summary": "Let the day move from warehouse-gallery energy to a rooftop finish, with enough flexibility to pivot back into Manhattan afterward.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1499092346589-b9b6be3e94b2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 6,
+    "tags": ["art", "food", "rooftops", "nightlife"],
+    "lgbtqRelevance": "Useful for travelers who want the city’s queer social scene without staying in a single neighborhood all day.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "miami-south-beach-day-to-night",
+    "destinationSlug": "miami",
+    "title": "South Beach day-to-night reset",
+    "summary": "Move from beach and Art Deco streets into a drag-friendly brunch or dinner window, then decide whether to keep the night easy or loud.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["beach", "drag", "food", "nightlife"],
+    "lgbtqRelevance": "Mirrors the city’s mix of daytime visibility, hospitality spaces, and after-dark social traffic.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "miami-wynwood-little-havana-mix",
+    "destinationSlug": "miami",
+    "title": "Wynwood murals and Little Havana dinner swing",
+    "summary": "Build a color-heavy, food-forward afternoon that gives the trip more texture before returning to the beach corridor.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["art", "food", "culture", "walking"],
+    "lgbtqRelevance": "Helps groups balance iconic queer beach spaces with a broader read on Miami’s neighborhoods.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "ptown-dunes-bike-loop",
+    "destinationSlug": "provincetown",
+    "title": "Dunes bike loop and harbor-town breaks",
+    "summary": "Use the bike network and shoreline light to experience Provincetown’s scale before settling into a slower meal and people-watching stretch.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["cycling", "outdoors", "beach", "small-town"],
+    "lgbtqRelevance": "Captures the town’s blend of queer vacation culture, open-air movement, and intimate scale.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "ptown-gallery-cabaret-evening",
+    "destinationSlug": "provincetown",
+    "title": "Gallery crawl into cabaret evening",
+    "summary": "Spend the late afternoon browsing Commercial Street and keep the evening pointed toward live performance rather than a club-only plan.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["art", "performance", "walking", "nightlife"],
+    "lgbtqRelevance": "Provincetown’s queer identity is as tied to artists and performers as it is to bars and dance floors.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "mtl-village-market-evening",
+    "destinationSlug": "montreal",
+    "title": "Le Village terraces and summer market drift",
+    "summary": "Lean into Montréal’s long summer evenings with terrace stops, open streets, and a soft handoff into whichever venue feels right.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1519178614-68673b201f36?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["terraces", "food", "walking", "nightlife"],
+    "lgbtqRelevance": "Centers the city’s pedestrian queer village while leaving room for the broader francophone nightlife scene.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "mtl-plateau-cinema-and-cafe-day",
+    "destinationSlug": "montreal",
+    "title": "Plateau cafe day with queer cinema stop",
+    "summary": "Build a lower-key day around bookstores, coffee, and independent culture before deciding whether the night belongs in the Village or elsewhere.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1519178614-68673b201f36?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["cinema", "coffee", "culture", "indie"],
+    "lgbtqRelevance": "Useful for travelers who want the city’s queer culture beyond the obvious late-night corridor.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "london-soho-history-and-stage",
+    "destinationSlug": "london",
+    "title": "Soho queer history with West End finish",
+    "summary": "Walk historic streets, pause for pubs or coffee, and keep the evening open for theatre, cabaret, or a more traditional night out.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["history", "theatre", "pubs", "walking"],
+    "lgbtqRelevance": "Soho remains a key reference point even as London’s queer geography spreads across multiple boroughs.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "london-east-end-to-vauxhall-night",
+    "destinationSlug": "london",
+    "title": "East London galleries to Vauxhall late set",
+    "summary": "Let the day stay art-heavy and the night more electronic, with transit time built in so the pace never feels rushed.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 6,
+    "tags": ["art", "clubs", "nightlife", "transit-friendly"],
+    "lgbtqRelevance": "Shows how London’s queer nightlife is now distributed rather than concentrated in one district.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "berlin-schoneberg-archives-day",
+    "destinationSlug": "berlin",
+    "title": "Schöneberg queer archives and cafe route",
+    "summary": "Use the city’s historic district as your anchor, adding bookstores, memorial context, and a measured afternoon before darker club hours.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1528728329032-2972f65dfb3f?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["history", "archives", "coffee", "walking"],
+    "lgbtqRelevance": "Berlin’s queer travel story makes more sense when nightlife is paired with memory and political history.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "berlin-kreuzberg-night-trajectory",
+    "destinationSlug": "berlin",
+    "title": "Kreuzberg dinner into late club trajectory",
+    "summary": "Start with a deliberately social dinner and move into a night plan that can stay playful or go fully all-in depending on the group.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1528728329032-2972f65dfb3f?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 7,
+    "tags": ["nightlife", "food", "clubs", "late-night"],
+    "lgbtqRelevance": "Reflects Berlin’s cross-scene queer nightlife, where the mood can shift quickly from neighborhood to neighborhood.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "madrid-chueca-vermouth-loop",
+    "destinationSlug": "madrid",
+    "title": "Chueca vermouth loop and plaza evening",
+    "summary": "Ease into Madrid through terraces, side streets, and a plaza rhythm that naturally stretches into dinner and a later second stop.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["food", "walking", "nightlife", "terraces"],
+    "lgbtqRelevance": "Chueca is still the city’s clearest queer reference point for first-time visitors.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "madrid-art-axis-to-rooftop",
+    "destinationSlug": "madrid",
+    "title": "Art axis afternoon and rooftop nightcap",
+    "summary": "Pair museum time with a relaxed evening finish so the day keeps cultural weight without losing the city’s sociable energy.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["art", "museums", "rooftops", "culture"],
+    "lgbtqRelevance": "Useful for travelers who want Madrid’s queer mood without spending every hour in bar-focused settings.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "bcn-gaixample-to-beach-day",
+    "destinationSlug": "barcelona",
+    "title": "Gaixample start with beach-side finish",
+    "summary": "Begin with neighborhood bearings and local cafes, then let the route loosen toward the waterfront once the heat and light make that the better choice.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1464790719320-516ecd75af6c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["beach", "walking", "cafes", "neighborhoods"],
+    "lgbtqRelevance": "Puts the Gaixample in context without making the whole trip revolve around one set of nightlife blocks.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "bcn-montjuic-sunset-evening",
+    "destinationSlug": "barcelona",
+    "title": "Montjuïc viewpoints and late dinner plan",
+    "summary": "Use a scenic climb or cable-car leg to reset the day, then come back down for a dinner-and-drinks sequence that can end whenever you want it to.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1464790719320-516ecd75af6c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["sunset", "views", "food", "nightlife"],
+    "lgbtqRelevance": "Adds shape to longer stays where beach, nightlife, and architecture can otherwise blur together.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "lis-principe-real-design-stroll",
+    "destinationSlug": "lisbon",
+    "title": "Príncipe Real design and garden stroll",
+    "summary": "Walk Lisbon at a measured pace through tiled facades, shaded gardens, and the kind of shops and cafes that reward lingering.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["design", "gardens", "walking", "cafes"],
+    "lgbtqRelevance": "Keeps one of the city’s most LGBTQ-aware neighborhoods central without reducing Lisbon to nightlife alone.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "lis-river-sunset-to-bairro-alto",
+    "destinationSlug": "lisbon",
+    "title": "River sunset into Bairro Alto night",
+    "summary": "Spend golden hour near the water, then let the evening rise slowly through dinner and hilltop bars instead of rushing into a first venue.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1513735492246-483525079686?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["sunset", "nightlife", "food", "views"],
+    "lgbtqRelevance": "Reflects how queer nights in Lisbon often feel distributed across several adjacent districts.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "ams-canal-queer-history-ride",
+    "destinationSlug": "amsterdam",
+    "title": "Canal-side queer history ride",
+    "summary": "Link major memory sites, easy bike stretches, and terrace breaks into a route that stays relaxed even with multiple stops.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["cycling", "history", "canals", "terraces"],
+    "lgbtqRelevance": "Works well for travelers who want queer history, public space, and nightlife orientation in one pass.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "ams-noord-ferry-night-loop",
+    "destinationSlug": "amsterdam",
+    "title": "Noord ferry detour and club-night return",
+    "summary": "Use the free ferry for contrast, then circle back into the center once the evening calls for dance floors or a slower bar crawl.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 6,
+    "tags": ["nightlife", "ferry", "clubs", "urban"],
+    "lgbtqRelevance": "Shows how Amsterdam’s queer nightlife can be part of a wider city itinerary rather than the whole plan.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "tokyo-ni-chome-orientation-evening",
+    "destinationSlug": "tokyo",
+    "title": "Ni-chōme orientation and bar-hopping primer",
+    "summary": "Start with the district’s tiny-grid logic, then move carefully through bars or cafes with enough pauses to keep the night navigable.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["nightlife", "bars", "walking", "orientation"],
+    "lgbtqRelevance": "Useful because Tokyo’s main queer district is compact, specific, and easier to enjoy with a little advance structure.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "tokyo-art-and-cafe-balance",
+    "destinationSlug": "tokyo",
+    "title": "Contemporary art day with quiet cafe reset",
+    "summary": "Give the trip a daytime center of gravity before deciding whether the evening belongs in Ni-chōme or elsewhere in the city.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["art", "cafes", "culture", "flexible"],
+    "lgbtqRelevance": "Helps travelers avoid reading Tokyo only through nightlife while still keeping queer spaces in view.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "gville-redwoods-river-day",
+    "destinationSlug": "guerneville",
+    "title": "Redwoods morning and river float afternoon",
+    "summary": "Let the destination stay spacious: a nature-first day that leaves room for town socializing later without forcing an all-day schedule.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["redwoods", "river", "outdoors", "relaxation"],
+    "lgbtqRelevance": "Matches Guerneville’s long-running queer resort culture, where nature and community time are tightly linked.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "gville-main-street-cabaret-night",
+    "destinationSlug": "guerneville",
+    "title": "Main Street browse and resort cabaret night",
+    "summary": "Keep the day local and unhurried, then move into a performance or patio-heavy evening rather than chasing a big-city club format.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["performance", "small-town", "nightlife", "community"],
+    "lgbtqRelevance": "Guerneville works best when the itinerary leans into community scale instead of comparing itself to nearby cities.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "la-weho-night-orientation",
+    "destinationSlug": "los-angeles",
+    "title": "West Hollywood orientation and dinner loop",
+    "summary": "Use an early-evening walking circuit to get your bearings, then layer in dinner and one or two venues instead of over-scheduling LA traffic.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1444723121867-7a241cacace9?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["nightlife", "food", "walking", "orientation"],
+    "lgbtqRelevance": "WeHo is the quickest on-ramp for many visitors, even though queer life in LA spans multiple neighborhoods.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "la-silver-lake-creative-day",
+    "destinationSlug": "los-angeles",
+    "title": "Silver Lake creative day and taco stop",
+    "summary": "Keep things daylight-heavy with coffee, design, and a low-key dinner, then decide whether the night needs another neighborhood entirely.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1444723121867-7a241cacace9?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["coffee", "design", "food", "culture"],
+    "lgbtqRelevance": "Adds a different queer geography to the trip beyond the standard West Hollywood first pass.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "vegas-arts-district-drag-brunch",
+    "destinationSlug": "las-vegas",
+    "title": "Arts District brunch and drag-forward start",
+    "summary": "Begin off-Strip with murals, vintage shops, and a social meal before deciding how much spectacle the rest of the day really needs.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 4,
+    "tags": ["brunch", "drag", "art", "shopping"],
+    "lgbtqRelevance": "Useful for travelers who want queer energy without spending every hour inside the casino corridor.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  },
+  {
+    "id": "vegas-pool-reset-and-cabaret",
+    "destinationSlug": "las-vegas",
+    "title": "Pool reset and late cabaret plan",
+    "summary": "Build the day around recovery and pacing, then save your energy for one polished evening show or lounge sequence.",
+    "imageUrls": [
+      "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "durationHours": 5,
+    "tags": ["poolside", "cabaret", "nightlife", "leisure"],
+    "lgbtqRelevance": "Vegas often lands best when queer travelers plan for stamina instead of trying to do every headline experience at once.",
+    "provider": "editorial",
+    "bookingMode": "none"
+  }
+]

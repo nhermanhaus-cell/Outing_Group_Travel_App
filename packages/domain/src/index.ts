@@ -47,6 +47,21 @@ export type {
   PartitionedRecommendations,
 } from './recommendation/origin';
 
+export { blendGroupPreferences } from './recommendation/groupBlend';
+
+export {
+  distanceKm,
+  rankPlacesNearLodging,
+  suggestQueerNeighborhoods,
+} from './recommendation/nearby';
+export type {
+  Coords,
+  RankablePlace,
+  RankedPlace,
+  SuggestableNeighborhood,
+  SuggestedNeighborhood,
+} from './recommendation/nearby';
+
 // ─── Community Pulse ──────────────────────────────────────────────────────────
 export { computePulse, PULSE_MIN_THRESHOLDS } from './pulse/engine';
 

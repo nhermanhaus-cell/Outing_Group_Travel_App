@@ -42,6 +42,19 @@ export interface LocalTrip {
   createdAt: string;
   members?: TripMember[];
   savedPlaces?: string[];
+  activityPace?: 'packed' | 'balanced' | 'downtime';
+  lodgingStatus?: 'none' | 'booked';
+  lodgingAddress?: string;
+  lodgingLat?: number;
+  lodgingLng?: number;
+  memberPrefs?: Array<{
+    memberId: string;
+    displayName?: string;
+    interests?: string[];
+    nightlifeImportance?: number;
+    activityPace?: 'packed' | 'balanced' | 'downtime';
+    lookingFor?: string[];
+  }>;
   comments?: TripComment[];
   polls?: TripPoll[];
 }

@@ -1,6 +1,7 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Image,
+  Linking,
   Pressable,
   ScrollView,
   View,
@@ -19,8 +20,12 @@ import { PulseMeter } from '../../components/ui/PulseMeter';
 import { DataSourceBadge } from '../../components/ui/DataSourceBadge';
 import { lgbtqVibeLabel, lgbtqVibeVariant } from '../../src/lib/lgbtqVibe';
 import travelAdvisories from '../../assets/public/travel-advisories.json';
+import experiencesSeed from '../../assets/seed/experiences.json';
 
 type TabKey = 'overview' | 'lgbtq' | 'places' | 'events';
+type DestinationExperience = (typeof experiencesSeed)[number] & {
+  affiliateUrl?: string;
+};
 
 const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -82,6 +87,16 @@ export default function DestinationDetailScreen() {
     const match = entries.find((e) => e.countryCode === destination.countryCode);
     return match?.links ?? [];
   }, [destination]);
+
+  const destinationExperiences = useMemo<DestinationExperience[]>(
+    () =>
+      destination
+        ? (experiencesSeed as DestinationExperience[])
+            .filter((experience) => experience.destinationSlug === destination.slug)
+            .slice(0, 3)
+        : [],
+    [destination],
+  );
 
   if (!destination) {
     return (
@@ -181,6 +196,41 @@ export default function DestinationDetailScreen() {
                 ))}
               </View>
 
+              {destinationExperiences.length > 0 && (
+                <>
+                  <SectionTitle>Things to do</SectionTitle>
+                  {destinationExperiences.map((experience) => (
+                    <Card key={experience.id} elevated padded style={{ marginBottom: spacing.sm }}>
+                      <View style={{ gap: spacing.xs }}>
+                        <Text variant="h4">{experience.title}</Text>
+                        <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                          {experience.summary}
+                        </Text>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+                          {experience.tags?.slice(0, 4).map((tag) => (
+                            <Badge key={tag} label={tag} variant="default" />
+                          ))}
+                        </View>
+                        {typeof experience.affiliateUrl === 'string' ? (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onPress={() => {
+                              const affiliateUrl = experience.affiliateUrl;
+                              if (affiliateUrl) {
+                                Linking.openURL(affiliateUrl);
+                              }
+                            }}
+                          >
+                            Open experience
+                          </Button>
+                        ) : null}
+                      </View>
+                    </Card>
+                  ))}
+                </>
+              )}
+
               {destination.neighborhoods?.length > 0 && (
                 <>
                   <SectionTitle>Neighborhoods</SectionTitle>
@@ -247,6 +297,62 @@ export default function DestinationDetailScreen() {
                 <>
                   <SectionTitle>Gender recognition</SectionTitle>
                   <Text variant="bodyMd" style={{ color: colors.textSecondary }}>{lgbtq.genderRecognitionNotes}</Text>
+                </>
+              )}
+
+              {lgbtq?.humanRightsSummary && (
+                <>
+                  <SectionTitle>Human rights summary</SectionTitle>
+                  <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+                    {lgbtq.humanRightsSummary}
+                  </Text>
+                </>
+              )}
+
+              {lgbtq?.advocacyNotes && (
+                <>
+                  <SectionTitle>Advocacy notes</SectionTitle>
+                  <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+                    {lgbtq.advocacyNotes}
+                  </Text>
+                </>
+              )}
+
+              {lgbtq?.recentRelevantEvents?.length > 0 && (
+                <>
+                  <SectionTitle>Recent relevant events</SectionTitle>
+                  {lgbtq.recentRelevantEvents.map(
+                    (
+                      event: {
+                        title: string;
+                        date?: string;
+                        summary?: string;
+                        sourceUrl?: string;
+                      },
+                      index: number,
+                    ) => (
+                      <Card key={`${event.title}-${index}`} elevated padded style={{ marginBottom: spacing.sm }}>
+                        <View style={{ gap: spacing.xs }}>
+                          <Text variant="h4">{event.title}</Text>
+                          {event.date ? (
+                            <Text variant="caption" style={{ color: colors.textTertiary }}>
+                              {event.date}
+                            </Text>
+                          ) : null}
+                          {event.summary ? (
+                            <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                              {event.summary}
+                            </Text>
+                          ) : null}
+                          {event.sourceUrl ? (
+                            <Text variant="caption" style={{ color: colors.accent }}>
+                              {event.sourceUrl}
+                            </Text>
+                          ) : null}
+                        </View>
+                      </Card>
+                    ),
+                  )}
                 </>
               )}
 

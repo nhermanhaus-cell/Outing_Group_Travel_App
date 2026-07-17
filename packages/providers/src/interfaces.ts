@@ -54,6 +54,33 @@ export interface EventsRes {
   events: LocalEvent[];
 }
 
+// ── experiences ───────────────────────────────────────────────────────────────
+
+export interface Experience {
+  id: string;
+  destinationSlug: string;
+  title: string;
+  summary: string;
+  imageUrls: string[];
+  durationHours?: number;
+  priceFrom?: number;
+  currency?: string;
+  tags: string[];
+  lgbtqRelevance?: string;
+  lat?: number;
+  lng?: number;
+  provider: 'editorial' | 'viator' | 'getyourguide';
+  affiliateUrl?: string;
+  bookingMode: 'none' | 'external';
+}
+export interface ExperiencesReq {
+  destinationSlug: string;
+  limit?: number;
+}
+export interface ExperiencesRes {
+  experiences: Experience[];
+}
+
 // ── lgbtqContext ──────────────────────────────────────────────────────────────
 
 export interface LgbtqContext {

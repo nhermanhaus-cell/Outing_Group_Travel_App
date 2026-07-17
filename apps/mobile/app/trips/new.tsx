@@ -15,7 +15,7 @@ import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { GlamourSelector } from '../../components/ui/GlamourSelector';
 import { AuthGate } from '../../components/ui/AuthGate';
-import type { GlamourLevel } from '@gayi/shared';
+import type { ActivityPace, GlamourLevel } from '@gayi/shared';
 
 export default function NewTripScreen() {
   const { colors, spacing, radius } = useTheme();
@@ -23,7 +23,12 @@ export default function NewTripScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { createTrip } = useTrips();
-  const params = useLocalSearchParams<{ destinationSlug?: string; destinationName?: string }>();
+  const params = useLocalSearchParams<{
+    destinationSlug?: string;
+    destinationName?: string;
+    lodgingAddress?: string;
+    activityPace?: ActivityPace;
+  }>();
 
   const [gateVisible, setGateVisible] = useState(!user);
   const [loading, setLoading] = useState(false);
@@ -38,6 +43,13 @@ export default function NewTripScreen() {
     travelers: 2,
     glamourLevel: 'comfortably_fabulous' as GlamourLevel,
     budget: '',
+    lodgingAddress: params.lodgingAddress ?? '',
+    activityPace:
+      params.activityPace === 'packed' ||
+      params.activityPace === 'balanced' ||
+      params.activityPace === 'downtime'
+        ? params.activityPace
+        : undefined,
   });
 
   const set = <K extends keyof typeof form>(key: K, val: (typeof form)[K]) => {
@@ -58,6 +70,8 @@ export default function NewTripScreen() {
         travelers: form.travelers,
         glamourLevel: form.glamourLevel,
         budget: form.budget ? parseInt(form.budget, 10) : undefined,
+        lodgingAddress: form.lodgingAddress || undefined,
+        activityPace: form.activityPace,
         members: [{ id: user.id, displayName: user.displayName ?? user.email, role: 'owner' }],
       });
       router.replace(`/trips/${trip.tripId}`);

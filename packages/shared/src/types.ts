@@ -41,6 +41,10 @@ export type LookingFor =
   | 'exploration'
   | 'activism';
 
+export type ActivityPace = 'packed' | 'balanced' | 'downtime';
+
+export type LodgingStatus = 'none' | 'booked';
+
 export interface TravelPreferences {
   budgetLevel: GlamourLevel;
   /** IATA airport codes */
@@ -58,6 +62,24 @@ export interface TravelPreferences {
   lgbtqSafetyPriority: number;
   soloTravel: boolean;
   lookingFor: LookingFor[];
+  /** Day-to-day activities vs downtime preference */
+  activityPace?: ActivityPace;
+  /** Whether lodging is already booked */
+  lodgingStatus?: LodgingStatus;
+  /** Free-text lodging address or Airbnb/hotel URL */
+  lodgingAddress?: string;
+  lodgingLat?: number;
+  lodgingLng?: number;
+}
+
+/** Per-member preference snapshot for group blending */
+export interface MemberPreferenceSnapshot {
+  memberId: string;
+  displayName?: string;
+  interests?: Interest[];
+  nightlifeImportance?: number;
+  activityPace?: ActivityPace;
+  lookingFor?: LookingFor[];
 }
 
 export interface DestinationEvent {

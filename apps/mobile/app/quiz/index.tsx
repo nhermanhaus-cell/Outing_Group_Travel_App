@@ -28,6 +28,9 @@ export interface QuizAnswers {
   nightlife: number; // 0-5
   socialPrefs: string[];
   identityConsiderations: string[];
+  activityPace: 'packed' | 'balanced' | 'downtime';
+  lodgingStatus: 'none' | 'booked';
+  lodgingAddress: string;
 }
 
 const DEFAULT_ANSWERS: QuizAnswers = {
@@ -41,6 +44,9 @@ const DEFAULT_ANSWERS: QuizAnswers = {
   nightlife: 3,
   socialPrefs: [],
   identityConsiderations: [],
+  activityPace: 'balanced',
+  lodgingStatus: 'none',
+  lodgingAddress: '',
 };
 
 const MONTHS = [
@@ -190,7 +196,7 @@ function NightlifeSlider({
 
 // ─── Main quiz ────────────────────────────────────────────────────────────────
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 9;
 
 export default function QuizScreen() {
   const { colors, spacing, radius } = useTheme();
@@ -391,6 +397,92 @@ export default function QuizScreen() {
           selected={answers.interests as never[]}
           onChange={(v) => set('interests', v as string[])}
         />
+      ),
+    },
+    {
+      title: 'Pace of your days?',
+      subtitle: 'How much downtime vs activities do you want day to day?',
+      content: (
+        <View style={{ gap: spacing.sm }}>
+          {(
+            [
+              { key: 'packed' as const, label: 'Packed — fill the days', hint: 'More stops, fewer free blocks' },
+              { key: 'balanced' as const, label: 'Balanced — classic Gay-i mix', hint: 'Sightseeing + evenings without overload' },
+              { key: 'downtime' as const, label: 'Downtime — soft days', hint: 'Protected rest blocks every day' },
+            ]
+          ).map((opt) => {
+            const active = answers.activityPace === opt.key;
+            return (
+              <Pressable
+                key={opt.key}
+                onPress={() => set('activityPace', opt.key)}
+                style={{
+                  paddingVertical: spacing.md,
+                  paddingHorizontal: spacing.base,
+                  borderRadius: radius.lg,
+                  borderWidth: 1.5,
+                  borderColor: active ? colors.accent : colors.border,
+                  backgroundColor: active ? colors.accentLight : colors.cardBackground,
+                  gap: spacing.xxs,
+                }}
+              >
+                <Text variant="labelLg" style={{ color: active ? colors.accent : colors.textPrimary }}>
+                  {opt.label}
+                </Text>
+                <Text variant="caption" style={{ color: colors.textTertiary }}>{opt.hint}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ),
+    },
+    {
+      title: 'Lodging sorted?',
+      subtitle: 'If you already booked an Airbnb or hotel, we can prioritize nearby spots.',
+      content: (
+        <View style={{ gap: spacing.lg }}>
+          {(
+            [
+              { key: 'none' as const, label: 'Not yet — suggest neighborhoods' },
+              { key: 'booked' as const, label: 'Already booked — find spots nearby' },
+            ]
+          ).map((opt) => {
+            const active = answers.lodgingStatus === opt.key;
+            return (
+              <Pressable
+                key={opt.key}
+                onPress={() => set('lodgingStatus', opt.key)}
+                style={{
+                  paddingVertical: spacing.md,
+                  paddingHorizontal: spacing.base,
+                  borderRadius: radius.lg,
+                  borderWidth: 1.5,
+                  borderColor: active ? colors.accent : colors.border,
+                  backgroundColor: active ? colors.accentLight : colors.cardBackground,
+                }}
+              >
+                <Text variant="labelLg" style={{ color: active ? colors.accent : colors.textPrimary }}>
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+          {answers.lodgingStatus === 'booked' ? (
+            <TextInput
+              value={answers.lodgingAddress}
+              onChangeText={(t) => set('lodgingAddress', t)}
+              placeholder="Paste Airbnb/hotel address or link"
+              placeholderTextColor={colors.textTertiary}
+              style={{
+                fontSize: 16,
+                color: colors.textPrimary,
+                borderBottomWidth: 2,
+                borderBottomColor: answers.lodgingAddress ? colors.accent : colors.border,
+                paddingBottom: spacing.sm,
+              }}
+            />
+          ) : null}
+        </View>
       ),
     },
     {

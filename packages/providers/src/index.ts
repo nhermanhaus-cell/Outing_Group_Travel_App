@@ -19,6 +19,8 @@ export type {
   PlacesReq, PlacesRes,
   // events
   LocalEvent, EventsReq, EventsRes,
+  // experiences
+  Experience, ExperiencesReq, ExperiencesRes,
   // lgbtqContext
   LgbtqContext, LgbtqContextReq, LgbtqContextRes,
   // communitySignals
@@ -66,6 +68,9 @@ export { eventsMockSeed }                 from './plugins/events/mock-seed';
 export { eventsSupabaseShell }            from './plugins/events/supabase.shell';
 export { eventsTicketmasterShell }        from './plugins/events/ticketmaster.shell';
 export { eventsWikidata }                 from './plugins/events/wikidata';
+export { experiencesMockEditorial }       from './plugins/experiences/mock-editorial';
+export { experiencesViatorShell }         from './plugins/experiences/viator.shell';
+export { experiencesGetYourGuideShell }   from './plugins/experiences/getyourguide.shell';
 export { lgbtqContextMockEditorial }      from './plugins/lgbtqContext/mock-editorial';
 export { lgbtqContextIlgaEurope }         from './plugins/lgbtqContext/ilga-europe';
 export { lgbtqContextIlgaWorld }          from './plugins/lgbtqContext/ilga-world';

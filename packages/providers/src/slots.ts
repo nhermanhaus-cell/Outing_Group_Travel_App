@@ -2,6 +2,7 @@ export const SLOTS = [
   'destinations',
   'places',
   'events',
+  'experiences',
   'lgbtqContext',
   'communitySignals',
   'weather',
