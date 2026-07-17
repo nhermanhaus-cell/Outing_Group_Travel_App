@@ -1,0 +1,92 @@
+{
+  "_comment": "Golden test vector: nightlife-focused LGBTQ+ traveller departing from NYC in summer. Amsterdam should rank first due to marriage equality, high safety, and matching nightlife/culture interests.",
+  "input": {
+    "preferences": {
+      "budgetLevel": "comfortably_fabulous",
+      "departureAirports": ["JFK", "LGA"],
+      "travelMonths": [6, 7],
+      "tripDurationDays": 7,
+      "groupSize": 2,
+      "interests": ["nightlife", "culture", "lgbtq_venues"],
+      "accessibilityNeeds": [],
+      "nightlifeImportance": 0.8,
+      "weatherPreference": "warm",
+      "lgbtqSafetyPriority": 0.9,
+      "soloTravel": false,
+      "lookingFor": ["dancing", "community"]
+    },
+    "destinations": [
+      {
+        "slug": "amsterdam-nl",
+        "name": "Amsterdam",
+        "country": "Netherlands",
+        "continentCode": "EU",
+        "nearestAirportCodes": ["AMS"],
+        "legalStatus": "marriage_equality",
+        "safetyScore": 95,
+        "communityScore": 90,
+        "nightlifeScore": 85,
+        "bestMonths": [4, 5, 6, 7, 8, 9],
+        "avgTempCByMonth": {
+          "1": 4, "2": 5, "3": 8, "4": 12, "5": 16,
+          "6": 19, "7": 22, "8": 21, "9": 18, "10": 13, "11": 8, "12": 5
+        },
+        "interests": ["nightlife", "culture", "lgbtq_venues", "art", "history"],
+        "upcomingEvents": [
+          { "name": "Amsterdam Pride", "month": 7, "type": "pride", "url": "https://pride.amsterdam" },
+          { "name": "Amsterdam Dance Event", "month": 10, "type": "festival" }
+        ],
+        "accessibility": {
+          "wheelchairFriendly": true,
+          "brailleAvailable": false,
+          "notes": "Most major venues are accessible. Canal-side cobblestones can be challenging."
+        },
+        "costPerDay": { "budget": 80, "mid": 140, "luxury": 350 },
+        "lastUpdated": "2026-05-01",
+        "reviewScore": 4.7,
+        "reviewCount": 312,
+        "typicalStayDays": { "min": 3, "max": 8 }
+      },
+      {
+        "slug": "bangkok-th",
+        "name": "Bangkok",
+        "country": "Thailand",
+        "continentCode": "AS",
+        "nearestAirportCodes": ["BKK", "DMK"],
+        "legalStatus": "limited_protections",
+        "safetyScore": 68,
+        "communityScore": 72,
+        "nightlifeScore": 88,
+        "bestMonths": [11, 12, 1, 2, 3],
+        "avgTempCByMonth": {
+          "1": 28, "2": 30, "3": 33, "4": 35, "5": 34,
+          "6": 32, "7": 31, "8": 31, "9": 31, "10": 30, "11": 29, "12": 28
+        },
+        "interests": ["nightlife", "food", "culture", "shopping", "wellness"],
+        "upcomingEvents": [
+          { "name": "Bangkok Pride", "month": 6, "type": "pride" }
+        ],
+        "accessibility": {
+          "wheelchairFriendly": false,
+          "brailleAvailable": false,
+          "notes": "Accessibility infrastructure is limited outside major hotels and malls."
+        },
+        "costPerDay": { "budget": 40, "mid": 80, "luxury": 220 },
+        "lastUpdated": "2026-04-15",
+        "reviewScore": 4.3,
+        "reviewCount": 198,
+        "typicalStayDays": { "min": 4, "max": 10 }
+      }
+    ]
+  },
+  "expectedOutput": {
+    "topResult": "amsterdam-nl",
+    "minOverallMatchForTop": 75,
+    "topResultMustScore": {
+      "lgbtqLegal": { "min": 90 },
+      "seasonalFit": { "min": 95 },
+      "interestMatch": { "min": 90 }
+    },
+    "ordering": ["amsterdam-nl", "bangkok-th"]
+  }
+}
