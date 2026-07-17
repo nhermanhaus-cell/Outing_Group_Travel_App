@@ -1,0 +1,123 @@
+{
+  "_note": "Sample pride events by destinationSlug for fallback. Derived from publicly known event schedules; verify dates before publishing.",
+  "_source": "Wikidata SPARQL fallback sample",
+  "events": [
+    {
+      "destinationSlug": "amsterdam",
+      "eventId": "wd-ams-pride-2026",
+      "name": "Amsterdam Pride",
+      "type": "pride",
+      "startDate": "2026-07-31",
+      "endDate": "2026-08-09",
+      "venue": "Canal Parade & Vondelpark",
+      "ticketUrl": "https://amsterdampride.nl",
+      "lgbtqFocused": true,
+      "wikidataId": "Q215030"
+    },
+    {
+      "destinationSlug": "berlin",
+      "eventId": "wd-ber-csd-2026",
+      "name": "Berlin CSD (Christopher Street Day)",
+      "type": "pride",
+      "startDate": "2026-07-19",
+      "endDate": "2026-07-26",
+      "venue": "Tiergarten / Brandenburg Gate",
+      "ticketUrl": "https://csd-berlin.de",
+      "lgbtqFocused": true,
+      "wikidataId": "Q700311"
+    },
+    {
+      "destinationSlug": "london",
+      "eventId": "wd-lon-pride-2026",
+      "name": "Pride in London",
+      "type": "pride",
+      "startDate": "2026-06-27",
+      "venue": "Central London / Trafalgar Square",
+      "ticketUrl": "https://prideinlondon.org",
+      "lgbtqFocused": true,
+      "wikidataId": "Q2140007"
+    },
+    {
+      "destinationSlug": "madrid",
+      "eventId": "wd-mad-pride-2026",
+      "name": "WorldPride Madrid / Orgullo Madrid",
+      "type": "pride",
+      "startDate": "2026-06-26",
+      "endDate": "2026-07-05",
+      "venue": "Chueca / Paseo del Prado",
+      "ticketUrl": "https://orgullomadrid.es",
+      "lgbtqFocused": true,
+      "wikidataId": "Q1190278"
+    },
+    {
+      "destinationSlug": "barcelona",
+      "eventId": "wd-bcn-pride-2026",
+      "name": "Barcelona Pride",
+      "type": "pride",
+      "startDate": "2026-06-20",
+      "endDate": "2026-06-28",
+      "venue": "Eixample / Passeig de Gràcia",
+      "ticketUrl": "https://pridebarcelona.org",
+      "lgbtqFocused": true,
+      "wikidataId": "Q3055213"
+    },
+    {
+      "destinationSlug": "san-francisco",
+      "eventId": "wd-sfo-pride-2026",
+      "name": "San Francisco Pride",
+      "type": "pride",
+      "startDate": "2026-06-27",
+      "endDate": "2026-06-28",
+      "venue": "Civic Center / Market Street",
+      "ticketUrl": "https://sfpride.org",
+      "lgbtqFocused": true,
+      "wikidataId": "Q1756105"
+    },
+    {
+      "destinationSlug": "new-york-city",
+      "eventId": "wd-nyc-pride-2026",
+      "name": "NYC Pride March",
+      "type": "pride",
+      "startDate": "2026-06-28",
+      "venue": "Fifth Avenue",
+      "ticketUrl": "https://nycpride.org",
+      "lgbtqFocused": true,
+      "wikidataId": "Q1189119"
+    },
+    {
+      "destinationSlug": "montreal",
+      "eventId": "wd-mtl-pride-2026",
+      "name": "Fierté Montréal Pride",
+      "type": "pride",
+      "startDate": "2026-08-07",
+      "endDate": "2026-08-16",
+      "venue": "Village / Quartier des spectacles",
+      "ticketUrl": "https://fiertemontrealpride.com",
+      "lgbtqFocused": true,
+      "wikidataId": "Q3082003"
+    },
+    {
+      "destinationSlug": "tokyo",
+      "eventId": "wd-tyo-pride-2026",
+      "name": "Tokyo Rainbow Pride",
+      "type": "pride",
+      "startDate": "2026-04-25",
+      "endDate": "2026-05-06",
+      "venue": "Yoyogi Park",
+      "ticketUrl": "https://tokyorainbowpride.com",
+      "lgbtqFocused": true,
+      "wikidataId": "Q7812483"
+    },
+    {
+      "destinationSlug": "lisbon",
+      "eventId": "wd-lis-pride-2026",
+      "name": "Lisboa Pride (Marcha do Orgulho LGBTI+)",
+      "type": "pride",
+      "startDate": "2026-06-20",
+      "venue": "Praça do Marquês de Pombal",
+      "ticketUrl": "https://ilga-portugal.pt",
+      "lgbtqFocused": true,
+      "wikidataId": "Q28060816"
+    }
+  ]
+}

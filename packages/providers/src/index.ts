@@ -61,10 +61,15 @@ export { destinationsSupabaseShell }      from './plugins/destinations/supabase.
 export { placesMockSeed }                 from './plugins/places/mock-seed';
 export { placesSupabaseShell }            from './plugins/places/supabase.shell';
 export { placesGoogleShell }              from './plugins/places/google-places.shell';
+export { placesOsmOverpass }              from './plugins/places/osm-overpass';
 export { eventsMockSeed }                 from './plugins/events/mock-seed';
 export { eventsSupabaseShell }            from './plugins/events/supabase.shell';
 export { eventsTicketmasterShell }        from './plugins/events/ticketmaster.shell';
+export { eventsWikidata }                 from './plugins/events/wikidata';
 export { lgbtqContextMockEditorial }      from './plugins/lgbtqContext/mock-editorial';
+export { lgbtqContextIlgaEurope }         from './plugins/lgbtqContext/ilga-europe';
+export { lgbtqContextIlgaWorld }          from './plugins/lgbtqContext/ilga-world';
+export { lgbtqContextEqualdexCited }      from './plugins/lgbtqContext/equaldex-cited';
 export { communitySignalsMockSeed }       from './plugins/communitySignals/mock-seed';
 export { communitySignalsSupabaseShell }  from './plugins/communitySignals/supabase.shell';
 export { weatherMockSeasonal }            from './plugins/weather/mock-seasonal';

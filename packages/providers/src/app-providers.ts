@@ -27,10 +27,15 @@ import { destinationsSupabaseShell }      from './plugins/destinations/supabase.
 import { placesMockSeed }                 from './plugins/places/mock-seed';
 import { placesSupabaseShell }            from './plugins/places/supabase.shell';
 import { placesGoogleShell }              from './plugins/places/google-places.shell';
+import { placesOsmOverpass }              from './plugins/places/osm-overpass';
 import { eventsMockSeed }                 from './plugins/events/mock-seed';
 import { eventsSupabaseShell }            from './plugins/events/supabase.shell';
 import { eventsTicketmasterShell }        from './plugins/events/ticketmaster.shell';
+import { eventsWikidata }                 from './plugins/events/wikidata';
 import { lgbtqContextMockEditorial }      from './plugins/lgbtqContext/mock-editorial';
+import { lgbtqContextIlgaEurope }         from './plugins/lgbtqContext/ilga-europe';
+import { lgbtqContextIlgaWorld }          from './plugins/lgbtqContext/ilga-world';
+import { lgbtqContextEqualdexCited }      from './plugins/lgbtqContext/equaldex-cited';
 import { communitySignalsMockSeed }       from './plugins/communitySignals/mock-seed';
 import { communitySignalsSupabaseShell }  from './plugins/communitySignals/supabase.shell';
 import { weatherMockSeasonal }            from './plugins/weather/mock-seasonal';
@@ -96,12 +101,17 @@ export async function createAppProviders(registry: ProviderRegistry): Promise<Ap
 
   registry.register(placesSupabaseShell);
   registry.register(placesGoogleShell);
+  registry.register(placesOsmOverpass);
   registry.register(placesMockSeed);
 
   registry.register(eventsSupabaseShell);
   registry.register(eventsTicketmasterShell);
+  registry.register(eventsWikidata);
   registry.register(eventsMockSeed);
 
+  registry.register(lgbtqContextEqualdexCited);
+  registry.register(lgbtqContextIlgaWorld);
+  registry.register(lgbtqContextIlgaEurope);
   registry.register(lgbtqContextMockEditorial);
 
   registry.register(communitySignalsSupabaseShell);
