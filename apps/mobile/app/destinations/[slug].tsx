@@ -73,6 +73,15 @@ export default function DestinationDetailScreen() {
     return computePulse(inputs);
   }, [destination]);
 
+  const advisoryLinks = useMemo(() => {
+    if (!destination) return [] as Array<{ title: string; url: string }>;
+    const entries = (travelAdvisories as {
+      entries: Array<{ countryCode: string; issuer: string; links: Array<{ title: string; url: string }> }>;
+    }).entries;
+    const match = entries.find((e) => e.countryCode === destination.countryCode);
+    return match?.links ?? [];
+  }, [destination]);
+
   if (!destination) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
@@ -86,14 +95,6 @@ export default function DestinationDetailScreen() {
   const legal = lgbtq?.legalEqualityScore ?? 0;
   const opinion = lgbtq?.publicOpinionScore ?? 0;
   const legalVariant = legal >= 85 ? 'success' : legal >= 60 ? 'info' : legal >= 40 ? 'warning' : 'error';
-
-  const advisoryLinks = useMemo(() => {
-    const entries = (travelAdvisories as {
-      entries: Array<{ countryCode: string; issuer: string; links: Array<{ title: string; url: string }> }>;
-    }).entries;
-    const match = entries.find((e) => e.countryCode === destination.countryCode);
-    return match?.links ?? [];
-  }, [destination.countryCode]);
 
   const TABS: Array<{ key: TabKey; label: string }> = [
     { key: 'overview', label: 'Overview' },
