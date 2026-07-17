@@ -1,0 +1,77 @@
+{
+  "_note": "Real official travel advisory URLs where known. Embassy and FCDO URLs may change — verify before publishing.",
+  "entries": [
+    {
+      "countryCode": "US",
+      "issuer": "U.S. Department of State",
+      "links": [
+        {
+          "title": "LGBTQI+ Travelers — U.S. Department of State",
+          "url": "https://travel.state.gov/content/travel/en/international-travel/before-you-go/travelers-with-special-considerations/lgbtqi.html"
+        },
+        {
+          "title": "U.S. State Department Travel Advisories",
+          "url": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html/"
+        }
+      ]
+    },
+    {
+      "countryCode": "GB",
+      "issuer": "UK Foreign, Commonwealth & Development Office",
+      "links": [
+        {
+          "title": "LGBTQ+ travel advice — FCDO",
+          "url": "https://www.gov.uk/guidance/lesbian-gay-bisexual-and-transgender-foreign-travel-advice"
+        },
+        {
+          "title": "FCDO Travel Advice",
+          "url": "https://www.gov.uk/foreign-travel-advice"
+        }
+      ]
+    },
+    {
+      "countryCode": "CA",
+      "issuer": "Government of Canada",
+      "links": [
+        {
+          "title": "Travel advice for LGBTQ2 travellers — Government of Canada",
+          "url": "https://travel.gc.ca/travelling/health-safety/lgbt-travel"
+        },
+        {
+          "title": "Canada Travel Advisories",
+          "url": "https://travel.gc.ca/travelling/advisories"
+        }
+      ]
+    },
+    {
+      "countryCode": "AU",
+      "issuer": "Australian Government — Smartraveller",
+      "links": [
+        {
+          "title": "LGBTQIA+ travellers — Smartraveller",
+          "url": "https://www.smartraveller.gov.au/before-you-go/who-you-are/lgbtqia"
+        }
+      ]
+    },
+    {
+      "countryCode": "DE",
+      "issuer": "German Federal Foreign Office",
+      "links": [
+        {
+          "title": "Reise & Sicherheit — Auswärtiges Amt",
+          "url": "https://www.auswaertiges-amt.de/de/ReiseUndSicherheit"
+        }
+      ]
+    },
+    {
+      "countryCode": "NL",
+      "issuer": "Netherlands Ministry of Foreign Affairs",
+      "links": [
+        {
+          "title": "Travel advice — Rijksoverheid",
+          "url": "https://www.rijksoverheid.nl/onderwerpen/reisadvies"
+        }
+      ]
+    }
+  ]
+}

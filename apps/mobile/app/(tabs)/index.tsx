@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Image, Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,14 +7,44 @@ import { useDestinations } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { DestinationCard } from '../../components/ui/DestinationCard';
+import homeEditorial from '../../assets/editorial/home.json';
+
+type HomeEditorial = {
+  hero: {
+    brand: string;
+    headline: string;
+    subhead: string;
+    ctaLabel: string;
+    ctaRoute: string;
+    heroDestinationSlug: string;
+  };
+  featuredDestinationSlugs: string[];
+  placesToVisit: Array<{
+    destinationSlug: string;
+    placeName: string;
+    blurb: string;
+  }>;
+};
 
 export default function HomeScreen() {
-  const { colors, spacing } = useTheme();
-  const { catalog } = useDestinations();
+  const { colors, spacing, radius } = useTheme();
+  const { catalog, getBySlug } = useDestinations();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const featured = catalog.slice(0, 4);
+  const editorial = homeEditorial as HomeEditorial;
+
+  const featured = useMemo(() => {
+    const fromEditorial = editorial.featuredDestinationSlugs
+      .map((slug) => getBySlug(slug))
+      .filter(Boolean);
+    return fromEditorial.length > 0 ? fromEditorial : catalog.slice(0, 6);
+  }, [catalog, editorial.featuredDestinationSlugs, getBySlug]);
+
+  const heroDest =
+    getBySlug(editorial.hero.heroDestinationSlug) ?? featured[0] ?? catalog[0];
+
+  const places = editorial.placesToVisit;
 
   return (
     <ScrollView
@@ -24,9 +54,9 @@ export default function HomeScreen() {
     >
       {/* Hero */}
       <View style={{ position: 'relative' }}>
-        {featured[0]?.heroImageUrl ? (
+        {heroDest?.heroImageUrl ? (
           <Image
-            source={{ uri: featured[0].heroImageUrl }}
+            source={{ uri: heroDest.heroImageUrl }}
             style={{ width: '100%', height: 520 }}
             resizeMode="cover"
           />
@@ -34,16 +64,6 @@ export default function HomeScreen() {
           <View style={{ width: '100%', height: 520, backgroundColor: colors.ink700 }} />
         )}
 
-        <View
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 340,
-          }}
-          pointerEvents="none"
-        />
         <View
           style={{
             position: 'absolute',
@@ -66,30 +86,29 @@ export default function HomeScreen() {
               fontWeight: '700',
             }}
           >
-            Gay-i
+            {editorial.hero.brand}
           </Text>
           <Text
             variant="displayLg"
             style={{ color: colors.white, marginBottom: spacing.md, lineHeight: 46 }}
           >
-            Travel made for us.
+            {editorial.hero.headline}
           </Text>
           <Text
             variant="bodyLg"
             style={{ color: 'rgba(255,255,255,0.82)', marginBottom: spacing.xl }}
           >
-            Personalized LGBTQ+ travel — every destination scored for safety, community & vibe.
+            {editorial.hero.subhead}
           </Text>
           <Button
             size="lg"
-            onPress={() => router.push('/quiz')}
+            onPress={() => router.push(editorial.hero.ctaRoute as '/quiz')}
             style={{ alignSelf: 'flex-start' }}
           >
-            Find my trip
+            {editorial.hero.ctaLabel}
           </Button>
         </View>
 
-        {/* Top bar */}
         <View
           style={{
             position: 'absolute',
@@ -119,15 +138,51 @@ export default function HomeScreen() {
       {/* Featured destinations */}
       <View style={{ paddingHorizontal: spacing.base, paddingTop: spacing['2xl'], gap: spacing.xl }}>
         <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' }}>
-          <Text variant="h2">Featured</Text>
+          <Text variant="h2">Featured destinations</Text>
           <Pressable onPress={() => router.push('/discover')}>
             <Text variant="labelMd" style={{ color: colors.accent }}>See all →</Text>
           </Pressable>
         </View>
 
-        {featured.slice(1).map((dest) => (
-          <DestinationCard key={dest.slug} destination={dest} />
+        {featured.map((dest) => (
+          <DestinationCard key={dest!.slug} destination={dest!} />
         ))}
+      </View>
+
+      {/* Places to visit */}
+      <View style={{ paddingHorizontal: spacing.base, paddingTop: spacing['2xl'], gap: spacing.lg }}>
+        <View style={{ gap: spacing.xs }}>
+          <Text variant="h2">Places to visit</Text>
+          <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+            Editorial spotlights from our curated queer travel map.
+          </Text>
+        </View>
+
+        {places.map((spot) => {
+          const dest = getBySlug(spot.destinationSlug);
+          return (
+            <Pressable
+              key={`${spot.destinationSlug}-${spot.placeName}`}
+              onPress={() => router.push(`/destinations/${spot.destinationSlug}`)}
+              style={{
+                borderRadius: radius.lg,
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.backgroundSecondary,
+                padding: spacing.base,
+                gap: spacing.xs,
+              }}
+            >
+              <Text variant="h3">{spot.placeName}</Text>
+              <Text variant="caption" style={{ color: colors.accent }}>
+                {dest?.name ?? spot.destinationSlug}
+              </Text>
+              <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+                {spot.blurb}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       {/* Divider CTA */}

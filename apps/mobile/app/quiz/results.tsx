@@ -1,18 +1,23 @@
 import React, { useMemo, useState } from 'react';
-import { FlatList, Pressable, View } from 'react-native';
+import { Pressable, SectionList, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { scoreDestinations } from '@gayi/domain';
+import {
+  partitionRecommendations,
+  resolveOriginHub,
+  scoreDestinations,
+  type OriginHub,
+  type RecommendationResult,
+} from '@gayi/domain';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useDestinations } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
 import { ScoreBreakdown } from '../../components/ui/ScoreBreakdown';
 import { DataSourceBadge } from '../../components/ui/DataSourceBadge';
 import type { QuizAnswers } from './index';
 import type { Destination, TravelPreferences } from '@gayi/shared';
-import type { RecommendationResult } from '@gayi/domain';
+import originHubsJson from '../../assets/editorial/origin-hubs.json';
 
 function mapAnswersToPrefs(answers: QuizAnswers): TravelPreferences {
   return {
@@ -29,6 +34,15 @@ function mapAnswersToPrefs(answers: QuizAnswers): TravelPreferences {
     soloTravel: answers.groupType === 'solo',
     lookingFor: answers.socialPrefs as TravelPreferences['lookingFor'],
   };
+}
+
+type SectionKey = 'weekend' | 'quick' | 'best';
+
+interface ResultSection {
+  key: SectionKey;
+  title: string;
+  subtitle: string;
+  data: RecommendationResult[];
 }
 
 export default function QuizResultsScreen() {
@@ -48,20 +62,72 @@ export default function QuizResultsScreen() {
 
   const prefs = useMemo(() => mapAnswersToPrefs(answers), [answers]);
 
-  const results = useMemo<RecommendationResult[]>(() => {
-    if (!scoring.length) return [];
+  const hubs = (originHubsJson as { hubs: OriginHub[] }).hubs;
+
+  const hub = useMemo(
+    () => resolveOriginHub(prefs.departureAirports, hubs),
+    [prefs.departureAirports, hubs],
+  );
+
+  const partitioned = useMemo(() => {
+    if (!scoring.length) {
+      return {
+        weekendNearby: [] as RecommendationResult[],
+        quickFlights: [] as RecommendationResult[],
+        bestMatches: [] as RecommendationResult[],
+        excludedHomeSlugs: [] as string[],
+        hub: null as OriginHub | null,
+      };
+    }
     const destinations = scoring.map((row) => {
       const { catalog: _catalog, ...dest } = row as Destination & { catalog?: unknown };
       return dest;
     });
-    return scoreDestinations(prefs, destinations).slice(0, 10);
-  }, [scoring, prefs]);
+    const ranked = scoreDestinations(prefs, destinations);
+    return partitionRecommendations(ranked, hub);
+  }, [scoring, prefs, hub]);
 
-  const [expanded, setExpanded] = useState<string | null>(results[0]?.slug ?? null);
+  const sections = useMemo<ResultSection[]>(() => {
+    const list: ResultSection[] = [];
+    if (partitioned.weekendNearby.length > 0) {
+      list.push({
+        key: 'weekend',
+        title: 'Weekend nearby',
+        subtitle: hub
+          ? `Easy escapes from ${hub.label}.`
+          : 'Nearby weekend ideas.',
+        data: partitioned.weekendNearby,
+      });
+    }
+    if (partitioned.quickFlights.length > 0) {
+      list.push({
+        key: 'quick',
+        title: 'Quick flights',
+        subtitle: 'Editorial short-hop ideas — not live flight inventory.',
+        data: partitioned.quickFlights,
+      });
+    }
+    list.push({
+      key: 'best',
+      title: 'Best matches',
+      subtitle: partitioned.excludedHomeSlugs.length
+        ? `Ranked for you (excluding ${partitioned.excludedHomeSlugs.join(', ')}).`
+        : 'Ranked by how well they match your preferences.',
+      data: partitioned.bestMatches.slice(0, 10),
+    });
+    return list.filter((s) => s.data.length > 0 || s.key === 'best');
+  }, [partitioned, hub]);
+
+  const [expanded, setExpanded] = useState<string | null>(
+    partitioned.weekendNearby[0]?.slug ??
+      partitioned.bestMatches[0]?.slug ??
+      null,
+  );
+
+  const totalShown = sections.reduce((n, s) => n + s.data.length, 0);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
       <View
         style={{
           paddingTop: insets.top + spacing.md,
@@ -81,9 +147,10 @@ export default function QuizResultsScreen() {
         <DataSourceBadge />
       </View>
 
-      <FlatList
-        data={results}
+      <SectionList
+        sections={sections}
         keyExtractor={(r) => r.slug}
+        stickySectionHeadersEnabled={false}
         contentContainerStyle={{
           padding: spacing.base,
           gap: spacing.md,
@@ -92,10 +159,12 @@ export default function QuizResultsScreen() {
         ListHeaderComponent={
           <View style={{ gap: spacing.xs, marginBottom: spacing.sm }}>
             <Text variant="h2">
-              {results.length} destination{results.length !== 1 ? 's' : ''} for you
+              {totalShown} destination{totalShown !== 1 ? 's' : ''} for you
             </Text>
             <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-              Ranked by how well they match your preferences.
+              {hub
+                ? `Origin-aware picks for ${hub.label}. Your home city is never recommended.`
+                : 'Ranked by how well they match your preferences.'}
             </Text>
           </View>
         }
@@ -105,10 +174,25 @@ export default function QuizResultsScreen() {
             <Button variant="secondary" onPress={() => router.back()}>Adjust quiz</Button>
           </View>
         }
-        renderItem={({ item, index }) => (
+        renderSectionHeader={({ section }) => (
+          <View style={{ gap: spacing.xxs, marginTop: spacing.md, marginBottom: spacing.xs }}>
+            <Text variant="h3">{section.title}</Text>
+            <Text variant="caption" style={{ color: colors.textTertiary }}>
+              {section.subtitle}
+            </Text>
+          </View>
+        )}
+        renderItem={({ item, index, section }) => (
           <ResultCard
             result={item}
             rank={index + 1}
+            badge={
+              section.key === 'weekend'
+                ? 'Weekend'
+                : section.key === 'quick'
+                  ? 'Quick flight'
+                  : undefined
+            }
             expanded={expanded === item.slug}
             onToggle={() => setExpanded((prev) => (prev === item.slug ? null : item.slug))}
           />
@@ -121,11 +205,13 @@ export default function QuizResultsScreen() {
 function ResultCard({
   result,
   rank,
+  badge,
   expanded,
   onToggle,
 }: {
   result: RecommendationResult;
   rank: number;
+  badge?: string;
   expanded: boolean;
   onToggle: () => void;
 }) {
@@ -140,12 +226,12 @@ function ResultCard({
       style={{
         backgroundColor: colors.cardBackground,
         borderRadius: radius.xl,
-        borderWidth: rank === 1 ? 2 : 1,
-        borderColor: rank === 1 ? colors.accent : colors.cardBorder,
+        borderWidth: rank === 1 && !badge ? 2 : 1,
+        borderColor: rank === 1 && !badge ? colors.accent : colors.cardBorder,
         overflow: 'hidden',
+        marginBottom: spacing.sm,
       }}
     >
-      {/* Summary row */}
       <View style={{ padding: spacing.base, flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
         <View
           style={{
@@ -167,7 +253,7 @@ function ResultCard({
         <View style={{ flex: 1 }}>
           <Text variant="h3">{result.destinationName}</Text>
           <Text variant="caption" style={{ color: colors.textTertiary }}>
-            {confidentPct}% confidence
+            {badge ? `${badge} · ` : ''}{confidentPct}% confidence
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end', gap: spacing.xxs }}>
@@ -178,7 +264,6 @@ function ResultCard({
         </View>
       </View>
 
-      {/* Expanded detail */}
       {expanded && (
         <View
           style={{

@@ -1,0 +1,242 @@
+{
+  "_note": "Attribution-only file. URLs are blog homepages/section pages used as further-reading pointers. No article text was copied. Original editorial content in destinations.json was written by Gay-i editors inspired by general LGBTQ+ travel knowledge.",
+  "blogs": [
+    { "id": "nomadic-boys",     "name": "Nomadic Boys",            "homeUrl": "https://nomadicboys.com/" },
+    { "id": "couple-of-men",    "name": "Couple of Men",           "homeUrl": "https://coupleofmen.com/" },
+    { "id": "wwgdn",            "name": "What We Gan Did Next",    "homeUrl": "http://www.whatwegandidnext.com/" },
+    { "id": "out-with-ryan",    "name": "Out With Ryan",           "homeUrl": "http://www.outwithryan.com/" },
+    { "id": "asian-maple-leaf", "name": "Asian Maple Leaf",        "homeUrl": "https://asianmapleleaf.com/" },
+    { "id": "two-bad-tourists", "name": "Two Bad Tourists",        "homeUrl": "http://www.twobadtourists.com/" },
+    { "id": "mr-hudson",        "name": "Mr Hudson Explores",      "homeUrl": "https://mrhudsonexplores.com/" }
+  ],
+  "destinations": {
+    "san-francisco": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "Covers SF Castro, Pride, and SoMa nightlife" },
+        { "blogName": "Out With Ryan",         "url": "http://www.outwithryan.com/", "notes": "US city guides including SF neighbourhood walks" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "Bay Area day-trips and queer bar round-ups" }
+      ],
+      "placeIdeas": [
+        { "name": "Castro Theatre",                 "neighborhoodHint": "The Castro",   "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Twin Peaks Bar",                 "neighborhoodHint": "The Castro",   "inspiredByBlog": "Out With Ryan" },
+        { "name": "GLBT Historical Society Museum", "neighborhoodHint": "The Castro",   "inspiredByBlog": "Two Bad Tourists" },
+        { "name": "Dolores Park",                   "neighborhoodHint": "Mission District", "inspiredByBlog": "Nomadic Boys" },
+        { "name": "The Stud",                       "neighborhoodHint": "SoMa",         "inspiredByBlog": "Two Bad Tourists" },
+        { "name": "Anchor Oyster Bar",              "neighborhoodHint": "The Castro",   "inspiredByBlog": "Out With Ryan" }
+      ]
+    },
+    "palm-springs": {
+      "furtherReading": [
+        { "blogName": "Out With Ryan",         "url": "http://www.outwithryan.com/", "notes": "Desert resort guide and pool party coverage" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "Warm Sands resort reviews and Arenas bar crawl" },
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "White Party and Dinah Shore weekend context" }
+      ],
+      "placeIdeas": [
+        { "name": "Toucans Tiki Lounge",      "neighborhoodHint": "Arenas Road",           "inspiredByBlog": "Out With Ryan" },
+        { "name": "Hunters Palm Springs",     "neighborhoodHint": "Downtown Village",       "inspiredByBlog": "Two Bad Tourists" },
+        { "name": "Warm Sands Neighborhood",  "neighborhoodHint": "Warm Sands",            "inspiredByBlog": "Nomadic Boys" }
+      ]
+    },
+    "puerto-vallarta": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "Zona Romántica guide and beach club picks" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "PV bar scene and Los Muertos Beach coverage" },
+        { "blogName": "Out With Ryan",         "url": "http://www.outwithryan.com/", "notes": "Mexico queer travel including PV day trips" }
+      ],
+      "placeIdeas": [
+        { "name": "Mantamar Beach Club",      "neighborhoodHint": "Zona Romántica", "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Paco's Bar",               "neighborhoodHint": "Zona Romántica", "inspiredByBlog": "Two Bad Tourists" },
+        { "name": "Los Muertos Beach",        "neighborhoodHint": "Zona Romántica", "inspiredByBlog": "Out With Ryan" }
+      ]
+    },
+    "mexico-city": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "Zona Rosa nightlife and queer culture picks" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "CDMX neighbourhood bar guide" },
+        { "blogName": "Out With Ryan",         "url": "http://www.outwithryan.com/", "notes": "Mexico City Pride and arts coverage" }
+      ],
+      "placeIdeas": [
+        { "name": "El Marrakech",             "neighborhoodHint": "Zona Rosa",    "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Kinky Bar",                "neighborhoodHint": "Zona Rosa",    "inspiredByBlog": "Two Bad Tourists" },
+        { "name": "Museo del Chopo",          "neighborhoodHint": "Santa María la Ribera", "inspiredByBlog": "Out With Ryan" }
+      ]
+    },
+    "new-york-city": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "NYC gay bars, Pride route and Brooklyn scene" },
+        { "blogName": "Out With Ryan",         "url": "http://www.outwithryan.com/", "notes": "Hell's Kitchen guide and West Village history" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "NYC queer nightlife from Brooklyn to Midtown" }
+      ],
+      "placeIdeas": [
+        { "name": "Stonewall Inn",            "neighborhoodHint": "Greenwich Village", "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Cubbyhole",               "neighborhoodHint": "Greenwich Village", "inspiredByBlog": "Out With Ryan" },
+        { "name": "House of Yes",            "neighborhoodHint": "Bushwick",          "inspiredByBlog": "Two Bad Tourists" },
+        { "name": "Leslie-Lohman Museum of Art", "neighborhoodHint": "SoHo",         "inspiredByBlog": "Nomadic Boys" }
+      ]
+    },
+    "miami": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "South Beach bar guide and WMC coverage" },
+        { "blogName": "Out With Ryan",         "url": "http://www.outwithryan.com/", "notes": "Miami Beach queer scene and Wilton Drive trips" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "Florida queer travel including Miami and Ft. Lauderdale" }
+      ],
+      "placeIdeas": [
+        { "name": "Palace Bar",              "neighborhoodHint": "South Beach",  "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Twist",                   "neighborhoodHint": "South Beach",  "inspiredByBlog": "Out With Ryan" },
+        { "name": "Score Miami Beach",       "neighborhoodHint": "South Beach",  "inspiredByBlog": "Two Bad Tourists" }
+      ]
+    },
+    "provincetown": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "Provincetown summer guide and bear week" },
+        { "blogName": "Out With Ryan",         "url": "http://www.outwithryan.com/", "notes": "Cape Cod queer travel and P-town events calendar" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "New England road trips with P-town highlights" }
+      ],
+      "placeIdeas": [
+        { "name": "Atlantic House",           "neighborhoodHint": "Commercial Street West End", "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Boatslip Beach Club",      "neighborhoodHint": "East End",      "inspiredByBlog": "Out With Ryan" },
+        { "name": "Herring Cove Beach",       "neighborhoodHint": "National Seashore", "inspiredByBlog": "Two Bad Tourists" }
+      ]
+    },
+    "montreal": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "Le Village bar guide and Divers/Cité festival" },
+        { "blogName": "What We Gan Did Next", "url": "http://www.whatwegandidnext.com/", "notes": "Canada queer travel including Montreal" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "Montreal Pride and après-parade bar crawl" }
+      ],
+      "placeIdeas": [
+        { "name": "Cabaret Mado",            "neighborhoodHint": "Le Village",    "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Unity Club",              "neighborhoodHint": "Le Village",    "inspiredByBlog": "Two Bad Tourists" },
+        { "name": "Sky Club",                "neighborhoodHint": "Le Village",    "inspiredByBlog": "What We Gan Did Next" }
+      ]
+    },
+    "london": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "London Soho and Vauxhall bar guides" },
+        { "blogName": "What We Gan Did Next", "url": "http://www.whatwegandidnext.com/", "notes": "UK couple guide to London queer venues" },
+        { "blogName": "Mr Hudson Explores",   "url": "https://mrhudsonexplores.com/", "notes": "RVT history and Dalston underground scene" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "London queer nightlife and Pride route map" }
+      ],
+      "placeIdeas": [
+        { "name": "Royal Vauxhall Tavern",   "neighborhoodHint": "Vauxhall",      "inspiredByBlog": "Mr Hudson Explores" },
+        { "name": "G-A-Y Bar",              "neighborhoodHint": "Soho",          "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Heaven",                 "neighborhoodHint": "Charing Cross",  "inspiredByBlog": "Two Bad Tourists" },
+        { "name": "Queer Britain Museum",   "neighborhoodHint": "Kings Cross",    "inspiredByBlog": "What We Gan Did Next" }
+      ]
+    },
+    "berlin": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "Berlin gay guide: Schöneberg, Berghain, CSD Pride" },
+        { "blogName": "Mr Hudson Explores",   "url": "https://mrhudsonexplores.com/", "notes": "Berlin techno queer scene and Kreuzberg nightlife" },
+        { "blogName": "Couple of Men",        "url": "https://coupleofmen.com/", "notes": "Berlin weekend guide for gay couples" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "Kreuzberg and Friedrichshain queer bar map" }
+      ],
+      "placeIdeas": [
+        { "name": "Berghain / Panorama Bar",  "neighborhoodHint": "Friedrichshain", "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Möbel Olfe",              "neighborhoodHint": "Kreuzberg",      "inspiredByBlog": "Mr Hudson Explores" },
+        { "name": "Hafen",                   "neighborhoodHint": "Schöneberg",     "inspiredByBlog": "Couple of Men" },
+        { "name": "Schwuz",                  "neighborhoodHint": "Neukölln",       "inspiredByBlog": "Two Bad Tourists" }
+      ]
+    },
+    "madrid": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "Chueca neighbourhood guide and Madrid Pride (World Pride)" },
+        { "blogName": "Couple of Men",        "url": "https://coupleofmen.com/", "notes": "Madrid romantic getaway and tapas queer trail" },
+        { "blogName": "Mr Hudson Explores",   "url": "https://mrhudsonexplores.com/", "notes": "Madrid bars and Malasaña art scene" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "Chueca bar map and World Pride 2026 preview" }
+      ],
+      "placeIdeas": [
+        { "name": "Boyberry",                "neighborhoodHint": "Chueca",        "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Strong Center",           "neighborhoodHint": "Chueca",        "inspiredByBlog": "Two Bad Tourists" },
+        { "name": "Plaza de Chueca",         "neighborhoodHint": "Chueca",        "inspiredByBlog": "Couple of Men" }
+      ]
+    },
+    "barcelona": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "Gayxample guide: bars, saunas, nightlife" },
+        { "blogName": "Couple of Men",        "url": "https://coupleofmen.com/", "notes": "Barcelona romantic weekend and beach guide" },
+        { "blogName": "Mr Hudson Explores",   "url": "https://mrhudsonexplores.com/", "notes": "Barcelona queer culture and El Born arts scene" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "Circuit Festival prep guide and Eixample bar map" }
+      ],
+      "placeIdeas": [
+        { "name": "Punto BCN",               "neighborhoodHint": "Eixample (Gayxample)", "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Axel Hotel Barcelona",    "neighborhoodHint": "Eixample",      "inspiredByBlog": "Couple of Men" },
+        { "name": "Bacon Bear Bar",          "neighborhoodHint": "Eixample",      "inspiredByBlog": "Two Bad Tourists" }
+      ]
+    },
+    "lisbon": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "Lisbon queer bars, Príncipe Real and Bairro Alto" },
+        { "blogName": "Couple of Men",        "url": "https://coupleofmen.com/", "notes": "Lisbon city guide for gay couples" },
+        { "blogName": "Mr Hudson Explores",   "url": "https://mrhudsonexplores.com/", "notes": "Lisbon neighbourhood walks and miradouros" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "Iberian peninsula queer travel including Lisbon" }
+      ],
+      "placeIdeas": [
+        { "name": "Trumps Club",             "neighborhoodHint": "Príncipe Real", "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Finalmente",              "neighborhoodHint": "Bairro Alto",   "inspiredByBlog": "Two Bad Tourists" },
+        { "name": "Pensão Amor",             "neighborhoodHint": "Cais do Sodré", "inspiredByBlog": "Mr Hudson Explores" }
+      ]
+    },
+    "amsterdam": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "Amsterdam gay guide: Reguliersdwarsstraat and Club Church" },
+        { "blogName": "Couple of Men",        "url": "https://coupleofmen.com/", "notes": "Amsterdam canal-side romance and Pride boat parade" },
+        { "blogName": "Mr Hudson Explores",   "url": "https://mrhudsonexplores.com/", "notes": "Amsterdam neighbourhood walks and queer history" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "King's Day and Amsterdam Pride street guide" }
+      ],
+      "placeIdeas": [
+        { "name": "Café 't Mandje",          "neighborhoodHint": "Zeedijk / De Wallen", "inspiredByBlog": "Mr Hudson Explores" },
+        { "name": "Spijkerbar",              "neighborhoodHint": "Reguliersdwarsstraat", "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Club Church",             "neighborhoodHint": "Warmoesstraat",  "inspiredByBlog": "Two Bad Tourists" }
+      ]
+    },
+    "tokyo": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "Tokyo Ni-chome guide and Rainbow Pride coverage" },
+        { "blogName": "Asian Maple Leaf",     "url": "https://asianmapleleaf.com/", "notes": "Tokyo queer travel and Ni-chome deep dive" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "Japan queer travel including Tokyo and Osaka" }
+      ],
+      "placeIdeas": [
+        { "name": "Advocates Bar",           "neighborhoodHint": "Shinjuku Ni-chome", "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Bar Goldfinger",          "neighborhoodHint": "Shinjuku Ni-chome", "inspiredByBlog": "Asian Maple Leaf" },
+        { "name": "Code Bar",               "neighborhoodHint": "Shinjuku Ni-chome", "inspiredByBlog": "Two Bad Tourists" }
+      ]
+    },
+    "guerneville": {
+      "furtherReading": [
+        { "blogName": "Out With Ryan",         "url": "http://www.outwithryan.com/", "notes": "Russian River and Guerneville weekend escape guide" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "Wine country day trips from San Francisco" },
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "Lazy Bear Weekend and Russian River camping coverage" }
+      ],
+      "placeIdeas": [
+        { "name": "Rainbow Cattle Company",  "neighborhoodHint": "Downtown Guerneville", "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Johnson's Beach",         "neighborhoodHint": "Riverfront",           "inspiredByBlog": "Out With Ryan" },
+        { "name": "Armstrong Redwoods State Natural Reserve", "neighborhoodHint": "Monte Rio area", "inspiredByBlog": "Two Bad Tourists" }
+      ]
+    },
+    "los-angeles": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "WeHo bar guide, LA Pride and Silver Lake crawl" },
+        { "blogName": "Out With Ryan",         "url": "http://www.outwithryan.com/", "notes": "Los Angeles queer neighbourhoods and beach days" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "LA gay travel guide and weekend in WeHo" }
+      ],
+      "placeIdeas": [
+        { "name": "The Abbey",               "neighborhoodHint": "West Hollywood",  "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Akbar",                   "neighborhoodHint": "Silver Lake",     "inspiredByBlog": "Out With Ryan" },
+        { "name": "Revolver Video Bar",      "neighborhoodHint": "West Hollywood",  "inspiredByBlog": "Two Bad Tourists" }
+      ]
+    },
+    "las-vegas": {
+      "furtherReading": [
+        { "blogName": "Nomadic Boys",         "url": "https://nomadicboys.com/", "notes": "Las Vegas gay bars and queer scene on Paradise Road" },
+        { "blogName": "Out With Ryan",         "url": "http://www.outwithryan.com/", "notes": "Vegas nightlife beyond the Strip: queer venues and shows" },
+        { "blogName": "Two Bad Tourists",      "url": "http://www.twobadtourists.com/", "notes": "Las Vegas road-trip stopover guide" }
+      ],
+      "placeIdeas": [
+        { "name": "Piranha Nightclub",        "neighborhoodHint": "Paradise Road", "inspiredByBlog": "Nomadic Boys" },
+        { "name": "Flex Cocktail Lounge",     "neighborhoodHint": "Paradise Road", "inspiredByBlog": "Out With Ryan" },
+        { "name": "Arts District",            "neighborhoodHint": "Downtown Las Vegas", "inspiredByBlog": "Two Bad Tourists" }
+      ]
+    }
+  }
+}

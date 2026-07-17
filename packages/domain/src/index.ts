@@ -37,6 +37,16 @@ export {
   WEATHER_PREF_RANGES,
 } from './recommendation/seasons';
 
+export {
+  excludeHomeDestinations,
+  partitionRecommendations,
+  resolveOriginHub,
+} from './recommendation/origin';
+export type {
+  OriginHub,
+  PartitionedRecommendations,
+} from './recommendation/origin';
+
 // ─── Community Pulse ──────────────────────────────────────────────────────────
 export { computePulse, PULSE_MIN_THRESHOLDS } from './pulse/engine';
 

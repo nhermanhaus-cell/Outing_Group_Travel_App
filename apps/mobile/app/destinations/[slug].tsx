@@ -17,6 +17,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
 import { PulseMeter } from '../../components/ui/PulseMeter';
 import { DataSourceBadge } from '../../components/ui/DataSourceBadge';
+import travelAdvisories from '../../assets/public/travel-advisories.json';
 
 type TabKey = 'overview' | 'lgbtq' | 'places' | 'events';
 
@@ -85,6 +86,14 @@ export default function DestinationDetailScreen() {
   const legal = lgbtq?.legalEqualityScore ?? 0;
   const opinion = lgbtq?.publicOpinionScore ?? 0;
   const legalVariant = legal >= 85 ? 'success' : legal >= 60 ? 'info' : legal >= 40 ? 'warning' : 'error';
+
+  const advisoryLinks = useMemo(() => {
+    const entries = (travelAdvisories as {
+      entries: Array<{ countryCode: string; issuer: string; links: Array<{ title: string; url: string }> }>;
+    }).entries;
+    const match = entries.find((e) => e.countryCode === destination.countryCode);
+    return match?.links ?? [];
+  }, [destination.countryCode]);
 
   const TABS: Array<{ key: TabKey; label: string }> = [
     { key: 'overview', label: 'Overview' },
@@ -186,6 +195,30 @@ export default function DestinationDetailScreen() {
                   ))}
                 </>
               )}
+
+              {(destination.sources?.length ?? 0) > 0 && (
+                <>
+                  <SectionTitle>Sources</SectionTitle>
+                  <Text variant="bodySm" style={{ color: colors.textTertiary, marginBottom: spacing.sm }}>
+                    Attribution for editorial further reading and public datasets. Gay-i never claims a destination is universally safe.
+                  </Text>
+                  {(destination.sources as Array<{ type: string; label: string; url: string }>).map((s, i) => (
+                    <View
+                      key={`${s.type}-${i}`}
+                      style={{
+                        paddingVertical: spacing.sm,
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.borderSubtle,
+                        gap: spacing.xxs,
+                      }}
+                    >
+                      <Text variant="labelMd">{s.label}</Text>
+                      <Text variant="caption" style={{ color: colors.textTertiary }}>{s.type.replace('_', ' ')}</Text>
+                      <Text variant="caption" style={{ color: colors.accent }}>{s.url}</Text>
+                    </View>
+                  ))}
+                </>
+              )}
             </View>
           )}
 
@@ -233,6 +266,22 @@ export default function DestinationDetailScreen() {
                   {lgbtq.emergencyResources.map((r: { name: string; url: string }, i: number) => (
                     <Text key={i} variant="bodyMd" style={{ color: colors.accent }}>
                       {r.name} ({r.url})
+                    </Text>
+                  ))}
+                </>
+              )}
+
+              {advisoryLinks.length > 0 && (
+                <>
+                  <SectionTitle>Official advisories</SectionTitle>
+                  <Text variant="bodySm" style={{ color: colors.textTertiary, marginBottom: spacing.sm }}>
+                    Government links only — not a Gay-i safety rating.
+                  </Text>
+                  {advisoryLinks.map((link) => (
+                    <Text key={link.url} variant="bodyMd" style={{ color: colors.accent, marginBottom: spacing.xs }}>
+                      {link.title}
+                      {'\n'}
+                      <Text variant="caption" style={{ color: colors.textTertiary }}>{link.url}</Text>
                     </Text>
                   ))}
                 </>

@@ -1,0 +1,60 @@
+{
+  "hero": {
+    "brand": "Gay-i",
+    "headline": "Travel made for us.",
+    "subhead": "Personalized LGBTQ+ travel — destinations, places, and trip planning with clear sources.",
+    "ctaLabel": "Find my trip",
+    "ctaRoute": "/quiz",
+    "heroDestinationSlug": "berlin"
+  },
+  "featuredDestinationSlugs": [
+    "berlin",
+    "san-francisco",
+    "puerto-vallarta",
+    "tokyo",
+    "guerneville",
+    "amsterdam"
+  ],
+  "placesToVisit": [
+    {
+      "destinationSlug": "san-francisco",
+      "placeName": "Castro Theatre",
+      "blurb": "A classic first stop when you want queer history, neighborhood atmosphere, and an evening that can still go anywhere."
+    },
+    {
+      "destinationSlug": "guerneville",
+      "placeName": "Armstrong Redwoods State Natural Reserve",
+      "blurb": "The redwood reset that makes a Russian River weekend feel bigger than its bar count."
+    },
+    {
+      "destinationSlug": "berlin",
+      "placeName": "Schwuz",
+      "blurb": "Come here when you want Berlin’s club culture with a more explicitly queer center of gravity."
+    },
+    {
+      "destinationSlug": "puerto-vallarta",
+      "placeName": "Los Muertos Beach",
+      "blurb": "A daylight anchor for travelers who want beach time that still feels close to the queer social core."
+    },
+    {
+      "destinationSlug": "amsterdam",
+      "placeName": "Café 't Mandje",
+      "blurb": "A historic bar stop that turns canal wandering into a sharper sense of queer continuity."
+    },
+    {
+      "destinationSlug": "tokyo",
+      "placeName": "Bar Goldfinger",
+      "blurb": "One of the Ni-chōme stops that reminds you Tokyo’s queer nightlife is often about specificity, not scale."
+    },
+    {
+      "destinationSlug": "los-angeles",
+      "placeName": "Akbar",
+      "blurb": "An eastside counterpoint to WeHo that helps an LA trip feel more local and less performance-heavy."
+    },
+    {
+      "destinationSlug": "provincetown",
+      "placeName": "Boatslip Beach Club",
+      "blurb": "A social landmark for the kind of afternoon that effortlessly turns into an evening plan."
+    }
+  ]
+}

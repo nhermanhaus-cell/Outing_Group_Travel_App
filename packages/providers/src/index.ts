@@ -70,6 +70,8 @@ export { lgbtqContextMockEditorial }      from './plugins/lgbtqContext/mock-edit
 export { lgbtqContextIlgaEurope }         from './plugins/lgbtqContext/ilga-europe';
 export { lgbtqContextIlgaWorld }          from './plugins/lgbtqContext/ilga-world';
 export { lgbtqContextEqualdexCited }      from './plugins/lgbtqContext/equaldex-cited';
+export { lgbtqContextEqualdexApiShell }   from './plugins/lgbtqContext/equaldex-api.shell';
+export { lgbtqContextGovAdvisories }      from './plugins/lgbtqContext/gov-advisories';
 export { communitySignalsMockSeed }       from './plugins/communitySignals/mock-seed';
 export { communitySignalsSupabaseShell }  from './plugins/communitySignals/supabase.shell';
 export { weatherMockSeasonal }            from './plugins/weather/mock-seasonal';

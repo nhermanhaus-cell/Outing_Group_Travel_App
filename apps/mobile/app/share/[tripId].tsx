@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Linking, Pressable, ScrollView, Share, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -7,6 +7,10 @@ import { useTrips } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+
+function inviteLinkFor(tripId: string): string {
+  return `gayi://trips/${tripId}/invite`;
+}
 
 export default function ShareScreen() {
   const { colors, spacing } = useTheme();
@@ -18,18 +22,19 @@ export default function ShareScreen() {
   const [copied, setCopied] = useState<string | null>(null);
 
   const trip = getTrip(tripId ?? '');
+  const inviteLink = trip ? inviteLinkFor(trip.tripId) : '';
 
   const dateRange = trip?.startDate && trip?.endDate
     ? `${trip.startDate} – ${trip.endDate}`
     : trip?.startDate ?? 'TBD';
 
   const shareText = trip
-    ? `✈ Join me on a trip to ${trip.destinationName ?? 'somewhere amazing'}!\n📅 ${dateRange}\n👥 ${trip.travelers} travelers\n\nPlanned with Gay-i — LGBTQ+ travel made for us.\ngayi://trips/${trip.tripId}`
+    ? `✈ Join me on a trip to ${trip.destinationName ?? 'somewhere amazing'}!\n📅 ${dateRange}\n👥 ${trip.travelers} travelers\n\nPlanned with Gay-i — LGBTQ+ travel made for us.\n${inviteLink}`
     : '';
 
   const partifulTitle = trip ? `${trip.name}${trip.destinationName ? ` – ${trip.destinationName}` : ''}` : '';
   const partifulCopy = trip
-    ? `Join us for a trip to ${trip.destinationName ?? 'somewhere fabulous'}! ${dateRange}.`
+    ? `Join us for a trip to ${trip.destinationName ?? 'somewhere fabulous'}! ${dateRange}.\n${inviteLink}`
     : '';
 
   const copyToClipboard = async (text: string, key: string) => {
@@ -44,17 +49,38 @@ export default function ShareScreen() {
     }
   };
 
-  const handleShare = async () => {
+  const handleNativeShare = async () => {
+    if (!trip) return;
     try {
-      const Sharing = await import('expo-sharing');
-      const isAvailable = await Sharing.default.isAvailableAsync();
-      if (isAvailable) {
-        await Sharing.default.shareAsync('', { dialogTitle: trip?.name ?? 'Gay-i Trip', UTI: 'public.text' });
-      } else {
-        await copyToClipboard(shareText, 'native');
-      }
+      await Share.share({
+        message: shareText,
+        title: trip.name ?? 'Gay-i Trip',
+        url: inviteLink,
+      });
     } catch {
       await copyToClipboard(shareText, 'native');
+    }
+  };
+
+  const handleWhatsApp = async () => {
+    const url = `whatsapp://send?text=${encodeURIComponent(shareText)}`;
+    try {
+      const can = await Linking.canOpenURL(url);
+      if (can) {
+        await Linking.openURL(url);
+      } else {
+        await Linking.openURL(`https://wa.me/?text=${encodeURIComponent(shareText)}`);
+      }
+    } catch {
+      await copyToClipboard(shareText, 'wa');
+    }
+  };
+
+  const handlePartiful = async () => {
+    try {
+      await Linking.openURL('https://partiful.com/create');
+    } catch {
+      await copyToClipboard(`${partifulTitle}\n${partifulCopy}\n${dateRange}`, 'pall');
     }
   };
 
@@ -89,14 +115,12 @@ export default function ShareScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: spacing.base, gap: spacing.xl, paddingBottom: insets.bottom + spacing['4xl'] }}>
-        {/* Trip summary */}
         <Card>
           <Text variant="h3">{trip.name}</Text>
           {trip.destinationName ? <Text variant="bodyMd" style={{ color: colors.textSecondary }}>{trip.destinationName}</Text> : null}
           {trip.startDate ? <Text variant="caption" style={{ color: colors.textTertiary }}>{dateRange}</Text> : null}
         </Card>
 
-        {/* Copy message */}
         <View style={{ gap: spacing.md }}>
           <Text variant="h3">Share message</Text>
           <View
@@ -114,21 +138,24 @@ export default function ShareScreen() {
             <Button style={{ flex: 1 }} variant="secondary" onPress={() => copyToClipboard(shareText, 'text')}>
               {copied === 'text' ? '✓ Copied!' : 'Copy text'}
             </Button>
-            <Button style={{ flex: 1 }} onPress={handleShare}>
+            <Button style={{ flex: 1 }} onPress={handleNativeShare}>
               Share ↑
             </Button>
           </View>
         </View>
 
-        {/* WhatsApp */}
         <View style={{ gap: spacing.md }}>
           <Text variant="h3">WhatsApp</Text>
           <Card>
             <Text variant="bodyMd" style={{ color: colors.textSecondary, marginBottom: spacing.md }}>
-              Copy the message and paste into your WhatsApp group.
+              Open WhatsApp with this trip invite pre-filled.
             </Text>
+            <Button onPress={handleWhatsApp}>
+              Open WhatsApp
+            </Button>
             <Button
               variant="secondary"
+              style={{ marginTop: spacing.sm }}
               onPress={() => copyToClipboard(shareText, 'wa')}
             >
               {copied === 'wa' ? '✓ Copied for WhatsApp!' : 'Copy for WhatsApp'}
@@ -136,12 +163,11 @@ export default function ShareScreen() {
           </Card>
         </View>
 
-        {/* Partiful */}
         <View style={{ gap: spacing.md }}>
           <Text variant="h3">Partiful</Text>
           <Card style={{ gap: spacing.md }}>
             <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-              Use these fields when creating your Partiful event.
+              Use these fields when creating your Partiful event, then open Partiful to create it.
             </Text>
 
             <View style={{ gap: spacing.xs }}>
@@ -189,31 +215,24 @@ export default function ShareScreen() {
               {copied === 'pall' ? '✓ All copied!' : 'Copy all fields'}
             </Button>
 
-            <Text
-              variant="caption"
-              style={{ color: colors.accent }}
-              onPress={() => {
-                /* open partiful.com */
-              }}
-            >
-              Open partiful.com →
-            </Text>
+            <Button onPress={handlePartiful}>
+              Open Partiful →
+            </Button>
           </Card>
         </View>
 
-        {/* Invite link */}
         <View style={{ gap: spacing.md }}>
           <Text variant="h3">Invite link</Text>
           <Card>
             <Text variant="bodyMd" style={{ color: colors.textSecondary, marginBottom: spacing.md }}>
-              Share this link to let friends join your trip.
+              Share this deep link so friends can join your trip.
             </Text>
             <Text variant="labelMd" style={{ color: colors.textPrimary, marginBottom: spacing.md }}>
-              gayi://trips/{trip.tripId}/invite
+              {inviteLink}
             </Text>
             <Button
               variant="secondary"
-              onPress={() => copyToClipboard(`gayi://trips/${trip.tripId}/invite`, 'invite')}
+              onPress={() => copyToClipboard(inviteLink, 'invite')}
             >
               {copied === 'invite' ? '✓ Copied!' : 'Copy invite link'}
             </Button>

@@ -1,0 +1,108 @@
+[
+  {
+    "_disclaimer": "Approximate editorial snapshot for demo purposes. Cite ILGA World (https://ilga.org) for authoritative data. Statuses may vary sub-nationally.",
+    "_snapshotDate": "2025-01-01",
+    "_source": "ILGA World — State-Sponsored Homophobia Report & ILGA World Database",
+    "_sourceUrl": "https://ilga.org"
+  },
+  {
+    "countryCode": "US",
+    "countryName": "United States",
+    "criminalizationStatus": "none",
+    "sameSexRecognition": true,
+    "antiDiscrimination": true,
+    "notes": "Federal marriage equality since Obergefell v. Hodges (2015). Federal employment non-discrimination via Bostock v. Clayton County (2020). Sub-national protections vary by state.",
+    "reportYear": 2024,
+    "sourceUrl": "https://ilga.org"
+  },
+  {
+    "countryCode": "CA",
+    "countryName": "Canada",
+    "criminalizationStatus": "none",
+    "sameSexRecognition": true,
+    "antiDiscrimination": true,
+    "notes": "Civil Marriage Act (2005) provides nationwide marriage equality. Canadian Human Rights Act prohibits discrimination based on sexual orientation and gender identity.",
+    "reportYear": 2024,
+    "sourceUrl": "https://ilga.org"
+  },
+  {
+    "countryCode": "MX",
+    "countryName": "Mexico",
+    "criminalizationStatus": "none",
+    "sameSexRecognition": true,
+    "antiDiscrimination": true,
+    "notes": "Supreme Court ruling (2015) established marriage equality federally; all 31 states have implemented it. Federal anti-discrimination law covers sexual orientation.",
+    "reportYear": 2024,
+    "sourceUrl": "https://ilga.org"
+  },
+  {
+    "countryCode": "GB",
+    "countryName": "United Kingdom",
+    "criminalizationStatus": "none",
+    "sameSexRecognition": true,
+    "antiDiscrimination": true,
+    "notes": "Marriage (Same Sex Couples) Act 2013 (England & Wales), Marriage and Civil Partnership (Scotland) Act 2014. Equality Act 2010 provides broad protections.",
+    "reportYear": 2024,
+    "sourceUrl": "https://ilga.org"
+  },
+  {
+    "countryCode": "DE",
+    "countryName": "Germany",
+    "criminalizationStatus": "none",
+    "sameSexRecognition": true,
+    "antiDiscrimination": true,
+    "notes": "Marriage equality since October 2017 (Gesetz zur Einführung des Rechts auf Eheschließung für Personen gleichen Geschlechts). General Equal Treatment Act (AGG) covers sexual orientation.",
+    "reportYear": 2024,
+    "sourceUrl": "https://ilga.org"
+  },
+  {
+    "countryCode": "ES",
+    "countryName": "Spain",
+    "criminalizationStatus": "none",
+    "sameSexRecognition": true,
+    "antiDiscrimination": true,
+    "notes": "Marriage equality since 2005 (Ley 13/2005). Spain was the third country in the world to legalise same-sex marriage. Comprehensive anti-discrimination framework.",
+    "reportYear": 2024,
+    "sourceUrl": "https://ilga.org"
+  },
+  {
+    "countryCode": "PT",
+    "countryName": "Portugal",
+    "criminalizationStatus": "none",
+    "sameSexRecognition": true,
+    "antiDiscrimination": true,
+    "notes": "Marriage equality since 2010. Joint adoption rights since 2016. Constitution prohibits discrimination on grounds of sexual orientation.",
+    "reportYear": 2024,
+    "sourceUrl": "https://ilga.org"
+  },
+  {
+    "countryCode": "NL",
+    "countryName": "Netherlands",
+    "criminalizationStatus": "none",
+    "sameSexRecognition": true,
+    "antiDiscrimination": true,
+    "notes": "First country in the world to legalise same-sex marriage (2001). Equal Treatment Act prohibits discrimination on grounds of sexual orientation.",
+    "reportYear": 2024,
+    "sourceUrl": "https://ilga.org"
+  },
+  {
+    "countryCode": "JP",
+    "countryName": "Japan",
+    "criminalizationStatus": "none",
+    "sameSexRecognition": false,
+    "antiDiscrimination": false,
+    "notes": "No national same-sex marriage or partnership recognition as of 2024, though some municipalities offer partnership certificates. No comprehensive national anti-discrimination law for sexual orientation.",
+    "reportYear": 2024,
+    "sourceUrl": "https://ilga.org"
+  },
+  {
+    "countryCode": "TH",
+    "countryName": "Thailand",
+    "criminalizationStatus": "none",
+    "sameSexRecognition": true,
+    "antiDiscrimination": false,
+    "notes": "Marriage Equality Act signed September 2024 (effective January 2025), making Thailand the first Southeast Asian country to legalise same-sex marriage. No comprehensive anti-discrimination legislation for sexual orientation.",
+    "reportYear": 2024,
+    "sourceUrl": "https://ilga.org"
+  }
+]

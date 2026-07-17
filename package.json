@@ -9,7 +9,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0 || true",
-    "db:seed": "node scripts/print-seed-info.mjs"
+    "db:seed": "node scripts/print-seed-info.mjs",
+    "seed:sync": "node scripts/seed-sync.mjs",
+    "seed:score": "node scripts/regenerate-scoring.mjs"
   },
   "devDependencies": {
     "typescript": "^5.8.2",

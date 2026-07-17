@@ -1,0 +1,78 @@
+[
+  {
+    "_disclaimer": "Approximate editorial snapshot for demo purposes. Not a substitute for the live ILGA-Europe Rainbow Map. Cite ILGA-Europe (https://rainbowmap.ilga-europe.org/) for any public use.",
+    "_snapshotDate": "2025-05-01",
+    "_source": "ILGA-Europe Rainbow Map & Index",
+    "_sourceUrl": "https://rainbowmap.ilga-europe.org/"
+  },
+  {
+    "countryCode": "NL",
+    "countryName": "Netherlands",
+    "rainbowScore": 76,
+    "year": 2025,
+    "sourceUrl": "https://rainbowmap.ilga-europe.org/"
+  },
+  {
+    "countryCode": "BE",
+    "countryName": "Belgium",
+    "rainbowScore": 71,
+    "year": 2025,
+    "sourceUrl": "https://rainbowmap.ilga-europe.org/"
+  },
+  {
+    "countryCode": "ES",
+    "countryName": "Spain",
+    "rainbowScore": 74,
+    "year": 2025,
+    "sourceUrl": "https://rainbowmap.ilga-europe.org/"
+  },
+  {
+    "countryCode": "PT",
+    "countryName": "Portugal",
+    "rainbowScore": 70,
+    "year": 2025,
+    "sourceUrl": "https://rainbowmap.ilga-europe.org/"
+  },
+  {
+    "countryCode": "DE",
+    "countryName": "Germany",
+    "rainbowScore": 67,
+    "year": 2025,
+    "sourceUrl": "https://rainbowmap.ilga-europe.org/"
+  },
+  {
+    "countryCode": "FR",
+    "countryName": "France",
+    "rainbowScore": 67,
+    "year": 2025,
+    "sourceUrl": "https://rainbowmap.ilga-europe.org/"
+  },
+  {
+    "countryCode": "GB",
+    "countryName": "United Kingdom",
+    "rainbowScore": 70,
+    "year": 2025,
+    "sourceUrl": "https://rainbowmap.ilga-europe.org/"
+  },
+  {
+    "countryCode": "IE",
+    "countryName": "Ireland",
+    "rainbowScore": 72,
+    "year": 2025,
+    "sourceUrl": "https://rainbowmap.ilga-europe.org/"
+  },
+  {
+    "countryCode": "SE",
+    "countryName": "Sweden",
+    "rainbowScore": 73,
+    "year": 2025,
+    "sourceUrl": "https://rainbowmap.ilga-europe.org/"
+  },
+  {
+    "countryCode": "NO",
+    "countryName": "Norway",
+    "rainbowScore": 69,
+    "year": 2025,
+    "sourceUrl": "https://rainbowmap.ilga-europe.org/"
+  }
+]

@@ -36,6 +36,8 @@ import { lgbtqContextMockEditorial }      from './plugins/lgbtqContext/mock-edit
 import { lgbtqContextIlgaEurope }         from './plugins/lgbtqContext/ilga-europe';
 import { lgbtqContextIlgaWorld }          from './plugins/lgbtqContext/ilga-world';
 import { lgbtqContextEqualdexCited }      from './plugins/lgbtqContext/equaldex-cited';
+import { lgbtqContextEqualdexApiShell }   from './plugins/lgbtqContext/equaldex-api.shell';
+import { lgbtqContextGovAdvisories }      from './plugins/lgbtqContext/gov-advisories';
 import { communitySignalsMockSeed }       from './plugins/communitySignals/mock-seed';
 import { communitySignalsSupabaseShell }  from './plugins/communitySignals/supabase.shell';
 import { weatherMockSeasonal }            from './plugins/weather/mock-seasonal';
@@ -109,9 +111,12 @@ export async function createAppProviders(registry: ProviderRegistry): Promise<Ap
   registry.register(eventsWikidata);
   registry.register(eventsMockSeed);
 
+  // Equaldex live API is registered but healthCheck stays false until commercial license.
+  registry.register(lgbtqContextEqualdexApiShell);
   registry.register(lgbtqContextEqualdexCited);
   registry.register(lgbtqContextIlgaWorld);
   registry.register(lgbtqContextIlgaEurope);
+  registry.register(lgbtqContextGovAdvisories);
   registry.register(lgbtqContextMockEditorial);
 
   registry.register(communitySignalsSupabaseShell);
