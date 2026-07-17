@@ -15,10 +15,5 @@
     "typescript": "^5.8.2",
     "vitest": "^2.1.9",
     "@types/node": "^22.13.10"
-  },
-  "pnpm": {
-    "overrides": {
-      "react-native-gesture-handler": "~2.32.0"
-    }
   }
 }
