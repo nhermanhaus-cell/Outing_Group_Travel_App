@@ -24,8 +24,20 @@ All integrations are **fixture-first**. Live adapters run only when keyed / onli
 | **Weather** | `weather:mock-seasonal` / `weather:weather-api` | Provider-specific | Fixture default; live when `WEATHER_API_KEY` set |
 | **FX / currency** | `currency:mock-rates` / `currency:fx-api` | Provider-specific | Static rates default; live when `FX_API_KEY` set |
 | **Equaldex Equality Index** | `lgbtqContext:equaldex-cited` | Credit Equaldex page URLs | **Editorial cited snapshot only** (`fixtures/public/equaldex-cited-scores.json`). Live `lgbtqContext:equaldex-api` stays **OFF** until a commercial license |
-| **Experiences (excursions)** | `experiences:mock-editorial` / `viator` / `getyourguide` | Affiliate disclosure when linked | Editorial seed + **live Viator** `POST /partner/products/search` when `VIATOR_API_KEY` / `EXPO_PUBLIC_VIATOR_API_KEY` set (destination taxonomy → search → freetext fallback) |
-| **Google Maps / Places** | `places:google-places` + in-app deep links | Google | Geocode lodging + Nearby Search (rating ≥ 4.0), merge/dedupe with editorial. **Cannot** create collaborative Saved Lists via API. |
+| **Experiences (excursions)** | `experiences:mock-editorial` / `viator` / `getyourguide` | Affiliate disclosure when linked | Editorial seed + **live Viator** when keyed |
+| **Google Maps (in-app)** | `react-native-maps` + Places / Geocoding / Distance Matrix | Google | See [`docs/google-maps-apis.md`](google-maps-apis.md). Map, nearby places, and travel times stay in-app. |
+
+### Google APIs required for in-app maps
+
+| API | Why |
+|-----|-----|
+| **Maps SDK for iOS** | In-app MapView (pins, route polyline) |
+| **Maps SDK for Android** | Same on Android builds |
+| **Geocoding API** | Lodging address → coordinates |
+| **Places API** | Highly rated nearby places around your stay |
+| **Distance Matrix API** | Walk / transit / drive time between itinerary stops |
+
+Optional later: Places API (New), Routes API. Primary UX does **not** open the Google Maps app.
 
 ### Equaldex license gate
 

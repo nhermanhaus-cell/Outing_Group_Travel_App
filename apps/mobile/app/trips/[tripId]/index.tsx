@@ -50,6 +50,13 @@ import {
   loadDestinationExperiences,
   type MobileExperience,
 } from '../../../src/lib/experiences';
+import {
+  fetchTravelLegs,
+  itineraryStopsForDay,
+  type TravelLeg,
+  type TravelMode,
+} from '../../../src/lib/travelTimes';
+import { TripMap, type TripMapMarker } from '../../../components/maps/TripMap';
 
 type SectionKey =
   | 'overview'
@@ -186,6 +193,9 @@ export default function TripHubScreen() {
   const [destinationExperienceSource, setDestinationExperienceSource] = useState<
     'viator_live' | 'editorial_fallback'
   >('editorial_fallback');
+  const [travelMode, setTravelMode] = useState<TravelMode>('walking');
+  const [travelLegsByDay, setTravelLegsByDay] = useState<Record<number, TravelLeg[]>>({});
+  const [selectedMapMarkerId, setSelectedMapMarkerId] = useState<string | null>(null);
   const lastGeocodeAttemptKeyRef = useRef<string | null>(null);
   const lastNearbyFetchKeyRef = useRef<string | null>(null);
 
@@ -384,6 +394,30 @@ export default function TripHubScreen() {
       return null;
     }
   }, [blendedPreferences, destination, domainPlaces, trip]);
+
+  useEffect(() => {
+    if (!itinerary || itinerary.length === 0) {
+      setTravelLegsByDay({});
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const days = Array.from(new Set(itinerary.map((item) => item.day))).sort((a, b) => a - b);
+      const next: Record<number, TravelLeg[]> = {};
+      for (const day of days) {
+        const stops = itineraryStopsForDay(itinerary, day);
+        if (stops.length < 2) {
+          next[day] = [];
+          continue;
+        }
+        next[day] = await fetchTravelLegs(stops, travelMode);
+      }
+      if (!cancelled) setTravelLegsByDay(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [itinerary, travelMode]);
 
   const nearStayPlaces = useMemo(() => {
     if (!hasLodgingCoords || catalogPlaces.length === 0) {
@@ -594,6 +628,30 @@ export default function TripHubScreen() {
     ],
     [experienceMarkers, itineraryMarkers, liveNearbyMarkers, lodgingMarker],
   );
+
+  const tripMapMarkers = useMemo<TripMapMarker[]>(
+    () =>
+      mapMarkers.map((marker) => ({
+        id: marker.id,
+        label: marker.label,
+        lat: marker.lat,
+        lng: marker.lng,
+        kind: marker.kind,
+      })),
+    [mapMarkers],
+  );
+
+  const itineraryRouteCoords = useMemo(() => {
+    if (!itinerary) return [];
+    const day1 = itineraryStopsForDay(itinerary, 1);
+    if (day1.length >= 2) {
+      return day1.map((stop) => ({ latitude: stop.lat, longitude: stop.lng }));
+    }
+    return itineraryMarkers.map((marker) => ({
+      latitude: marker.lat,
+      longitude: marker.lng,
+    }));
+  }, [itinerary, itineraryMarkers]);
 
   const exportStops = useMemo(() => {
     const stops = [
@@ -958,6 +1016,63 @@ export default function TripHubScreen() {
               </Text>
             ) : (
               <>
+                {itineraryMarkers.length > 0 ? (
+                  <TripMap
+                    markers={itineraryMarkers.map((marker) => ({
+                      id: marker.id,
+                      label: marker.label,
+                      lat: marker.lat,
+                      lng: marker.lng,
+                      kind: 'itinerary' as const,
+                    }))}
+                    routeCoords={itineraryRouteCoords}
+                    height={240}
+                  />
+                ) : null}
+
+                <View style={{ gap: spacing.sm }}>
+                  <Text variant="labelMd" style={{ color: colors.textSecondary }}>
+                    Travel time between stops
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+                    {(
+                      [
+                        { key: 'walking' as const, label: 'Walk' },
+                        { key: 'transit' as const, label: 'Transit' },
+                        { key: 'driving' as const, label: 'Drive' },
+                      ]
+                    ).map((opt) => {
+                      const active = travelMode === opt.key;
+                      return (
+                        <Pressable
+                          key={opt.key}
+                          onPress={() => setTravelMode(opt.key)}
+                          style={{
+                            paddingHorizontal: spacing.md,
+                            paddingVertical: spacing.sm,
+                            borderRadius: 999,
+                            borderWidth: 1.5,
+                            borderColor: active ? colors.accent : colors.border,
+                            backgroundColor: active ? colors.accentLight : colors.cardBackground,
+                          }}
+                        >
+                          <Text
+                            variant="labelMd"
+                            style={{ color: active ? colors.accent : colors.textPrimary }}
+                          >
+                            {opt.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                  {!hasGooglePlacesApiKey ? (
+                    <Text variant="caption" style={{ color: colors.textTertiary }}>
+                      Enable Distance Matrix API on your Google key to show live travel times.
+                    </Text>
+                  ) : null}
+                </View>
+
                 {blendedPreferences ? (
                   <Card>
                     <View style={{ gap: spacing.sm }}>
@@ -974,37 +1089,59 @@ export default function TripHubScreen() {
                   </Card>
                 ) : null}
 
-                {groupByDay(itinerary).map(({ day, items }) => (
-                  <View key={day}>
-                    <Text variant="labelLg" style={{ marginBottom: spacing.sm, color: colors.accent }}>Day {day}</Text>
-                    {items.map((item, i) => (
-                      <View key={i} style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md }}>
-                        <View style={{ width: 44, alignItems: 'center' }}>
-                          <Text variant="caption" style={{ color: colors.textTertiary }}>{item.time}</Text>
-                          {i < items.length - 1 && (
-                            <View style={{ flex: 1, width: 1, backgroundColor: colors.border, marginTop: spacing.xs }} />
-                          )}
-                        </View>
-                        <Card style={{ flex: 1 }}>
-                          <View style={{ gap: spacing.xs }}>
-                            <Text variant="labelLg">{item.title}</Text>
-                            <Text variant="caption" style={{ color: colors.textSecondary }}>
-                              {item.category} · {item.duration}min
-                            </Text>
-                            {item.lgbtqRelevance ? (
-                              <Text variant="caption" style={{ color: colors.accent }}>
-                                ✦ {item.lgbtqRelevance}
-                              </Text>
+                {groupByDay(itinerary).map(({ day, items }) => {
+                  const dayLegs = travelLegsByDay[day] ?? [];
+                  return (
+                    <View key={day}>
+                      <Text variant="labelLg" style={{ marginBottom: spacing.sm, color: colors.accent }}>Day {day}</Text>
+                      {items.map((item, i) => {
+                        const legAfter = dayLegs.find((leg) => leg.fromLabel === item.title);
+                        return (
+                          <View key={`${item.placeId}-${item.time}`}>
+                            <View style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.sm }}>
+                              <View style={{ width: 44, alignItems: 'center' }}>
+                                <Text variant="caption" style={{ color: colors.textTertiary }}>{item.time}</Text>
+                                {i < items.length - 1 && (
+                                  <View style={{ flex: 1, width: 1, backgroundColor: colors.border, marginTop: spacing.xs }} />
+                                )}
+                              </View>
+                              <Card style={{ flex: 1 }}>
+                                <View style={{ gap: spacing.xs }}>
+                                  <Text variant="labelLg">{item.title}</Text>
+                                  <Text variant="caption" style={{ color: colors.textSecondary }}>
+                                    {item.category} · {item.duration}min
+                                  </Text>
+                                  {item.lgbtqRelevance ? (
+                                    <Text variant="caption" style={{ color: colors.accent }}>
+                                      ✦ {item.lgbtqRelevance}
+                                    </Text>
+                                  ) : null}
+                                  <Text variant="caption" style={{ color: colors.textTertiary }}>
+                                    {item.whySelected}
+                                  </Text>
+                                </View>
+                              </Card>
+                            </View>
+                            {legAfter ? (
+                              <View
+                                style={{
+                                  marginLeft: 52,
+                                  marginBottom: spacing.md,
+                                  paddingVertical: spacing.xs,
+                                  paddingHorizontal: spacing.sm,
+                                }}
+                              >
+                                <Text variant="caption" style={{ color: colors.accent }}>
+                                  → {legAfter.durationText} {travelMode} · {legAfter.distanceText} to next
+                                </Text>
+                              </View>
                             ) : null}
-                            <Text variant="caption" style={{ color: colors.textTertiary }}>
-                              {item.whySelected}
-                            </Text>
                           </View>
-                        </Card>
-                      </View>
-                    ))}
-                  </View>
-                ))}
+                        );
+                      })}
+                    </View>
+                  );
+                })}
               </>
             )}
           </View>
@@ -1318,61 +1455,77 @@ export default function TripHubScreen() {
         {/* ─── Map ─── */}
         {section === 'map' && (
           <View style={{ gap: spacing.md }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
-              <Text variant="h3">Marker list & export</Text>
-              <Button
-                size="sm"
-                variant="secondary"
-                disabled={exportStops.length === 0}
-                onPress={exportMultiStop}
-              >
-                Export multi-stop
-              </Button>
+            <Text variant="h3">Trip map</Text>
+            <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+              Lodging, itinerary stops, nearby places, and experiences — in-app.
+            </Text>
+
+            <TripMap
+              markers={tripMapMarkers}
+              routeCoords={itineraryRouteCoords}
+              height={320}
+              onSelectMarker={(marker) => setSelectedMapMarkerId(marker.id)}
+            />
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+              <Badge label="Stay" variant="info" />
+              <Badge label="Itinerary" variant="success" />
+              <Badge label="Nearby" variant="default" />
+              <Badge label="Experience" variant="warning" />
             </View>
+
+            {selectedMapMarkerId ? (
+              <Card>
+                <Text variant="labelLg">
+                  {mapMarkers.find((marker) => marker.id === selectedMapMarkerId)?.label ?? 'Selected place'}
+                </Text>
+                <Text variant="caption" style={{ color: colors.textSecondary }}>
+                  {mapMarkers.find((marker) => marker.id === selectedMapMarkerId)?.detail}
+                </Text>
+              </Card>
+            ) : null}
 
             {mapMarkers.length === 0 ? (
               <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-                Add a destination, itinerary stops, or lodging coordinates to unlock map actions.
+                Add a destination, itinerary stops, or lodging to populate the map.
               </Text>
             ) : (
               mapMarkers.map((marker) => {
                 const isSaved = marker.saveKey ? savedPlaces.has(marker.saveKey) : false;
+                const selected = selectedMapMarkerId === marker.id;
                 return (
-                  <Card key={marker.id} elevated>
-                    <View style={{ gap: spacing.sm }}>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm }}>
-                        <View style={{ flex: 1, gap: spacing.xxs }}>
-                          <Text variant="labelLg">{marker.label}</Text>
-                          <Text variant="caption" style={{ color: colors.textSecondary }}>
-                            {formatTokenLabel(marker.kind)} · {marker.lat.toFixed(4)}, {marker.lng.toFixed(4)}
-                          </Text>
+                  <Card
+                    key={marker.id}
+                    elevated={selected}
+                    style={selected ? { borderColor: colors.accent, borderWidth: 1.5 } : undefined}
+                  >
+                    <Pressable onPress={() => setSelectedMapMarkerId(marker.id)}>
+                      <View style={{ gap: spacing.sm }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm }}>
+                          <View style={{ flex: 1, gap: spacing.xxs }}>
+                            <Text variant="labelLg">{marker.label}</Text>
+                            <Text variant="caption" style={{ color: colors.textSecondary }}>
+                              {formatTokenLabel(marker.kind)}
+                            </Text>
+                          </View>
+                          <Badge
+                            label={formatTokenLabel(marker.kind)}
+                            variant={
+                              marker.kind === 'lodging'
+                                ? 'info'
+                                : marker.kind === 'experience'
+                                  ? 'warning'
+                                  : marker.kind === 'nearby'
+                                    ? 'success'
+                                    : 'default'
+                            }
+                          />
                         </View>
-                        <Badge
-                          label={formatTokenLabel(marker.kind)}
-                          variant={
-                            marker.kind === 'lodging'
-                              ? 'info'
-                              : marker.kind === 'experience'
-                                ? 'warning'
-                                : marker.kind === 'nearby'
-                                  ? 'success'
-                                  : 'default'
-                          }
-                        />
-                      </View>
-                      {marker.detail ? (
-                        <Text variant="bodySm" style={{ color: colors.textSecondary }}>
-                          {marker.detail}
-                        </Text>
-                      ) : null}
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onPress={() => openMapMarker(marker)}
-                        >
-                          Open stop in Google Maps
-                        </Button>
+                        {marker.detail ? (
+                          <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                            {marker.detail}
+                          </Text>
+                        ) : null}
                         {marker.saveKey ? (
                           <Button
                             size="sm"
@@ -1383,7 +1536,7 @@ export default function TripHubScreen() {
                           </Button>
                         ) : null}
                       </View>
-                    </View>
+                    </Pressable>
                   </Card>
                 );
               })
@@ -1612,7 +1765,17 @@ function getCurrentMonth(startDate?: string): number {
   try { return new Date(startDate).getMonth() + 1; } catch { return 6; }
 }
 
-function groupByDay(items: Array<{ day: number; time: string; title: string; category: string; duration: number; lgbtqRelevance?: string; whySelected: string }>) {
+function groupByDay(items: Array<{
+  day: number;
+  time: string;
+  title: string;
+  category: string;
+  duration: number;
+  placeId: string;
+  lgbtqRelevance?: string;
+  whySelected: string;
+  coords?: { lat: number; lng: number };
+}>) {
   const map = new Map<number, typeof items>();
   for (const item of items) {
     if (!map.has(item.day)) map.set(item.day, []);
