@@ -1,4 +1,4 @@
--- Gay-i initial schema + RLS
+-- Outing initial schema + RLS
 create extension if not exists "pgcrypto";
 
 do $$ begin

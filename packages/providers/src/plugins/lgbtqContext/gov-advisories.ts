@@ -150,7 +150,7 @@ function buildContext(slug: string, entry: AdvisoryEntry): LgbtqContext {
     destinationSlug: slug,
     editorialSummary:
       `Official travel advisory links from ${entry.issuer}. ` +
-      `Gay-i surfaces government links only — we never declare a destination universally safe.`,
+      `Outing surfaces government links only — we never declare a destination universally safe.`,
     safetyTips: entry.links.map((l) => `${l.title}: ${l.url}`),
     neighborhoodsToKnow: [],
     annualHighlights: [],

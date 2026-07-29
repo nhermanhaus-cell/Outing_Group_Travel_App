@@ -1,189 +1,168 @@
-import React, { useMemo, useState } from 'react';
-import { FlatList, Pressable, TextInput, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
+import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { editorialCollections } from '../../src/content/collections';
+import { useDestinations, useTravelProfile } from '../../src/providers/AppProviders';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { useDestinations } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
 import { DestinationCard } from '../../components/ui/DestinationCard';
 import { DataSourceBadge } from '../../components/ui/DataSourceBadge';
-import type { CatalogDestination } from '../../src/providers/AppProviders';
+import { featureFlags } from '../../src/lib/featureFlags';
+import { useQuery } from '@tanstack/react-query';
+import { loadIndicativeFlightDeals } from '../../src/lib/travel-api';
+import {
+  ANALYTICS_EVENTS,
+  bucketCount,
+  bucketQueryLength,
+} from '@gayi/shared';
+import { useAnalytics } from '../../src/analytics/analytics-provider';
 
-type SortKey = 'name' | 'safety' | 'community';
-
-const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
-  { key: 'name', label: 'A–Z' },
-  { key: 'safety', label: 'Safety' },
-  { key: 'community', label: 'Community' },
-];
-
-const INTEREST_FILTERS = [
-  'nightlife', 'beach', 'food', 'art_culture', 'pride', 'outdoors', 'history', 'wellness',
-];
+function nextMonth() {
+  const date = new Date();
+  date.setMonth(date.getMonth() + 1, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
 
 export default function DiscoverScreen() {
   const { colors, spacing, radius } = useTheme();
   const { catalog } = useDestinations();
+  const { profile } = useTravelProfile();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
-
+  const { width } = useWindowDimensions();
   const [query, setQuery] = useState('');
-  const [sort, setSort] = useState<SortKey>('name');
-  const [activeInterests, setActiveInterests] = useState<string[]>([]);
-
-  const toggleInterest = (interest: string) => {
-    setActiveInterests((prev) =>
-      prev.includes(interest) ? prev.filter((i) => i !== interest) : [...prev, interest],
+  const { track } = useAnalytics();
+  const impressionKeyRef = useRef('');
+  const primaryAirport = profile.homeAirports.find((airport) => airport.primary) ?? profile.homeAirports[0];
+  const flightDealsQuery = useQuery({
+    queryKey: ['indicative-flight-deals-v1', primaryAirport?.iata, nextMonth()],
+    queryFn: () => loadIndicativeFlightDeals({ originIata: primaryAirport!.iata, departureMonth: nextMonth(), limit: 24 }),
+    enabled: Boolean(primaryAirport?.iata),
+    staleTime: 6 * 60 * 60_000,
+    retry: 1,
+  });
+  const destinationDeals = useMemo(() => (flightDealsQuery.data?.deals ?? []).flatMap((deal) => {
+    const match = catalog.find((destination) =>
+      destination.country.toLowerCase() === deal.destinationCountry?.toLowerCase()
+      || destination.name.toLowerCase() === deal.destinationName.toLowerCase()
+      || deal.destinationName.toLowerCase().includes(destination.name.toLowerCase()),
     );
-  };
+    return match ? [{ deal, destination: match }] : [];
+  }).filter((item, index, all) => all.findIndex((candidate) => candidate.destination.slug === item.destination.slug) === index).slice(0, 8), [catalog, flightDealsQuery.data?.deals]);
 
-  const filtered = useMemo<CatalogDestination[]>(() => {
-    let list = catalog.filter((d) => {
-      const matchesQuery =
-        !query ||
-        d.name.toLowerCase().includes(query.toLowerCase()) ||
-        d.country.toLowerCase().includes(query.toLowerCase());
-      const matchesInterests =
-        activeInterests.length === 0 ||
-        activeInterests.some((i) =>
-          d.interests?.some((di: string) => di === i || di.replace('_', '') === i.replace('_', '')),
-        );
-      return matchesQuery && matchesInterests;
+  const collections = useMemo(() => (featureFlags.collectionsV1 ? editorialCollections : []).slice().sort((a, b) => {
+    const affinity = (collection: typeof a) =>
+      collection.bestFor.filter((tag) => profile.defaultInterests.includes(tag as never)).length * 3 +
+      (collection.travelRanges?.some((range) => profile.preferredTravelRanges.includes(range)) ? 2 : 0) +
+      (collection.bestMonths?.includes(new Date().getMonth() + 1) ? 1 : 0) +
+      (collection.id === 'weekend-escapes' && profile.homeAirports.length > 0 ? 2 : 0) +
+      ((profile.defaultTripLengthDays ?? 7) <= 4 && collection.bestFor.includes('long weekends') ? 2 : 0);
+    return affinity(b) - affinity(a);
+  }), [profile.defaultInterests, profile.defaultTripLengthDays, profile.homeAirports.length, profile.preferredTravelRanges]);
+
+  const results = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return catalog.filter((destination) => !needle || destination.name.toLowerCase().includes(needle) || destination.country.toLowerCase().includes(needle));
+  }, [catalog, query]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!query.trim()) return;
+      track(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
+        searchContext: 'destination_discovery',
+        queryLengthBucket: bucketQueryLength(query.trim().length),
+        resultCountBucket: bucketCount(results.length),
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [query, results.length, track]);
+
+  useEffect(() => {
+    const key = `${query.trim().toLowerCase()}:${results.slice(0, 20).map((item) => item.slug).join(',')}`;
+    if (impressionKeyRef.current === key) return;
+    impressionKeyRef.current = key;
+    results.slice(0, 20).forEach((destination, index) => {
+      track(ANALYTICS_EVENTS.DESTINATION_IMPRESSION, {
+        destinationSlug: destination.slug,
+        source: query.trim() ? 'search_results' : 'destination_catalog',
+        rank: index + 1,
+      });
     });
-
-    if (sort === 'name') {
-      list = list.slice().sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sort === 'safety') {
-      list = list.slice().sort((a, b) => {
-        const sa = a.lgbtqContext?.legalEqualityScore ?? 0;
-        const sb = b.lgbtqContext?.legalEqualityScore ?? 0;
-        return sb - sa;
-      });
-    } else if (sort === 'community') {
-      list = list.slice().sort((a, b) => {
-        const ca = a.lgbtqContext?.publicOpinionScore ?? 0;
-        const cb = b.lgbtqContext?.publicOpinionScore ?? 0;
-        return cb - ca;
-      });
-    }
-
-    return list;
-  }, [catalog, query, sort, activeInterests]);
+  }, [query, results, track]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Header */}
-      <View
-        style={{
-          paddingTop: insets.top + spacing.base,
-          paddingHorizontal: spacing.base,
-          paddingBottom: spacing.md,
-          backgroundColor: colors.background,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
-          gap: spacing.md,
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text variant="h1">Discover</Text>
-          <DataSourceBadge />
-        </View>
-
-        {/* Search */}
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search destinations…"
-          placeholderTextColor={colors.textTertiary}
-          style={{
-            backgroundColor: colors.backgroundSecondary,
-            borderRadius: radius.md,
-            borderWidth: 1,
-            borderColor: colors.border,
-            paddingHorizontal: spacing.md,
-            paddingVertical: spacing.sm,
-            color: colors.textPrimary,
-            fontSize: 15,
-          }}
-        />
-
-        {/* Sort */}
-        <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-          {SORT_OPTIONS.map((opt) => (
-            <Pressable
-              key={opt.key}
-              onPress={() => setSort(opt.key)}
-              style={{
-                paddingHorizontal: spacing.md,
-                paddingVertical: spacing.xs,
-                borderRadius: radius.full,
-                backgroundColor: sort === opt.key ? colors.accent : colors.backgroundSecondary,
-                borderWidth: 1,
-                borderColor: sort === opt.key ? colors.accent : colors.border,
-              }}
-            >
-              <Text
-                variant="labelSm"
-                style={{ color: sort === opt.key ? colors.textOnAccent : colors.textSecondary }}
-              >
-                {opt.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Interest filters */}
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={INTEREST_FILTERS}
-          keyExtractor={(i) => i}
-          contentContainerStyle={{ gap: spacing.xs }}
-          renderItem={({ item }) => {
-            const isActive = activeInterests.includes(item);
-            return (
-              <Pressable
-                onPress={() => toggleInterest(item)}
-                style={{
-                  paddingHorizontal: spacing.sm,
-                  paddingVertical: spacing.xxs + 1,
-                  borderRadius: radius.full,
-                  backgroundColor: isActive ? colors.accentLight : colors.backgroundSecondary,
-                  borderWidth: 1,
-                  borderColor: isActive ? colors.accent : colors.border,
-                }}
-              >
-                <Text
-                  variant="captionBold"
-                  style={{ color: isActive ? colors.accent : colors.textSecondary }}
-                >
-                  {item.replace('_', ' ')}
-                </Text>
-              </Pressable>
-            );
-          }}
-        />
+    <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentInsetAdjustmentBehavior="automatic">
+      <View style={{ paddingTop: insets.top + spacing.base, paddingHorizontal: spacing.base, gap: spacing.xs }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><Text variant="displayMd">Discover</Text><DataSourceBadge /></View>
+        <Text variant="bodyLg" style={{ color: colors.textSecondary }}>Editorial trips worth looking forward to.</Text>
       </View>
 
-      {/* Results */}
-      <FlatList
-        data={filtered}
-        keyExtractor={(d) => d.slug}
-        contentContainerStyle={{
-          padding: spacing.base,
-          gap: spacing.base,
-          paddingBottom: insets.bottom + spacing['4xl'],
-        }}
-        ListEmptyComponent={
-          <View style={{ paddingVertical: spacing['4xl'], alignItems: 'center' }}>
-            <Text variant="h3" style={{ color: colors.textTertiary }}>No destinations found</Text>
+      {destinationDeals.length > 0 ? (
+        <View style={{ paddingTop: spacing.xl, gap: spacing.sm }}>
+          <View style={{ paddingHorizontal: spacing.base, gap: spacing.xxs }}>
+            <Text variant="h2">Unexpectedly affordable ideas</Text>
+            <Text variant="bodySm" style={{ color: colors.textSecondary }}>Indicative one-way fares from {primaryAirport?.iata} for next month.</Text>
           </View>
-        }
-        ListHeaderComponent={
-          <Text variant="caption" style={{ color: colors.textTertiary, marginBottom: spacing.xs }}>
-            {filtered.length} destination{filtered.length !== 1 ? 's' : ''}
-          </Text>
-        }
-        renderItem={({ item }) => <DestinationCard destination={item} />}
-      />
-    </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.base, gap: spacing.md }}>
+            {destinationDeals.map(({ deal, destination }) => (
+              <Pressable
+                key={destination.slug}
+                onPress={() => {
+                  router.push(`/destinations/${destination.slug}`);
+                }}
+                style={{ width: 250, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.backgroundSecondary }}
+              >
+                {destination.heroImageUrl ? <Image source={{ uri: destination.heroImageUrl }} style={{ width: '100%', height: 150 }} contentFit="cover" /> : null}
+                <View style={{ padding: spacing.md, gap: spacing.xs }}>
+                  <Text variant="h4">{destination.name}</Text>
+                  <Text variant="h3">from {new Intl.NumberFormat(undefined, { style: 'currency', currency: deal.currency, maximumFractionDigits: 0 }).format(deal.price)}</Text>
+                  {deal.savingsPercent && deal.savingsPercent > 0 ? <Text variant="labelSm" style={{ color: colors.accent }}>{deal.savingsPercent}% below our recent median</Text> : null}
+                  <Text variant="caption" style={{ color: colors.textTertiary }}>{deal.direct ? 'Direct quote' : 'Stops may apply'} · recently observed via Skyscanner</Text>
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+          <Text variant="caption" style={{ color: colors.textTertiary, paddingHorizontal: spacing.base }}>Exploration estimate for one adult in economy; indicative prices may be several days old. Check a live search before making plans.</Text>
+        </View>
+      ) : null}
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} decelerationRate="fast" snapToInterval={Math.min(width * 0.84, 380) + spacing.md} contentContainerStyle={{ padding: spacing.base, gap: spacing.md }}>
+        {collections.map((collection) => {
+          const destination = catalog.find((item) => collection.destinationSlugs.includes(item.slug));
+          return (
+            <Pressable
+              key={collection.id}
+              onPress={() => {
+                track(ANALYTICS_EVENTS.COLLECTION_VIEWED, {
+                  collectionId: collection.id,
+                  source: 'discover',
+                });
+                router.push(`/collections/${collection.id}`);
+              }}
+              style={{ width: Math.min(width * 0.84, 380), height: 470, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: colors.backgroundSecondary }}
+            >
+              {destination?.heroImageUrl ? <Image source={{ uri: destination.heroImageUrl }} style={{ position: 'absolute', inset: 0 }} contentFit="cover" transition={200} /> : null}
+              <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(13,10,14,0.38)' }} />
+              <View style={{ marginTop: 'auto', padding: spacing.xl, gap: spacing.sm }}>
+                <Text variant="captionBold" style={{ color: '#fff', textTransform: 'uppercase', letterSpacing: 1.3 }}>{collection.kicker}</Text>
+                <Text variant="displaySm" style={{ color: '#fff' }}>{collection.title}</Text>
+                <Text variant="bodyMd" numberOfLines={3} style={{ color: 'rgba(255,255,255,0.9)' }}>{collection.whyVisit}</Text>
+                <Text variant="labelMd" style={{ color: '#fff' }}>Open collection →</Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <View style={{ paddingHorizontal: spacing.base, gap: spacing.base, paddingBottom: insets.bottom + spacing['4xl'] }}>
+        <View style={{ gap: spacing.sm }}>
+          <Text variant="h2">All destinations</Text>
+          <TextInput value={query} onChangeText={setQuery} placeholder="Search city or country…" placeholderTextColor={colors.textTertiary} style={{ backgroundColor: colors.backgroundSecondary, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, color: colors.textPrimary, fontSize: 15 }} />
+        </View>
+        {results.map((destination) => <DestinationCard key={destination.slug} destination={destination} />)}
+      </View>
+    </ScrollView>
   );
 }

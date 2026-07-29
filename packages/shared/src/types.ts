@@ -45,6 +45,41 @@ export type ActivityPace = 'packed' | 'balanced' | 'downtime';
 
 export type LodgingStatus = 'none' | 'booked';
 
+export type TravelRange =
+  | 'road_trip'
+  | 'short_flight'
+  | 'long_domestic'
+  | 'international';
+
+export type PreferredTransportMode = 'auto' | 'walking' | 'transit' | 'driving';
+
+export type LongDistanceTransportMode = 'car' | 'train' | 'plane' | 'boat';
+export type TravelScope = 'domestic' | 'international' | 'either';
+
+export interface HomeAirport {
+  iata: string;
+  name: string;
+  city?: string;
+  countryCode?: string;
+  coords?: { lat: number; lng: number };
+  primary: boolean;
+  source: 'manual' | 'nearby_suggestion' | 'profile_import';
+}
+
+export interface UserTravelProfile {
+  homeAirports: HomeAirport[];
+  coarseHomeRegion?: string;
+  defaultInterests: Interest[];
+  defaultGroupSize?: number;
+  defaultTripLengthDays?: number;
+  preferredTravelRanges: TravelRange[];
+  preferredTransportMode: PreferredTransportMode;
+  maxTravelTimeHours?: number;
+  travelScope?: TravelScope;
+  longDistanceTransportModes?: LongDistanceTransportMode[];
+  updatedAt: string;
+}
+
 export interface TravelPreferences {
   budgetLevel: GlamourLevel;
   /** IATA airport codes */
@@ -70,6 +105,17 @@ export interface TravelPreferences {
   lodgingAddress?: string;
   lodgingLat?: number;
   lodgingLng?: number;
+  /** Acceptable distance/transport categories for destination recommendations. */
+  travelRanges?: TravelRange[];
+  /** Saved airport profiles; departureAirports remains the compact scoring input. */
+  homeAirports?: HomeAirport[];
+  preferredTransportMode?: PreferredTransportMode;
+  /** Maximum acceptable one-way journey time. Omitted when the traveler has no limit. */
+  maxTravelTimeHours?: number;
+  /** Whether recommendations should stay domestic, cross borders, or include either. */
+  travelScope?: TravelScope;
+  /** Acceptable ways to reach the destination. */
+  longDistanceTransportModes?: LongDistanceTransportMode[];
 }
 
 /** Per-member preference snapshot for group blending */
@@ -153,8 +199,37 @@ export type PlaceCategory =
   | 'other';
 
 export interface PlaceHours {
+  /** 0 (Sunday) through 6 (Saturday). Omitted for legacy daily hours. */
+  dayOfWeek?: number;
   open: string;
   close: string;
+}
+
+export interface PlacePhoto {
+  url: string;
+  attribution?: string;
+  provider: string;
+}
+
+export type BookingProvider =
+  | 'viator'
+  | 'getyourguide'
+  | 'booking_com'
+  | 'expedia'
+  | 'skyscanner'
+  | 'google_flights'
+  | 'direct'
+  | 'other';
+
+export interface BookableOffer {
+  provider: BookingProvider;
+  /** Exact provider page for this product/search; never a fabricated checkout URL. */
+  url: string;
+  affiliate: boolean;
+  disclosure?: string;
+  price?: number;
+  currency?: string;
+  cancellationSummary?: string;
 }
 
 export interface Place {
@@ -171,6 +246,59 @@ export interface Place {
   lgbtqRelevance?: string;
   source: string;
   openingHours?: PlaceHours[];
+  providerPlaceId?: string;
+  address?: string;
+  rating?: number;
+  reviewCount?: number;
+  photos?: PlacePhoto[];
+  businessStatus?: 'operational' | 'closed_temporarily' | 'closed_permanently' | 'unknown';
+  priceLevel?: number;
+  verifiedAt?: string;
+  fixedStartTimes?: string[];
+  timezone?: string;
+  bookingOffer?: BookableOffer;
+}
+
+
+export interface PendingInvite {
+  id: string;
+  displayName: string;
+  phoneNumber: string;
+  status: 'pending' | 'sent' | 'cancelled' | 'failed';
+}
+
+export interface TripDraft {
+  draftId: string;
+  mode: 'recommendations' | 'manual';
+  destinationSlug?: string;
+  destinationName?: string;
+  name?: string;
+  preferences: Partial<TravelPreferences>;
+  pendingInvites: PendingInvite[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CollectionHighlight {
+  title: string;
+  description: string;
+  destinationSlug?: string;
+  placeName?: string;
+}
+
+export interface EditorialCollection {
+  id: string;
+  title: string;
+  kicker: string;
+  whyVisit: string;
+  heroImageUrl: string;
+  attribution: string;
+  destinationSlugs: string[];
+  highlights: CollectionHighlight[];
+  bestFor: string[];
+  travelRanges?: TravelRange[];
+  bestMonths?: number[];
+  seasonGuidance: string;
 }
 
 export interface Trip {

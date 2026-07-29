@@ -1,0 +1,10 @@
+project_id = "gayi-travel-planner"
+
+[functions.trip-invites]
+verify_jwt = false
+
+[functions.analytics-ingest]
+verify_jwt = false
+
+[functions.analytics-forward]
+verify_jwt = false

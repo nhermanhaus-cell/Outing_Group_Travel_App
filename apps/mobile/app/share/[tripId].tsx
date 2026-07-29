@@ -7,6 +7,8 @@ import { useTrips } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
+import { ANALYTICS_EVENTS } from '@gayi/shared';
+import { useAnalytics } from '../../src/analytics/analytics-provider';
 
 function inviteLinkFor(tripId: string): string {
   return `gayi://trips/${tripId}/invite`;
@@ -18,6 +20,7 @@ export default function ShareScreen() {
   const insets = useSafeAreaInsets();
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
   const { getTrip } = useTrips();
+  const { track } = useAnalytics();
 
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -29,7 +32,7 @@ export default function ShareScreen() {
     : trip?.startDate ?? 'TBD';
 
   const shareText = trip
-    ? `✈ Join me on a trip to ${trip.destinationName ?? 'somewhere amazing'}!\n📅 ${dateRange}\n👥 ${trip.travelers} travelers\n\nPlanned with Gay-i — LGBTQ+ travel made for us.\n${inviteLink}`
+    ? `✈ Join me on a trip to ${trip.destinationName ?? 'somewhere amazing'}!\n📅 ${dateRange}\n👥 ${trip.travelers} travelers\n\nPlanned with Outing — LGBTQ+ travel made for us.\n${inviteLink}`
     : '';
 
   const partifulTitle = trip ? `${trip.name}${trip.destinationName ? ` – ${trip.destinationName}` : ''}` : '';
@@ -54,11 +57,13 @@ export default function ShareScreen() {
     try {
       await Share.share({
         message: shareText,
-        title: trip.name ?? 'Gay-i Trip',
+        title: trip.name ?? 'Outing Trip',
         url: inviteLink,
       });
+      track(ANALYTICS_EVENTS.TRIP_SHARED, { channel: 'native_share' });
     } catch {
       await copyToClipboard(shareText, 'native');
+      track(ANALYTICS_EVENTS.TRIP_SHARED, { channel: 'clipboard_fallback' });
     }
   };
 
@@ -71,16 +76,20 @@ export default function ShareScreen() {
       } else {
         await Linking.openURL(`https://wa.me/?text=${encodeURIComponent(shareText)}`);
       }
+      track(ANALYTICS_EVENTS.TRIP_SHARED, { channel: 'whatsapp' });
     } catch {
       await copyToClipboard(shareText, 'wa');
+      track(ANALYTICS_EVENTS.TRIP_SHARED, { channel: 'whatsapp_clipboard_fallback' });
     }
   };
 
   const handlePartiful = async () => {
     try {
       await Linking.openURL('https://partiful.com/create');
+      track(ANALYTICS_EVENTS.TRIP_SHARED, { channel: 'partiful' });
     } catch {
       await copyToClipboard(`${partifulTitle}\n${partifulCopy}\n${dateRange}`, 'pall');
+      track(ANALYTICS_EVENTS.TRIP_SHARED, { channel: 'partiful_clipboard_fallback' });
     }
   };
 

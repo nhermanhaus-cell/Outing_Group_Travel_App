@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Platform, View, StyleSheet } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -26,6 +26,8 @@ type Props = {
   routeCoords?: Array<{ latitude: number; longitude: number }>;
   height?: number;
   onSelectMarker?: (marker: TripMapMarker) => void;
+  selectedMarkerId?: string | null;
+  fitTrigger?: string | number;
 };
 
 export function TripMap({
@@ -33,6 +35,8 @@ export function TripMap({
   routeCoords,
   height = 280,
   onSelectMarker,
+  selectedMarkerId,
+  fitTrigger,
 }: Props) {
   const { colors, radius } = useTheme();
   const mapRef = useRef<MapView>(null);
@@ -58,6 +62,14 @@ export function TripMap({
     const longitudeDelta = Math.max(0.02, (maxLng - minLng) * 1.4 || 0.04);
     return { latitude, longitude, latitudeDelta, longitudeDelta };
   }, [markers]);
+
+  useEffect(() => {
+    if (markers.length === 0) return;
+    mapRef.current?.fitToCoordinates(
+      markers.map((marker) => ({ latitude: marker.lat, longitude: marker.lng })),
+      { edgePadding: { top: 48, right: 48, bottom: 48, left: 48 }, animated: true },
+    );
+  }, [fitTrigger, markers]);
 
   if (markers.length === 0) {
     return (
@@ -95,19 +107,23 @@ export function TripMap({
         style={StyleSheet.absoluteFill}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_GOOGLE}
         initialRegion={region}
-        region={region}
         showsUserLocation={false}
         showsCompass
         loadingEnabled
       >
-        {markers.map((marker) => (
+        {markers.map((marker, index) => (
           <Marker
             key={marker.id}
             coordinate={{ latitude: marker.lat, longitude: marker.lng }}
             title={marker.label}
-            pinColor={PIN[marker.kind]}
             onPress={() => onSelectMarker?.(marker)}
-          />
+          >
+            <View style={{ width: selectedMarkerId === marker.id ? 38 : 32, height: selectedMarkerId === marker.id ? 38 : 32, borderRadius: 20, backgroundColor: PIN[marker.kind], borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
+              <Text variant="captionBold" style={{ color: '#fff' }}>
+                {marker.kind === 'lodging' ? '⌂' : index + 1}
+              </Text>
+            </View>
+          </Marker>
         ))}
         {routeCoords && routeCoords.length > 1 ? (
           <Polyline

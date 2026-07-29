@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, SectionList, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,13 +16,25 @@ import { Button } from '../../components/ui/Button';
 import { ScoreBreakdown } from '../../components/ui/ScoreBreakdown';
 import { DataSourceBadge } from '../../components/ui/DataSourceBadge';
 import type { QuizAnswers } from './index';
-import type { Destination, TravelPreferences } from '@gayi/shared';
+import {
+  ANALYTICS_EVENTS,
+  type Destination,
+  type TravelPreferences,
+} from '@gayi/shared';
 import originHubsJson from '../../assets/editorial/origin-hubs.json';
+import { useAnalytics } from '../../src/analytics/analytics-provider';
 
 function mapAnswersToPrefs(answers: QuizAnswers): TravelPreferences {
   return {
     budgetLevel: answers.glamourLevel,
     departureAirports: answers.originAirport ? [answers.originAirport] : [],
+    travelRanges: answers.travelRanges ?? [],
+    ...(answers.maxTravelTimeHours !== undefined ? { maxTravelTimeHours: answers.maxTravelTimeHours } : {}),
+    travelScope: answers.travelScope ?? 'either',
+    longDistanceTransportModes: answers.transportModes ?? [],
+    homeAirports: answers.originAirport
+      ? [{ iata: answers.originAirport, name: answers.originAirport, primary: true, source: 'manual' }]
+      : [],
     travelMonths: answers.months.length > 0 ? answers.months : [6, 7, 8],
     tripDurationDays: answers.duration,
     groupSize: answers.groupSize,
@@ -54,6 +66,8 @@ export default function QuizResultsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ answers: string }>();
+  const { track, preferenceSignals } = useAnalytics();
+  const trackedResultsRef = useRef(false);
 
   const answers: QuizAnswers = useMemo(() => {
     try {
@@ -86,13 +100,34 @@ export default function QuizResultsScreen() {
       const { catalog: _catalog, ...dest } = row as Destination & { catalog?: unknown };
       return dest;
     });
-    const ranked = scoreDestinations(prefs, destinations);
+    const cutoff = Date.now() - 180 * 24 * 60 * 60 * 1000;
+    const destinationSignals = new Map(
+      preferenceSignals
+        .filter((signal) =>
+          signal.subjectType === 'destination' &&
+          new Date(signal.lastObservedAt).getTime() >= cutoff
+        )
+        .map((signal) => [signal.subjectKey, signal]),
+    );
+    const ranked = scoreDestinations(prefs, destinations)
+      .map((result) => {
+        const signal = destinationSignals.get(result.slug);
+        if (!signal) return result;
+        return {
+          ...result,
+          overallMatch: Math.max(
+            0,
+            Math.min(100, result.overallMatch + signal.score * signal.confidence * 10),
+          ),
+        };
+      })
+      .sort((a, b) => b.overallMatch - a.overallMatch || a.slug.localeCompare(b.slug));
     return partitionRecommendations(ranked, hub);
-  }, [scoring, prefs, hub]);
+  }, [scoring, prefs, hub, preferenceSignals]);
 
   const sections = useMemo<ResultSection[]>(() => {
     const list: ResultSection[] = [];
-    if (partitioned.weekendNearby.length > 0) {
+    if (prefs.travelRanges?.includes('road_trip') && partitioned.weekendNearby.length > 0) {
       list.push({
         key: 'weekend',
         title: 'Weekend nearby',
@@ -102,7 +137,7 @@ export default function QuizResultsScreen() {
         data: partitioned.weekendNearby,
       });
     }
-    if (partitioned.quickFlights.length > 0) {
+    if (prefs.travelRanges?.includes('short_flight') && partitioned.quickFlights.length > 0) {
       list.push({
         key: 'quick',
         title: 'Quick flights',
@@ -112,14 +147,12 @@ export default function QuizResultsScreen() {
     }
     list.push({
       key: 'best',
-      title: 'Best matches',
-      subtitle: partitioned.excludedHomeSlugs.length
-        ? `Ranked for you (excluding ${partitioned.excludedHomeSlugs.join(', ')}).`
-        : 'Ranked by how well they match your preferences.',
+      title: prefs.travelRanges?.length ? 'Best matches in your ranges' : 'Best matches',
+      subtitle: 'Ranked by how well they match your preferences.',
       data: partitioned.bestMatches.slice(0, 10),
     });
     return list.filter((s) => s.data.length > 0 || s.key === 'best');
-  }, [partitioned, hub]);
+  }, [partitioned, hub, prefs.travelRanges]);
 
   const [expanded, setExpanded] = useState<string | null>(
     partitioned.weekendNearby[0]?.slug ??
@@ -128,6 +161,16 @@ export default function QuizResultsScreen() {
   );
 
   const totalShown = sections.reduce((n, s) => n + s.data.length, 0);
+
+  useEffect(() => {
+    if (trackedResultsRef.current || totalShown === 0) return;
+    trackedResultsRef.current = true;
+    track(ANALYTICS_EVENTS.RECOMMENDATION_GENERATED, {
+      recommendationType: 'destination_matches',
+      resultCount: totalShown,
+      algorithmVersion: 'destination-score-v1',
+    });
+  }, [totalShown, track]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -165,9 +208,7 @@ export default function QuizResultsScreen() {
               {totalShown} destination{totalShown !== 1 ? 's' : ''} for you
             </Text>
             <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-              {hub
-                ? `Origin-aware picks for ${hub.label}. Your home city is never recommended.`
-                : 'Ranked by how well they match your preferences.'}
+              Ranked by your interests, timing, and travel preferences.
             </Text>
           </View>
         }
@@ -198,6 +239,7 @@ export default function QuizResultsScreen() {
             }
             expanded={expanded === item.slug}
             onToggle={() => setExpanded((prev) => (prev === item.slug ? null : item.slug))}
+            answers={answers}
           />
         )}
       />
@@ -211,17 +253,17 @@ function ResultCard({
   badge,
   expanded,
   onToggle,
+  answers,
 }: {
   result: RecommendationResult;
   rank: number;
   badge?: string;
   expanded: boolean;
   onToggle: () => void;
+  answers: QuizAnswers;
 }) {
   const { colors, spacing, radius } = useTheme();
   const router = useRouter();
-
-  const confidentPct = Math.round(result.dataConfidence * 100);
 
   return (
     <Pressable
@@ -255,9 +297,7 @@ function ResultCard({
         </View>
         <View style={{ flex: 1 }}>
           <Text variant="h3">{result.destinationName}</Text>
-          <Text variant="caption" style={{ color: colors.textTertiary }}>
-            {badge ? `${badge} · ` : ''}{confidentPct}% confidence
-          </Text>
+          {badge ? <Text variant="caption" style={{ color: colors.textTertiary }}>{badge}</Text> : null}
         </View>
         <View style={{ alignItems: 'flex-end', gap: spacing.xxs }}>
           <Text variant="displaySm" style={{ color: colors.accent }}>
@@ -282,13 +322,19 @@ function ResultCard({
             <Button
               style={{ flex: 1 }}
               variant="secondary"
-              onPress={() => router.push(`/destinations/${result.slug}`)}
+              onPress={() => router.push({
+                pathname: '/destinations/[slug]',
+                params: {
+                  slug: result.slug,
+                  quizAnswers: JSON.stringify(answers),
+                },
+              })}
             >
               View destination
             </Button>
             <Button
               style={{ flex: 1 }}
-              onPress={() => router.push({ pathname: '/trips/new', params: { destinationSlug: result.slug, destinationName: result.destinationName } })}
+              onPress={() => router.push({ pathname: '/trips/new', params: { destinationSlug: result.slug, destinationName: result.destinationName, quizAnswers: JSON.stringify(answers) } })}
             >
               Create trip
             </Button>

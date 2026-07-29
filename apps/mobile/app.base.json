@@ -1,0 +1,43 @@
+{
+  "name": "Outing",
+  "slug": "gayi",
+  "version": "1.0.0",
+  "orientation": "portrait",
+  "icon": "./assets/images/outing-icon.png",
+  "scheme": "gayi",
+  "userInterfaceStyle": "automatic",
+  "ios": {
+    "supportsTablet": true,
+    "bundleIdentifier": "com.gayi.app",
+    "usesAppleSignIn": true
+  },
+  "android": {
+    "adaptiveIcon": {
+      "backgroundColor": "#1A1611",
+      "foregroundImage": "./assets/images/outing-android-foreground.png",
+      "backgroundImage": "./assets/images/outing-android-background.png",
+      "monochromeImage": "./assets/images/outing-android-monochrome.png"
+    },
+    "predictiveBackGestureEnabled": false
+  },
+  "web": {
+    "bundler": "metro",
+    "output": "static",
+    "favicon": "./assets/images/outing-favicon.png"
+  },
+  "plugins": [
+    "expo-router",
+    ["expo-splash-screen", { "image": "./assets/images/outing-splash-icon.png", "resizeMode": "contain", "backgroundColor": "#1A1611" }],
+    "expo-secure-store",
+    "expo-font",
+    "expo-apple-authentication",
+    ["expo-calendar", { "calendarPermission": "Outing uses calendar access only when you choose to add or update itinerary events." }],
+    ["expo-contacts", { "contactsPermission": "Outing uses contacts only when you choose travel buddies to invite. Phone numbers stay on this device." }],
+    ["expo-location", { "locationWhenInUsePermission": "Outing uses an approximate one-time location only when you ask for nearby airport suggestions." }]
+  ],
+  "experiments": { "typedRoutes": true },
+  "extra": { "eas": { "projectId": "1f156c64-1779-4117-9855-bd0800c987cf" } },
+  "owner": "noah-herman",
+  "runtimeVersion": { "policy": "appVersion" },
+  "updates": { "url": "https://u.expo.dev/1f156c64-1779-4117-9855-bd0800c987cf" }
+}

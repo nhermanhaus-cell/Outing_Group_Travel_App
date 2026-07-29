@@ -1,8 +1,10 @@
-# Gay-i
+# Outing
 
 LGBTQ+ travel discovery, planning, and social coordination — Expo (React Native) MVP.
 
-Gay-i helps travelers answer where to go, when, how welcoming it may feel, what to do, where to stay, what it might cost, and how to plan with friends. It is **not** a dating app.
+Outing helps travelers answer where to go, when, how welcoming it may feel, what to do, where to stay, what it might cost, and how to plan with friends. It is **not** a dating app.
+
+The product was renamed from Gay-i to Outing. Legacy technical identifiers such as the `@gayi/*` package scope, `gayi://` deep-link scheme, storage keys, and deployed bundle IDs are intentionally retained for backward compatibility.
 
 ## Stack
 

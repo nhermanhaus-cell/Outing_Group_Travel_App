@@ -14,7 +14,7 @@ import type { EventsReq, EventsRes, LocalEvent } from '../../interfaces';
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
 const TIMEOUT_MS = 7000;
-const USER_AGENT = 'GayI-App/0.1 (https://gayi.app; contact@gayi.app) wikidata-events-plugin';
+const USER_AGENT = 'Outing-App/0.1 (https://gayi.app; contact@gayi.app) wikidata-events-plugin';
 
 // ── Static fallback fixture ───────────────────────────────────────────────
 

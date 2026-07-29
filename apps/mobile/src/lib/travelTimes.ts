@@ -1,4 +1,5 @@
-import { getGooglePlacesApiKey } from './googlePlaces';
+import { invokeTravelApi } from './travel-api';
+import type { ItineraryRouteEstimate } from '@gayi/domain';
 
 export type TravelMode = 'walking' | 'transit' | 'driving';
 
@@ -10,6 +11,9 @@ export interface TravelLeg {
   distanceText: string;
   distanceMeters: number;
   mode: TravelMode;
+  encodedPolyline?: string;
+  routeCoords?: Array<{ latitude: number; longitude: number }>;
+  estimated?: boolean;
 }
 
 export interface TimedStop {
@@ -19,16 +23,33 @@ export interface TimedStop {
   lng: number;
 }
 
+export async function fetchCandidateRouteMatrix(
+  points: Array<{ placeId: string; lat: number; lng: number }>,
+  mode: TravelMode = 'transit',
+): Promise<ItineraryRouteEstimate[]> {
+  if (points.length < 2) return [];
+  const selected = points.slice(0, 12);
+  const waypoints = selected.map((point) => ({ waypoint: { location: { latLng: { latitude: point.lat, longitude: point.lng } } } }));
+  const data = await invokeTravelApi<{ elements: unknown[] }>('routeMatrix', { origins: waypoints, destinations: waypoints, travelMode: mode.toUpperCase() });
+  return data.elements.flatMap((raw) => {
+    if (!raw || typeof raw !== 'object') return [];
+    const element = raw as { originIndex?: number; destinationIndex?: number; duration?: string; distanceMeters?: number; condition?: string };
+    const from = selected[element.originIndex ?? -1];
+    const to = selected[element.destinationIndex ?? -1];
+    if (!from || !to || from.placeId === to.placeId || element.condition === 'ROUTE_NOT_FOUND') return [];
+    return [{ fromPlaceId: from.placeId, toPlaceId: to.placeId, mode, durationMinutes: Math.max(1, Math.round(parseDurationSeconds(element.duration) / 60)), ...(typeof element.distanceMeters === 'number' ? { distanceMeters: element.distanceMeters } : {}) }];
+  });
+}
+
 /**
  * Fetch travel times between consecutive stops via Distance Matrix API.
  * Stays in-app — no redirect to Google Maps.
  */
 export async function fetchTravelLegs(
   stops: TimedStop[],
-  mode: TravelMode = 'walking',
+  mode: TravelMode | 'auto' = 'auto',
 ): Promise<TravelLeg[]> {
-  const key = getGooglePlacesApiKey();
-  if (!key || stops.length < 2) return [];
+  if (stops.length < 2) return [];
 
   const legs: TravelLeg[] = [];
 
@@ -37,41 +58,59 @@ export async function fetchTravelLegs(
   for (let i = 0; i < stops.length - 1; i++) {
     const from = stops[i]!;
     const to = stops[i + 1]!;
-    const url = new URL('https://maps.googleapis.com/maps/api/distancematrix/json');
-    url.searchParams.set('origins', `${from.lat},${from.lng}`);
-    url.searchParams.set('destinations', `${to.lat},${to.lng}`);
-    url.searchParams.set('mode', mode);
-    url.searchParams.set('units', 'metric');
-    url.searchParams.set('key', key);
-
+    const directDistance = straightLineMeters(from, to);
+    let selectedMode: TravelMode = mode === 'auto'
+      ? directDistance <= 1_600 ? 'walking' : 'transit'
+      : mode;
     try {
-      const resp = await fetch(url.toString());
-      if (!resp.ok) continue;
-      const data = (await resp.json()) as {
-        status: string;
-        rows?: Array<{
-          elements?: Array<{
-            status: string;
-            duration?: { text: string; value: number };
-            distance?: { text: string; value: number };
-          }>;
+      let data = await invokeTravelApi<{
+        routes: Array<{
+          duration?: string;
+          distanceMeters?: number;
+          polyline?: { encodedPolyline?: string };
         }>;
-      };
-      const el = data.rows?.[0]?.elements?.[0];
-      if (data.status !== 'OK' || !el || el.status !== 'OK' || !el.duration || !el.distance) {
-        continue;
+      }>('route', {
+        origin: waypoint(from),
+        destination: waypoint(to),
+        travelMode: selectedMode.toUpperCase(),
+      });
+      let route = data.routes[0];
+      if (!route && mode === 'auto' && selectedMode === 'transit') {
+        selectedMode = 'driving';
+        data = await invokeTravelApi('route', { origin: waypoint(from), destination: waypoint(to), travelMode: 'DRIVING' });
+        route = data.routes[0];
       }
+      if (!route) throw new Error('No route');
+      const durationSeconds = parseDurationSeconds(route.duration);
+      const distanceMeters = route.distanceMeters ?? 0;
+      const encodedPolyline = route.polyline?.encodedPolyline;
       legs.push({
         fromLabel: from.label,
         toLabel: to.label,
-        durationText: el.duration.text,
-        durationSeconds: el.duration.value,
-        distanceText: el.distance.text,
-        distanceMeters: el.distance.value,
-        mode,
+        durationText: formatDuration(durationSeconds),
+        durationSeconds,
+        distanceText: formatDistance(distanceMeters),
+        distanceMeters,
+        mode: selectedMode,
+        ...(encodedPolyline ? {
+          encodedPolyline,
+          routeCoords: decodePolyline(encodedPolyline),
+        } : {}),
       });
     } catch {
-      // skip failed leg
+      const distanceMeters = directDistance;
+      const speedMetersPerSecond = selectedMode === 'walking' ? 1.35 : selectedMode === 'driving' ? 10 : 6;
+      const durationSeconds = Math.max(300, Math.round(distanceMeters / speedMetersPerSecond));
+      legs.push({
+        fromLabel: from.label,
+        toLabel: to.label,
+        durationText: `about ${formatDuration(durationSeconds)}`,
+        durationSeconds,
+        distanceText: formatDistance(distanceMeters),
+        distanceMeters,
+        mode: selectedMode,
+        estimated: true,
+      });
     }
   }
 
@@ -88,12 +127,13 @@ export function itineraryStopsForDay(
     coords?: { lat: number; lng: number };
   }>,
   day: number,
+  lodging?: TimedStop,
 ): TimedStop[] {
-  return items
+  const activityStops = items
     .filter(
       (item) =>
         item.day === day &&
-        !item.placeId.startsWith('free-') &&
+        !item.placeId.startsWith('free-') && !item.placeId.startsWith('meal-') &&
         typeof item.coords?.lat === 'number' &&
         typeof item.coords?.lng === 'number',
     )
@@ -104,4 +144,70 @@ export function itineraryStopsForDay(
       lat: item.coords!.lat,
       lng: item.coords!.lng,
     }));
+  if (!lodging) return activityStops;
+  return [
+    { ...lodging, id: `${lodging.id}-start-${day}`, label: `${lodging.label} · start` },
+    ...activityStops,
+    { ...lodging, id: `${lodging.id}-end-${day}`, label: `${lodging.label} · return` },
+  ];
+}
+
+function waypoint(stop: TimedStop) {
+  return {
+    location: {
+      latLng: { latitude: stop.lat, longitude: stop.lng },
+    },
+  };
+}
+
+function parseDurationSeconds(value?: string): number {
+  if (!value) return 0;
+  const parsed = Number(value.replace(/s$/, ''));
+  return Number.isFinite(parsed) ? Math.round(parsed) : 0;
+}
+
+function formatDuration(seconds: number): string {
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} hr ${rest} min` : `${hours} hr`;
+}
+
+function formatDistance(meters: number): string {
+  return meters < 1_000 ? `${Math.round(meters)} m` : `${(meters / 1_000).toFixed(1)} km`;
+}
+
+function straightLineMeters(a: TimedStop, b: TimedStop): number {
+  const rad = Math.PI / 180;
+  const lat1 = a.lat * rad;
+  const lat2 = b.lat * rad;
+  const deltaLat = (b.lat - a.lat) * rad;
+  const deltaLng = (b.lng - a.lng) * rad;
+  const h = Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+  return Math.round(6_371_000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)));
+}
+
+export function decodePolyline(encoded: string): Array<{ latitude: number; longitude: number }> {
+  const coordinates: Array<{ latitude: number; longitude: number }> = [];
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+  while (index < encoded.length) {
+    const read = () => {
+      let result = 0;
+      let shift = 0;
+      let byte: number;
+      do {
+        byte = encoded.charCodeAt(index++) - 63;
+        result |= (byte & 0x1f) << shift;
+        shift += 5;
+      } while (byte >= 0x20 && index <= encoded.length);
+      return (result & 1) ? ~(result >> 1) : result >> 1;
+    };
+    lat += read();
+    lng += read();
+    coordinates.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
+  }
+  return coordinates;
 }

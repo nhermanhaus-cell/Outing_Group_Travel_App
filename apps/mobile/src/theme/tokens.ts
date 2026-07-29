@@ -1,4 +1,4 @@
-// Gay-i design tokens — editorial travel aesthetic
+// Outing design tokens — editorial travel aesthetic
 // Warm charcoal/ink, soft parchment, coral accent
 
 export const palette = {

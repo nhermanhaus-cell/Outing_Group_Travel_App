@@ -1,4 +1,11 @@
-import type { Destination, Place, PlaceCategory, Trip } from '@gayi/shared';
+import type {
+  AnalyticsBatchRequest,
+  AnalyticsBatchResponse,
+  Destination,
+  Place,
+  PlaceCategory,
+  Trip,
+} from '@gayi/shared';
 
 // ── destinations ──────────────────────────────────────────────────────────────
 
@@ -261,14 +268,11 @@ export interface AiRes {
 
 // ── analytics ─────────────────────────────────────────────────────────────────
 
-export interface AnalyticsReq {
-  event: string;
-  properties?: Record<string, unknown>;
-  userId?: string;
+export interface AnalyticsReq extends AnalyticsBatchRequest {
+  /** Current Supabase access token. The server derives user identity from it. */
+  authorization?: string;
 }
-export interface AnalyticsRes {
-  tracked: boolean;
-}
+export type AnalyticsRes = AnalyticsBatchResponse;
 
 // ── share ─────────────────────────────────────────────────────────────────────
 

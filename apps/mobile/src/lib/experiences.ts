@@ -1,10 +1,11 @@
 import experiencesSeed from '../../assets/seed/experiences.json';
-import { getViatorApiKey } from './apiKeys';
+import { invokeTravelApi, type ApiExperience } from './travel-api';
+import { isExactViatorProductUrl } from '@gayi/shared';
+export { isExactViatorProductUrl } from '@gayi/shared';
 
 const PRODUCTS_SEARCH_URL = 'https://api.viator.com/partner/products/search';
 const DESTINATIONS_URL = 'https://api.viator.com/partner/destinations';
 const FREETEXT_URL = 'https://api.viator.com/partner/search/freetext';
-const FALLBACK_SEARCH_URL = 'https://www.viator.com/searchResults/all?text=';
 
 export interface MobileExperience {
   id: string;
@@ -21,6 +22,18 @@ export interface MobileExperience {
   lng?: number;
   provider: 'editorial' | 'viator' | 'getyourguide';
   affiliateUrl?: string;
+  productCode?: string;
+  productUrl?: string;
+  rating?: number;
+  reviewCount?: number;
+  durationMinutes?: number;
+  itinerary?: unknown;
+  inclusions?: unknown;
+  exclusions?: unknown;
+  logistics?: unknown;
+  cancellationPolicy?: unknown;
+  availabilitySummary?: string[];
+  availabilityStartTimes?: string[];
   bookingMode: 'none' | 'external';
 }
 
@@ -86,13 +99,41 @@ function editorial(destinationSlug: string, limit: number, asViator: boolean): M
       lgbtqRelevance: e.lgbtqRelevance,
       lat: e.lat,
       lng: e.lng,
-      provider: asViator ? 'viator' : 'editorial',
-      bookingMode: asViator ? 'external' : 'none',
-      affiliateUrl: asViator
-        ? `${FALLBACK_SEARCH_URL}${encodeURIComponent(`${slugToName(destinationSlug)} ${e.title}`)}`
-        : e.affiliateUrl,
+      provider: 'editorial',
+      bookingMode: 'none',
+      affiliateUrl: e.affiliateUrl,
     }));
 }
+
+function mapApiExperience(item: ApiExperience, destinationSlug: string): MobileExperience {
+  const productUrl = isExactViatorProductUrl(item.productUrl) ? item.productUrl : undefined;
+  return {
+    id: item.productCode,
+    productCode: item.productCode,
+    destinationSlug,
+    title: item.title,
+    summary: item.description ?? `Bookable experience in ${slugToName(destinationSlug)} via Viator.`,
+    imageUrls: item.images.map((image) => image.url).slice(0, 5),
+    durationHours:
+      item.durationMinutes !== undefined ? Math.round((item.durationMinutes / 60) * 10) / 10 : undefined,
+    durationMinutes: item.durationMinutes,
+    priceFrom: item.priceFrom,
+    currency: item.currency,
+    rating: item.rating,
+    reviewCount: item.reviewCount,
+    tags: ['bookable', 'viator'],
+    provider: 'viator',
+    productUrl,
+    affiliateUrl: productUrl,
+    bookingMode: productUrl ? 'external' : 'none',
+    itinerary: item.itinerary,
+    inclusions: item.inclusions,
+    exclusions: item.exclusions,
+    logistics: item.logistics,
+    cancellationPolicy: item.cancellationPolicy,
+  };
+}
+
 
 function extractImageUrls(item: JsonRecord): string[] {
   const urls: string[] = [];
@@ -145,9 +186,7 @@ function mapProducts(raw: unknown[], destinationSlug: string, limit: number): Mo
       const summary =
         pickString(item, ['summary', 'description', 'shortDescription']) ??
         `Bookable experience in ${destinationName} via Viator.`;
-      const affiliateUrl =
-        pickString(item, ['productUrl', 'webURL', 'url']) ??
-        `${FALLBACK_SEARCH_URL}${encodeURIComponent(`${destinationName} ${title}`)}`;
+      const affiliateUrl = pickString(item, ['productUrl', 'webURL', 'url']);
       const pricing = isRecord(item['pricing']) ? item['pricing'] : null;
       const product = isRecord(item['product']) ? item['product'] : item;
       return {
@@ -166,7 +205,7 @@ function mapProducts(raw: unknown[], destinationSlug: string, limit: number): Mo
         tags: ['bookable', 'viator'],
         provider: 'viator',
         affiliateUrl,
-        bookingMode: 'external',
+        bookingMode: affiliateUrl ? 'external' : 'none',
       };
     })
     .filter((e): e is MobileExperience => e != null)
@@ -191,97 +230,89 @@ async function fetchJson(url: string, init: RequestInit, timeoutMs = 5000): Prom
 export async function loadDestinationExperiences(
   destinationSlug: string,
   limit = 6,
+  interests: string[] = [],
 ): Promise<{ experiences: MobileExperience[]; source: 'viator_live' | 'editorial_fallback' }> {
-  const apiKey = getViatorApiKey();
-  if (!apiKey) {
-    return { experiences: editorial(destinationSlug, limit, false), source: 'editorial_fallback' };
-  }
-
   const destinationName = slugToName(destinationSlug);
 
   try {
-    let destId: string | null = null;
-    try {
-      const destData = await fetchJson(DESTINATIONS_URL, { headers: authHeaders(apiKey) }, 4000);
-      if (isRecord(destData)) {
-        const list = Array.isArray(destData['destinations'])
-          ? destData['destinations']
-          : Array.isArray(destData['data'])
-            ? destData['data']
-            : [];
-        const needle = destinationName.toLowerCase();
-        for (const item of list) {
-          if (!isRecord(item)) continue;
-          const name = pickString(item, ['name', 'destinationName']);
-          const id =
-            pickString(item, ['destinationId', 'id']) ??
-            (typeof item['destinationId'] === 'number' ? String(item['destinationId']) : undefined);
-          if (name && id && name.toLowerCase().includes(needle.split(' ')[0]!)) {
-            destId = id;
-            break;
-          }
-        }
-      }
-    } catch {
-      destId = null;
-    }
-
-    let products: unknown[] = [];
-    if (destId) {
-      const data = await fetchJson(
-        PRODUCTS_SEARCH_URL,
-        {
-          method: 'POST',
-          headers: authHeaders(apiKey),
-          body: JSON.stringify({
-            filtering: { destination: destId },
-            sorting: { sort: 'TRAVELER_RATING', order: 'DESCENDING' },
-            pagination: { start: 1, count: limit },
-            currency: 'USD',
-          }),
-        },
-        5000,
-      );
-      if (isRecord(data)) {
-        products = Array.isArray(data['products'])
-          ? data['products']
-          : Array.isArray(data['results'])
-            ? data['results']
-            : [];
-      }
-    }
-
-    if (products.length === 0) {
-      const data = await fetchJson(
-        FREETEXT_URL,
-        {
-          method: 'POST',
-          headers: authHeaders(apiKey),
-          body: JSON.stringify({
-            searchTerm: destinationName,
-            searchTypes: ['PRODUCTS'],
-            currency: 'USD',
-            pagination: { start: 1, count: limit },
-          }),
-        },
-        5000,
-      );
-      if (isRecord(data)) {
-        products = Array.isArray(data['products'])
-          ? data['products']
-          : Array.isArray(data['results'])
-            ? data['results']
-            : [];
-      }
-    }
-
-    const live = mapProducts(products, destinationSlug, limit);
+    const buckets = [[], ...interests.slice(0, 4).map((interest) => [interest])];
+    const results = await Promise.all(buckets.map((bucket) => invokeTravelApi<{ products: ApiExperience[] }>('viatorSearch', {
+      destination: destinationName,
+      interests: bucket,
+      limit: 6,
+      currency: 'USD',
+    }).catch(() => ({ products: [] }))));
+    const seen = new Set<string>();
+    const live = results.flatMap((result) => result.products)
+      .map((product) => mapApiExperience(product, destinationSlug))
+      .filter((product) => {
+        if (seen.has(product.id)) return false;
+        seen.add(product.id);
+        return true;
+      })
+      .slice(0, Math.min(12, Math.max(8, limit)));
     if (live.length > 0) {
-      return { experiences: live, source: 'viator_live' };
+      const enriched = await Promise.all(live.map(async (experience, index) => {
+        if (index >= 8 || !experience.productCode) return experience;
+        const schedule = await invokeTravelApi<{ schedule: unknown }>('viatorSchedule', { productCode: experience.productCode }).catch(() => null);
+        return schedule ? { ...experience, availabilitySummary: summarizeAvailability(schedule.schedule), availabilityStartTimes: extractStartTimes(schedule.schedule) } : experience;
+      }));
+      return { experiences: enriched, source: 'viator_live' };
     }
   } catch {
     // fall through
   }
 
-  return { experiences: editorial(destinationSlug, limit, true), source: 'editorial_fallback' };
+  return { experiences: editorial(destinationSlug, limit, false), source: 'editorial_fallback' };
+}
+
+export async function loadExperienceDetails(
+  destinationSlug: string,
+  productCode: string,
+): Promise<MobileExperience | null> {
+  try {
+    const [productResult, scheduleResult] = await Promise.all([
+      invokeTravelApi<{ product: ApiExperience | null }>('viatorProduct', { productCode }),
+      invokeTravelApi<{ schedule: unknown }>('viatorSchedule', { productCode }).catch(() => null),
+    ]);
+    if (!productResult.product) return null;
+    const experience = mapApiExperience(productResult.product, destinationSlug);
+    return {
+      ...experience,
+      availabilitySummary: summarizeAvailability(scheduleResult?.schedule),
+      availabilityStartTimes: extractStartTimes(scheduleResult?.schedule),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function extractStartTimes(value: unknown): string[] {
+  const found = new Set<string>();
+  const visit = (node: unknown, depth: number) => {
+    if (depth > 8 || found.size >= 12) return;
+    if (Array.isArray(node)) { node.forEach((item) => visit(item, depth + 1)); return; }
+    if (!isRecord(node)) return;
+    for (const [key, child] of Object.entries(node)) {
+      if (/starttime/i.test(key) && typeof child === 'string' && /^\d{2}:\d{2}$/.test(child)) found.add(child);
+      else visit(child, depth + 1);
+    }
+  };
+  visit(value, 0);
+  return Array.from(found).sort();
+}
+
+function summarizeAvailability(schedule: unknown): string[] {
+  if (!isRecord(schedule) || !Array.isArray(schedule['bookableItems'])) return [];
+  const summaries: string[] = [];
+  for (const item of schedule['bookableItems'].slice(0, 3)) {
+    if (!isRecord(item) || !Array.isArray(item['seasons'])) continue;
+    for (const season of item['seasons'].slice(0, 2)) {
+      if (!isRecord(season)) continue;
+      const start = pickString(season, ['startDate']);
+      const end = pickString(season, ['endDate']);
+      if (start) summaries.push(end ? `${start} – ${end}` : `From ${start}`);
+    }
+  }
+  return Array.from(new Set(summaries)).slice(0, 4);
 }

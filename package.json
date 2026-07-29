@@ -1,18 +1,20 @@
 {
-  "name": "gayi-travel-planner",
+  "name": "outing-travel-planner",
   "private": true,
   "packageManager": "pnpm@10.33.3",
   "scripts": {
     "dev": "pnpm --filter mobile start",
     "mobile": "pnpm --filter mobile start",
-    "typecheck": "pnpm -r --filter '@gayi/*' typecheck",
+    "typecheck": "pnpm -r --filter '@gayi/*' --filter mobile typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0 || true",
     "db:seed": "node scripts/print-seed-info.mjs",
     "seed:sync": "node scripts/seed-sync.mjs",
     "seed:score": "node scripts/regenerate-scoring.mjs",
-    "seed:photos": "node scripts/attach-place-photos.mjs"
+    "seed:photos": "node scripts/attach-place-photos.mjs",
+    "seed:insights": "node scripts/collect-editorial-insights.mjs && node scripts/seed-sync.mjs",
+    "seed:airports": "node scripts/sync-airports.mjs"
   },
   "devDependencies": {
     "typescript": "^5.8.2",

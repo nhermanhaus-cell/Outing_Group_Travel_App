@@ -1,6 +1,7 @@
-# Gay-i — Codex handoff context
+# Outing — Codex handoff context
 
-**Product:** Gay-i — LGBTQ+ travel discovery, planning, and social trip coordination (not dating).  
+**Product:** Outing — LGBTQ+ travel discovery, planning, and social trip coordination (not dating).
+**Compatibility:** The former `gayi` technical namespace remains in package scopes, deep links, storage keys, deployed domains, and bundle IDs so existing installs and trip data continue working.
 **Repo:** `github.com/nhermanhaus-cell/gayi-travel-planner`  
 **Working branch:** `cursor/gayi-expo-mvp-d31a` (base: `main`)  
 **PR:** https://github.com/nhermanhaus-cell/gayi-travel-planner/pull/1  
@@ -96,33 +97,31 @@ docs/
 
 ### In-app maps
 - `react-native-maps` `TripMap` on trip **Itinerary** + **Map** tabs
-- Markers: lodging, itinerary, Google nearby, experiences; day-1 polyline
-- **Distance Matrix** legs (walk / transit / drive) between itinerary stops
+- Markers: lodging, numbered selected-day itinerary stops, Google nearby, and experiences
+- **Routes API** legs (auto / walk / transit / drive) with encoded polylines between lodging and every stop
 - See `docs/google-maps-apis.md`
 
 ### Sharing
 - RN `Share.share`, WhatsApp / Partiful deep links
-- Invite: `gayi://trips/{id}/invite`
+- Invite: universal HTTPS `/invite?token=…` with one-use token redemption
 
 ### Auth / trips
-- Local mock auth + AsyncStorage trips by default
-- Supabase optional via `EXPO_PUBLIC_SUPABASE_URL` + publishable key in `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- Supabase sessions, synced trips, RLS, realtime edits, and a one-time local-trip migration; fixture-first fallback remains available
 
 ---
 
 ## Env / secrets
 
 - Local secrets live in **repo-root `.env`** (gitignored). Template: `.env.example`
-- `apps/mobile/app.config.js` **manually loads** root `.env` (Expo does not auto-load parent dirs), then injects into `expo.extra` + iOS/Android Maps config
-- On `expo start`, look for `[gayi] API keys loaded — maps:… places:… viator:…` (booleans only)
+- `apps/mobile/app.config.js` injects only the native Maps SDK key; web-service secrets are Supabase Edge secrets
+- On `expo start`, look for `[gayi] integrations configured — maps-sdk:… places-proxy:… viator-proxy:…` (booleans only)
 - Settings → Integrations shows the same runtime key status
-- Same Google key can serve Maps SDK + Places + Geocoding + Distance Matrix + Place Photos if all APIs are enabled and allowed on the key
 
 | Variable | Use |
 |----------|-----|
-| `VIATOR_API_KEY` | Viator affiliate |
-| `GOOGLE_MAPS_API_KEY` / `GOOGLE_PLACES_API_KEY` | Maps + Places + Geocode + Distance Matrix + Place Photos |
-| `EXPO_PUBLIC_*` mirrors | Optional; `app.config.js` also reads non-prefixed |
+| `VIATOR_API_KEY` | Server-only Viator affiliate Edge secret |
+| `GOOGLE_PLACES_API_KEY` | Server-only Places/Routes/Geocoding/Photos Edge secret |
+| `GOOGLE_MAPS_API_KEY` | Restricted native Maps SDK key |
 | `EXPO_PUBLIC_SUPABASE_URL` | Project URL `https://<id>.supabase.co` |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase **publishable** key (`sb_publishable_…`) |
 | `GETYOURGUIDE_API_KEY` | Optional GYG shell |

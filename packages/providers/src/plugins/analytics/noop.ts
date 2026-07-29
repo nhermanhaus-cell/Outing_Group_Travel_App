@@ -9,8 +9,11 @@ export const analyticsNoop = defineProviderPlugin<AnalyticsReq, AnalyticsRes>({
   isMock: true,
   create() {
     return {
-      async call(_req) {
-        return { tracked: false };
+      async call(req) {
+        return {
+          acceptedEventIds: req.events.map((event) => event.eventId),
+          rejected: [],
+        };
       },
     };
   },

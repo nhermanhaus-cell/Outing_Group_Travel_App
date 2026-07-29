@@ -116,7 +116,7 @@ export function computePulse(inputs: PulseInputs): PulseResult {
     explanation:
       'This score is a platform estimate based on aggregated community activity. ' +
       'Individual data points below minimum thresholds are not disclosed. ' +
-      'The score reflects relative LGBTQ+ community presence on Gay-i and may not represent the full in-person scene.',
+      'The score reflects relative LGBTQ+ community presence on Outing and may not represent the full in-person scene.',
   };
 }
 

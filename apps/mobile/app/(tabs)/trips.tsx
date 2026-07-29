@@ -7,23 +7,19 @@ import { useAuth, useTrips } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { AuthGate } from '../../components/ui/AuthGate';
 import type { LocalTrip } from '../../src/providers/AppProviders';
+import { RenameTripSheet } from '../../components/trips/RenameTripSheet';
 
 export default function TripsScreen() {
   const { colors, spacing, radius, shadows } = useTheme();
   const { user } = useAuth();
-  const { trips } = useTrips();
+  const { trips, updateTrip } = useTrips();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [gateVisible, setGateVisible] = useState(false);
+  const [renamingTrip, setRenamingTrip] = useState<LocalTrip | null>(null);
 
   const handleNewTrip = () => {
-    if (!user) {
-      setGateVisible(true);
-    } else {
-      router.push('/trips/new');
-    }
+    router.push('/trips/new');
   };
 
   return (
@@ -58,9 +54,9 @@ export default function TripsScreen() {
             gap: spacing.md,
           }}
         >
-          <Text variant="h3">Sign in to save trips</Text>
+          <Text variant="h3">Trips save on this phone</Text>
           <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-            Your trips will be saved and accessible across devices.
+            You can plan without an account. Sign in whenever you want to sync across devices or invite collaborators.
           </Text>
           <Button onPress={() => router.push('/auth/login')}>Sign in</Button>
         </View>
@@ -82,19 +78,16 @@ export default function TripsScreen() {
             action={<Button onPress={handleNewTrip}>Plan a trip</Button>}
           />
         }
-        renderItem={({ item }) => <TripCard trip={item} />}
+        renderItem={({ item }) => <TripCard trip={item} onRename={() => setRenamingTrip(item)} />}
       />
 
-      <AuthGate
-        visible={gateVisible}
-        onDismiss={() => setGateVisible(false)}
-        reason="Sign in to create and save trips."
-      />
+      <RenameTripSheet visible={Boolean(renamingTrip)} currentName={renamingTrip?.name ?? ''} onDismiss={() => setRenamingTrip(null)} onSave={(name) => updateTrip(renamingTrip!.tripId, { name })} />
+
     </View>
   );
 }
 
-function TripCard({ trip }: { trip: LocalTrip }) {
+function TripCard({ trip, onRename }: { trip: LocalTrip; onRename: () => void }) {
   const { colors, spacing, radius, shadows } = useTheme();
   const router = useRouter();
 
@@ -120,7 +113,7 @@ function TripCard({ trip }: { trip: LocalTrip }) {
     >
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <Text variant="h3" style={{ flex: 1 }}>{trip.name}</Text>
-        <Text style={{ fontSize: 20 }}>✈</Text>
+        <Pressable hitSlop={12} onPress={(event) => { event.stopPropagation(); onRename(); }} accessibilityLabel="Rename trip"><Text style={{ fontSize: 20, color: colors.accent }}>✎</Text></Pressable>
       </View>
       {trip.destinationName ? (
         <Text variant="bodyMd" style={{ color: colors.textSecondary }}>

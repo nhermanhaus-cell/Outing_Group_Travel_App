@@ -7,7 +7,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useAuth } from '../../src/providers/AppProviders';
@@ -19,19 +20,26 @@ export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { signInWithMagicLink, signInWithApple } = useAuth();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [appleAvailable, setAppleAvailable] = useState(false);
+
+  React.useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    void AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => setAppleAvailable(false));
+  }, []);
 
   const handleMagicLink = async () => {
     if (!email.trim()) { setError('Enter your email address.'); return; }
     setLoading(true);
     setError(null);
     try {
-      const res = await signInWithMagicLink(email.trim().toLowerCase());
-      if (res.error) { setError(res.error); } else { setSent(true); router.back(); }
+      const res = await signInWithMagicLink(email.trim().toLowerCase(), returnTo);
+      if (res.error) { setError(res.error); } else { setSent(true); }
     } finally {
       setLoading(false);
     }
@@ -42,7 +50,7 @@ export default function LoginScreen() {
     setError(null);
     try {
       const res = await signInWithApple();
-      if (res.error) { setError(res.error); } else { router.back(); }
+      if (res.error) { setError(res.error); } else { router.replace((returnTo as never) || '/'); }
     } finally {
       setLoading(false);
     }
@@ -72,14 +80,14 @@ export default function LoginScreen() {
       >
         {/* Brand */}
         <View style={{ alignItems: 'center', gap: spacing.sm }}>
-          <Text variant="displayMd" style={{ textAlign: 'center' }}>Gay-i</Text>
+          <Text variant="displayMd" style={{ textAlign: 'center' }}>Outing</Text>
           <Text variant="bodyLg" style={{ color: colors.textSecondary, textAlign: 'center' }}>
             Sign in to save trips and sync across devices.
           </Text>
         </View>
 
         {/* Magic link form */}
-        <View style={{ gap: spacing.md }}>
+        {sent ? <View style={{ gap: spacing.md, alignItems: 'center' }}><Text variant="h2">Check your email</Text><Text variant="bodyMd" style={{ color: colors.textSecondary, textAlign: 'center' }}>Open the secure Outing link on this device to finish signing in.</Text><Button variant="ghost" onPress={() => setSent(false)}>Use another email</Button></View> : <View style={{ gap: spacing.md }}>
           <TextInput
             value={email}
             onChangeText={setEmail}
@@ -103,25 +111,24 @@ export default function LoginScreen() {
           <Button size="lg" fullWidth loading={loading} onPress={handleMagicLink}>
             Continue with email
           </Button>
-        </View>
+        </View>}
 
-        {/* Divider */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-          <Text variant="caption" style={{ color: colors.textTertiary }}>or</Text>
-          <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
-        </View>
-
-        {/* Apple sign in */}
-        <Button
-          variant="secondary"
-          size="lg"
-          fullWidth
-          loading={loading}
-          onPress={handleApple}
-        >
-          Sign in with Apple
-        </Button>
+        {appleAvailable ? <>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+            <Text variant="caption" style={{ color: colors.textTertiary }}>or</Text>
+            <View style={{ flex: 1, height: 1, backgroundColor: colors.border }} />
+          </View>
+          <View pointerEvents={loading ? 'none' : 'auto'} style={{ opacity: loading ? 0.55 : 1 }}>
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={radius.md}
+              style={{ width: '100%', height: 52 }}
+              onPress={handleApple}
+            />
+          </View>
+        </> : null}
 
         {/* Browse without account */}
         <Button variant="ghost" fullWidth onPress={() => router.back()}>

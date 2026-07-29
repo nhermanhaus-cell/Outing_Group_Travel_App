@@ -100,6 +100,7 @@ export { authSupabaseShell }             from './plugins/auth/supabase.shell';
 export { aiTemplateSummary }             from './plugins/ai/template-summary';
 export { aiOpenAiShell }                 from './plugins/ai/openai-compatible.shell';
 export { analyticsNoop }                 from './plugins/analytics/noop';
+export { analyticsSupabase }             from './plugins/analytics/supabase';
 export { analyticsPosthogShell }         from './plugins/analytics/posthog.shell';
 export { shareNativeShare }              from './plugins/share/native-share';
 export { eventInvitationPartifulHandoff } from './plugins/eventInvitation/partiful-handoff';

@@ -226,7 +226,7 @@ const REASON_LABELS: Record<WeightKey, { positive: string; negative: string }> =
   },
   tripDurationFit: {
     positive: 'Destination suits your trip length',
-    negative: 'More or less time might be needed to fully explore',
+    negative: 'Trip length is a looser match for this destination',
   },
   eventAlignment: {
     positive: 'Major LGBTQ+ events happening during your visit',
@@ -355,6 +355,7 @@ export function scoreDestinations(
       .map((k) => REASON_LABELS[k].positive);
 
     const twoTradeoffs = ranked
+      .filter((key) => key !== 'tripDurationFit')
       .slice(-2)
       .map((k) => REASON_LABELS[k].negative);
 

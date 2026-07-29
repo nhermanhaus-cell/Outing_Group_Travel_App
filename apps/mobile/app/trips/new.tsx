@@ -8,30 +8,55 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { useAuth, useTrips } from '../../src/providers/AppProviders';
+import { useAuth, useTravelProfile, useTrips } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { GlamourSelector } from '../../components/ui/GlamourSelector';
-import { AuthGate } from '../../components/ui/AuthGate';
-import type { ActivityPace, GlamourLevel } from '@gayi/shared';
+import type { ActivityPace, GlamourLevel, PreferredTransportMode, TravelRange } from '@gayi/shared';
+import {
+  ANALYTICS_EVENTS,
+  bucketCount,
+  bucketDurationDays,
+} from '@gayi/shared';
+import { featureFlags } from '../../src/lib/featureFlags';
+import { useAnalytics } from '../../src/analytics/analytics-provider';
+import { TravelerSelector, type GroupType } from '../../components/trip-wizard/TravelerSelector';
+import { TripPathChooser } from '../../components/trip-wizard/TripPathChooser';
+import type { QuizAnswers } from '../quiz';
+import { AirportAutocomplete } from '../../components/trip-wizard/airport-autocomplete';
+import { DateField } from '../../components/trip-wizard/date-field';
+import { QUIZ_BUDDY_DRAFT_KEY, TravelBuddyPicker } from '../../components/trip-wizard/travel-buddy-picker';
+import { airports } from '../../src/content/airports';
+
+const NEW_TRIP_BUDDY_DRAFT_KEY = 'gayi:new-trip-travel-buddies';
 
 export default function NewTripScreen() {
   const { colors, spacing, radius } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { profile, updateProfile } = useTravelProfile();
   const { createTrip } = useTrips();
+  const { track } = useAnalytics();
   const params = useLocalSearchParams<{
     destinationSlug?: string;
     destinationName?: string;
     lodgingAddress?: string;
     activityPace?: ActivityPace;
+    quizAnswers?: string;
   }>();
+  let quizAnswers: Partial<QuizAnswers> = {};
+  try { quizAnswers = params.quizAnswers ? JSON.parse(params.quizAnswers) : {}; } catch { /* ignore */ }
+  const fromQuiz = Boolean(params.quizAnswers);
 
-  const [gateVisible, setGateVisible] = useState(!user);
   const [loading, setLoading] = useState(false);
+  const [creationPath, setCreationPath] = useState<'choose' | 'manual'>(
+    params.destinationName || !featureFlags.tripWizardV2 ? 'manual' : 'choose',
+  );
+  const primaryAirport = profile.homeAirports.find((airport) => airport.primary) ?? profile.homeAirports[0];
 
   const [form, setForm] = useState({
     name: params.destinationName ? `${params.destinationName} trip` : '',
@@ -39,9 +64,11 @@ export default function NewTripScreen() {
     destinationName: params.destinationName ?? '',
     startDate: '',
     endDate: '',
-    origin: '',
-    travelers: 2,
-    glamourLevel: 'comfortably_fabulous' as GlamourLevel,
+    origin: quizAnswers.originAirport ?? primaryAirport?.iata ?? '',
+    travelers: quizAnswers.groupSize ?? profile.defaultGroupSize ?? 2,
+    groupType: (quizAnswers.groupType ?? 'couple') as GroupType,
+    collaboratorChoice: quizAnswers.collaboratorChoice,
+    glamourLevel: (quizAnswers.glamourLevel ?? 'comfortably_fabulous') as GlamourLevel,
     budget: '',
     lodgingAddress: params.lodgingAddress ?? '',
     activityPace:
@@ -49,7 +76,11 @@ export default function NewTripScreen() {
       params.activityPace === 'balanced' ||
       params.activityPace === 'downtime'
         ? params.activityPace
+        : quizAnswers.activityPace
+          ? quizAnswers.activityPace
         : undefined,
+    travelRanges: quizAnswers.travelRanges ?? profile.preferredTravelRanges,
+    preferredTransportMode: profile.preferredTransportMode,
   });
 
   const set = <K extends keyof typeof form>(key: K, val: (typeof form)[K]) => {
@@ -57,7 +88,6 @@ export default function NewTripScreen() {
   };
 
   const handleCreate = async () => {
-    if (!user) { setGateVisible(true); return; }
     setLoading(true);
     try {
       const trip = await createTrip({
@@ -72,13 +102,85 @@ export default function NewTripScreen() {
         budget: form.budget ? parseInt(form.budget, 10) : undefined,
         lodgingAddress: form.lodgingAddress || undefined,
         activityPace: form.activityPace,
-        members: [{ id: user.id, displayName: user.displayName ?? user.email, role: 'owner' }],
+        interests: quizAnswers.interests as never[] | undefined,
+        travelRanges: form.travelRanges,
+        preferredTransportMode: form.preferredTransportMode,
+        members: [{ id: user?.id ?? 'local-owner', displayName: user?.displayName ?? user?.email ?? 'You', role: 'owner' }],
       });
-      router.replace(`/trips/${trip.tripId}`);
+      const durationDays = form.startDate && form.endDate
+        ? Math.max(
+            1,
+            Math.round(
+              (new Date(form.endDate).getTime() - new Date(form.startDate).getTime()) /
+              (24 * 60 * 60 * 1000),
+            ) + 1,
+          )
+        : undefined;
+      track(ANALYTICS_EVENTS.TRIP_CREATED, {
+        creationPath: fromQuiz ? 'recommendations' : 'manual',
+        groupType: form.groupType,
+        travelerCountBucket: bucketCount(form.travelers),
+        ...(durationDays ? { durationBucket: bucketDurationDays(durationDays) } : {}),
+        destinationPrefilled: Boolean(params.destinationSlug),
+      });
+      const airportCode = form.origin.trim().toUpperCase();
+      const selectedAirport = airports.find((airport) => airport.iata === airportCode);
+      await updateProfile({
+        preferredTravelRanges: form.travelRanges,
+        preferredTransportMode: form.preferredTransportMode,
+        defaultGroupSize: form.travelers,
+        ...(airportCode ? { homeAirports: [{ iata: airportCode, name: selectedAirport?.name ?? airportCode, ...(selectedAirport ? { city: selectedAirport.city, countryCode: selectedAirport.countryCode, coords: { lat: selectedAirport.lat, lng: selectedAirport.lng } } : {}), primary: true, source: 'manual' as const }, ...profile.homeAirports.filter((airport) => airport.iata !== airportCode).map((airport) => ({ ...airport, primary: false }))] } : {}),
+      });
+      if (form.groupType !== 'solo' && form.collaboratorChoice === 'now') {
+        const sourceKey = fromQuiz ? QUIZ_BUDDY_DRAFT_KEY : NEW_TRIP_BUDDY_DRAFT_KEY;
+        const selected = await SecureStore.getItemAsync(sourceKey);
+        if (selected) await SecureStore.setItemAsync(`gayi:pending-invites:${trip.tripId}`, selected);
+        await SecureStore.deleteItemAsync(sourceKey);
+      }
+      router.replace(form.groupType !== 'solo' && form.collaboratorChoice === 'now' ? `/trips/${trip.tripId}/invite` : `/trips/${trip.tripId}`);
+    } catch (error) {
+      track(ANALYTICS_EVENTS.OPERATION_FAILED, {
+        operation: 'trip_create',
+        errorCategory: error instanceof Error ? 'create_failed' : 'unknown',
+        sourceScreen: '/trips/new',
+      });
+      throw error;
     } finally {
       setLoading(false);
     }
   };
+
+  if (creationPath === 'choose') {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top + spacing.lg }}>
+        <View style={{ paddingHorizontal: spacing.base, gap: spacing.xs }}>
+          <Pressable onPress={() => router.back()} style={{ paddingVertical: spacing.sm }}>
+            <Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text>
+          </Pressable>
+          <Text variant="displayMd">Start a new trip</Text>
+          <Text variant="bodyLg" style={{ color: colors.textSecondary }}>
+            Find your next destination, or begin with a flexible draft.
+          </Text>
+        </View>
+        <TripPathChooser
+          onRecommend={() => {
+            track(ANALYTICS_EVENTS.TRIP_CREATION_PATH_SELECTED, {
+              path: 'recommendations',
+              entryPoint: 'new_trip',
+            });
+            router.push('/quiz');
+          }}
+          onManual={() => {
+            track(ANALYTICS_EVENTS.TRIP_CREATION_PATH_SELECTED, {
+              path: 'manual',
+              entryPoint: 'new_trip',
+            });
+            setCreationPath('manual');
+          }}
+        />
+      </View>
+    );
+  }
 
   return (
     <>
@@ -126,60 +228,59 @@ export default function NewTripScreen() {
             />
           </Field>
 
-          <View style={{ flexDirection: 'row', gap: spacing.md }}>
+          <View style={{ gap: spacing.md }}>
             <View style={{ flex: 1 }}>
               <Field label="Start date" optional>
-                <StyledInput
-                  value={form.startDate}
-                  onChangeText={(v) => set('startDate', v)}
-                  placeholder="YYYY-MM-DD"
-                />
+                <DateField value={form.startDate} onChange={(value) => setForm((current) => ({ ...current, startDate: value, endDate: current.endDate && current.endDate >= value ? current.endDate : quizAnswers.duration ? addDays(value, Math.max(0, quizAnswers.duration - 1)) : '' }))} placeholder="Choose start date" />
               </Field>
             </View>
             <View style={{ flex: 1 }}>
               <Field label="End date" optional>
-                <StyledInput
-                  value={form.endDate}
-                  onChangeText={(v) => set('endDate', v)}
-                  placeholder="YYYY-MM-DD"
-                />
+                <DateField value={form.endDate} onChange={(value) => set('endDate', value)} placeholder="Choose end date" minimumDate={form.startDate || undefined} />
               </Field>
             </View>
           </View>
 
           <Field label="Flying from" optional>
-            <StyledInput
-              value={form.origin}
-              onChangeText={(v) => set('origin', v.toUpperCase())}
-              placeholder="Airport code, e.g. LHR"
-              autoCapitalize="characters"
-            />
+            <AirportAutocomplete value={form.origin} onSelect={(airport) => set('origin', airport.iata)} placeholder="City or airport" />
           </Field>
 
-          <Field label="Travelers">
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-              <Pressable
-                onPress={() => set('travelers', Math.max(1, form.travelers - 1))}
-                style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Text variant="h2">–</Text>
-              </Pressable>
-              <Text variant="displaySm" style={{ minWidth: 32, textAlign: 'center' }}>{form.travelers}</Text>
-              <Pressable
-                onPress={() => set('travelers', Math.min(50, form.travelers + 1))}
-                style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Text variant="h2">+</Text>
-              </Pressable>
+          {!fromQuiz ? <Field label="Travel range">
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+              {([
+                ['road_trip', 'Road trip'], ['short_flight', 'Short flight'], ['long_domestic', 'Long domestic'], ['international', 'International'],
+              ] as Array<[TravelRange, string]>).map(([range, label]) => { const active = form.travelRanges.includes(range); return <Pressable key={range} onPress={() => set('travelRanges', active ? form.travelRanges.filter((item) => item !== range) : [...form.travelRanges, range])} style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full, borderWidth: 1.5, borderColor: active ? colors.accent : colors.border, backgroundColor: active ? colors.accentLight : colors.cardBackground }}><Text variant="labelMd">{label}</Text></Pressable>; })}
             </View>
-          </Field>
+          </Field> : null}
 
-          <Field label="Glamour level">
+          {!fromQuiz ? <Field label="Getting around">
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+              {(['auto', 'walking', 'transit', 'driving'] as PreferredTransportMode[]).map((mode) => <Pressable key={mode} onPress={() => set('preferredTransportMode', mode)} style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full, borderWidth: 1.5, borderColor: form.preferredTransportMode === mode ? colors.accent : colors.border, backgroundColor: form.preferredTransportMode === mode ? colors.accentLight : colors.cardBackground }}><Text variant="labelMd" style={{ textTransform: 'capitalize' }}>{mode}</Text></Pressable>)}
+            </View>
+          </Field> : null}
+
+          {!fromQuiz ? <Field label="Travelers">
+            <TravelerSelector groupType={form.groupType} count={form.travelers} onChange={(groupType, count) => setForm((current) => ({ ...current, groupType, travelers: count }))} />
+          </Field> : null}
+
+          {!fromQuiz && form.groupType !== 'solo' ? (
+            <Field label="Travel buddies">
+              <View style={{ gap: spacing.sm }}>
+                {([
+                  { key: 'now' as const, label: 'Add your travel buddies now', hint: 'Their interests can make the itinerary more accurate.' },
+                  { key: 'later' as const, label: 'I’ll add them later', hint: 'Invite people from the trip hub anytime.' },
+                ]).map((choice) => <Pressable key={choice.key} onPress={() => set('collaboratorChoice', choice.key)} style={{ padding: spacing.md, borderWidth: 1.5, borderColor: form.collaboratorChoice === choice.key ? colors.accent : colors.border, backgroundColor: form.collaboratorChoice === choice.key ? colors.accentLight : colors.cardBackground, borderRadius: radius.lg, gap: spacing.xxs }}><Text variant="labelLg">{choice.label}</Text><Text variant="caption" style={{ color: colors.textTertiary }}>{choice.hint}</Text></Pressable>)}
+                {form.collaboratorChoice === 'now' ? <TravelBuddyPicker draftKey={NEW_TRIP_BUDDY_DRAFT_KEY} autoRequest /> : null}
+              </View>
+            </Field>
+          ) : null}
+
+          {!fromQuiz ? <Field label="Glamour level">
             <GlamourSelector
               value={form.glamourLevel}
               onChange={(v) => set('glamourLevel', v)}
             />
-          </Field>
+          </Field> : null}
 
           <Field label="Total budget (USD)" optional>
             <StyledInput
@@ -196,11 +297,6 @@ export default function NewTripScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <AuthGate
-        visible={gateVisible && !user}
-        onDismiss={() => { setGateVisible(false); router.back(); }}
-        reason="Sign in to create and save trips."
-      />
     </>
   );
 }
@@ -236,4 +332,11 @@ function StyledInput(props: React.ComponentProps<typeof TextInput>) {
       {...props}
     />
   );
+}
+
+function addDays(iso: string, days: number): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const date = new Date(Date.UTC(year!, (month ?? 1) - 1, day ?? 1));
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
 }

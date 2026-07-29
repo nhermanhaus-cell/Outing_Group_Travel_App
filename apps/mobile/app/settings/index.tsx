@@ -97,7 +97,6 @@ export default function SettingsScreen() {
         }}
       >
         <Section title="Privacy">
-          <RowToggle label="Anonymous analytics" subtitle="Help improve Gay-i" value={false} />
           <RowToggle label="Share trip activity" subtitle="Show trips on community map" value={false} />
         </Section>
 

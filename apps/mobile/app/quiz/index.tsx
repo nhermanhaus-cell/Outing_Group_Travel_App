@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -7,18 +7,39 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Location from 'expo-location';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { ProgressBar } from '../../components/ui/ProgressBar';
-import type { GlamourLevel } from '@gayi/shared';
+import {
+  ANALYTICS_EVENTS,
+  type GlamourLevel,
+  type LongDistanceTransportMode,
+  type TravelRange,
+  type TravelScope,
+} from '@gayi/shared';
+import { useTravelProfile } from '../../src/providers/AppProviders';
+import { useAnalytics } from '../../src/analytics/analytics-provider';
+import { airportDataAttribution, airports, nearestAirports, type AirportRecord } from '../../src/content/airports';
+import { TravelerSelector, type GroupType } from '../../components/trip-wizard/TravelerSelector';
+import { AirportAutocomplete } from '../../components/trip-wizard/airport-autocomplete';
+import { QUIZ_BUDDY_DRAFT_KEY, TravelBuddyPicker } from '../../components/trip-wizard/travel-buddy-picker';
+import {
+  questionnaireCompletionHref,
+  selectedDestinationFromParams,
+} from '../../src/lib/tripPlanningFlow';
 
 // ─── Quiz state ───────────────────────────────────────────────────────────────
 
 export interface QuizAnswers {
   originAirport: string;
+  travelRanges: TravelRange[];
+  maxTravelTimeHours?: number;
+  travelScope: TravelScope;
+  transportModes: LongDistanceTransportMode[];
   months: number[];
   duration: number;
   groupType: string;
@@ -27,14 +48,26 @@ export interface QuizAnswers {
   interests: string[];
   nightlife: number; // 0-5
   socialPrefs: string[];
-  identityConsiderations: string[];
+  collaboratorChoice?: 'now' | 'later';
   activityPace: 'packed' | 'balanced' | 'downtime';
   lodgingStatus: 'none' | 'booked';
   lodgingAddress: string;
 }
 
+function analyticsStepId(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+    .slice(0, 80);
+}
+
 const DEFAULT_ANSWERS: QuizAnswers = {
   originAirport: '',
+  travelRanges: ['short_flight', 'international'],
+  maxTravelTimeHours: 4,
+  travelScope: 'either',
+  transportModes: ['plane'],
   months: [],
   duration: 7,
   groupType: 'couple',
@@ -43,7 +76,6 @@ const DEFAULT_ANSWERS: QuizAnswers = {
   interests: [],
   nightlife: 3,
   socialPrefs: [],
-  identityConsiderations: [],
   activityPace: 'balanced',
   lodgingStatus: 'none',
   lodgingAddress: '',
@@ -54,13 +86,6 @@ const MONTHS = [
   { n: 4, label: 'Apr' }, { n: 5, label: 'May' }, { n: 6, label: 'Jun' },
   { n: 7, label: 'Jul' }, { n: 8, label: 'Aug' }, { n: 9, label: 'Sep' },
   { n: 10, label: 'Oct' }, { n: 11, label: 'Nov' }, { n: 12, label: 'Dec' },
-];
-
-const GROUP_TYPES = [
-  { key: 'solo', label: 'Solo' },
-  { key: 'couple', label: 'Couple' },
-  { key: 'friends', label: 'Friends' },
-  { key: 'group', label: 'Group' },
 ];
 
 const INTERESTS_OPTIONS = [
@@ -94,13 +119,22 @@ const SOCIAL_PREFS = [
   { key: 'exploration', label: 'Exploration' },
 ];
 
-const IDENTITY_OPTS = [
-  { key: 'trans_friendly', label: 'Trans-inclusive spaces' },
-  { key: 'bi_visible', label: 'Bi-visibility important' },
-  { key: 'poc_spaces', label: 'POC queer spaces' },
-  { key: 'gender_neutral_bathrooms', label: 'Gender-neutral facilities' },
-  { key: 'accessibility', label: 'Accessibility needs' },
-];
+const JOURNEY_TIMES = [
+  { hours: 2, label: 'Up to 2 hours' },
+  { hours: 4, label: 'Up to 4 hours' },
+  { hours: 6, label: 'Up to 6 hours' },
+  { hours: 10, label: 'Up to 10 hours' },
+  { hours: undefined, label: 'No time limit' },
+] as const;
+
+function deriveTravelRanges(hours: number | undefined, scope: TravelScope, modes: LongDistanceTransportMode[]): TravelRange[] {
+  const ranges = new Set<TravelRange>();
+  if (modes.includes('car') && (hours === undefined || hours <= 6)) ranges.add('road_trip');
+  if ((modes.includes('plane') || modes.includes('train')) && hours !== undefined && hours <= 4) ranges.add('short_flight');
+  if (scope !== 'international') ranges.add('long_domestic');
+  if (scope !== 'domestic') ranges.add('international');
+  return [...ranges];
+}
 
 // ─── Step components ──────────────────────────────────────────────────────────
 
@@ -196,22 +230,56 @@ function NightlifeSlider({
 
 // ─── Main quiz ────────────────────────────────────────────────────────────────
 
-const TOTAL_STEPS = 9;
-
 export default function QuizScreen() {
   const { colors, spacing, radius } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { profile, updateProfile } = useTravelProfile();
+  const { track, initialized: analyticsInitialized } = useAnalytics();
+  const params = useLocalSearchParams<{
+    destinationSlug?: string;
+    destinationName?: string;
+  }>();
+  const selectedDestination = selectedDestinationFromParams(params);
+  const destinationPrefilled = Boolean(selectedDestination);
 
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<QuizAnswers>(DEFAULT_ANSWERS);
+  const [nearbyAirports, setNearbyAirports] = useState<AirportRecord[]>([]);
+  const analyticsStartedAtRef = useRef(Date.now());
+  const analyticsCompletedRef = useRef(false);
+  const analyticsStartedRef = useRef(false);
+  const currentAnalyticsStepRef = useRef({ id: 'unknown', index: 0 });
+
+  useEffect(() => {
+    const primary = profile.homeAirports.find((airport) => airport.primary) ?? profile.homeAirports[0];
+    setAnswers((current) => ({
+      ...current,
+      originAirport: current.originAirport || primary?.iata || '',
+      travelRanges: current.travelRanges.length > 0
+        ? current.travelRanges
+        : profile.preferredTravelRanges,
+    }));
+  }, [profile.homeAirports, profile.preferredTravelRanges]);
 
   const set = useCallback(<K extends keyof QuizAnswers>(key: K, val: QuizAnswers[K]) => {
     setAnswers((prev) => ({ ...prev, [key]: val }));
   }, []);
 
-  const goNext = () => {
-    if (step < TOTAL_STEPS - 1) setStep((s) => s + 1);
+  const suggestNearbyAirports = async () => {
+    const permission = await Location.requestForegroundPermissionsAsync();
+    if (!permission.granted) return;
+    const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
+    setNearbyAirports(nearestAirports(location.coords.latitude, location.coords.longitude).map((result) => result.airport));
+  };
+
+  const goNext = (skipped = false) => {
+    track(ANALYTICS_EVENTS.QUESTIONNAIRE_STEP_COMPLETED, {
+      stepId: analyticsStepId(currentStep.title),
+      stepIndex: step,
+      skipped,
+    });
+    if (step < totalSteps - 1) setStep((s) => s + 1);
     else handleComplete();
   };
 
@@ -221,34 +289,64 @@ export default function QuizScreen() {
   };
 
   const handleComplete = () => {
-    router.push({ pathname: '/quiz/results', params: { answers: JSON.stringify(answers) } });
+    analyticsCompletedRef.current = true;
+    track(ANALYTICS_EVENTS.QUESTIONNAIRE_COMPLETED, {
+      stepCount: totalSteps,
+      activeDurationMs: Date.now() - analyticsStartedAtRef.current,
+      destinationPrefilled,
+    });
+    const airportCode = answers.originAirport.trim().toUpperCase();
+    const airport = airports.find((item) => item.iata === airportCode);
+    void updateProfile({
+      homeAirports: airportCode
+        ? [
+            { iata: airportCode, name: airport?.name ?? airportCode, city: airport?.city, countryCode: airport?.countryCode, coords: airport ? { lat: airport.lat, lng: airport.lng } : undefined, primary: true, source: nearbyAirports.some((item) => item.iata === airportCode) ? 'nearby_suggestion' as const : 'manual' as const },
+            ...profile.homeAirports.filter((item) => item.iata !== airportCode).map((item) => ({ ...item, primary: false })),
+          ]
+        : profile.homeAirports,
+      preferredTravelRanges: answers.travelRanges,
+      ...(answers.maxTravelTimeHours !== undefined ? { maxTravelTimeHours: answers.maxTravelTimeHours } : {}),
+      travelScope: answers.travelScope,
+      longDistanceTransportModes: answers.transportModes,
+      defaultInterests: answers.interests as never[],
+      defaultGroupSize: answers.groupSize,
+      defaultTripLengthDays: answers.duration,
+      coarseHomeRegion: airport?.city,
+    });
+    router.push(questionnaireCompletionHref(answers, selectedDestination));
   };
-
-  const progress = ((step + 1) / TOTAL_STEPS) * 100;
 
   const steps = [
     {
-      title: 'Where are you flying from?',
-      subtitle: 'Enter your nearest airport code or city.',
+      title: 'Where are you starting from?',
+      subtitle: 'Enter your city or choose a nearby airport.',
       content: (
-        <TextInput
-          value={answers.originAirport}
-          onChangeText={(t) => set('originAirport', t.toUpperCase())}
-          placeholder="e.g. LHR, JFK, SYD"
-          placeholderTextColor={colors.textTertiary}
-          autoCapitalize="characters"
-          autoCorrect={false}
-          maxLength={5}
-          style={{
-            fontSize: 28,
-            fontWeight: '700',
-            color: colors.textPrimary,
-            borderBottomWidth: 2,
-            borderBottomColor: answers.originAirport ? colors.accent : colors.border,
-            paddingBottom: spacing.sm,
-            letterSpacing: 4,
-          }}
-        />
+        <View style={{ gap: spacing.md }}>
+        <AirportAutocomplete value={answers.originAirport} onSelect={(airport) => set('originAirport', airport.iata)} placeholder="Start typing a city or airport" />
+        <Button variant="secondary" onPress={suggestNearbyAirports}>Suggest airports near me</Button>
+        {nearbyAirports.length > 0 ? (
+          <View style={{ gap: spacing.xs }}>
+            {nearbyAirports.map((airport) => (
+              <Pressable key={airport.iata} onPress={() => set('originAirport', airport.iata)} style={{ padding: spacing.md, borderRadius: radius.md, backgroundColor: answers.originAirport === airport.iata ? colors.accentLight : colors.backgroundSecondary }}>
+                <Text variant="labelLg">{airport.iata} · {airport.name}</Text>
+                <Text variant="caption" style={{ color: colors.textSecondary }}>{airport.city}</Text>
+              </Pressable>
+            ))}
+            <Text variant="caption" style={{ color: colors.textTertiary }}>{airportDataAttribution} Precise location is not stored.</Text>
+          </View>
+        ) : null}
+        </View>
+      ),
+    },
+    {
+      title: 'How far—and how—do you want to go?',
+      subtitle: 'Choose a one-way travel time, where you want to travel, and the ways you would get there.',
+      content: (
+        <View style={{ gap: spacing.xl }}>
+          <View style={{ gap: spacing.sm }}><Text variant="h3">Travel time</Text><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>{JOURNEY_TIMES.map((option) => { const active = answers.maxTravelTimeHours === option.hours; return <Pressable key={option.label} onPress={() => setAnswers((current) => ({ ...current, maxTravelTimeHours: option.hours, travelRanges: deriveTravelRanges(option.hours, current.travelScope, current.transportModes) }))} style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full, borderWidth: 1.5, borderColor: active ? colors.accent : colors.border, backgroundColor: active ? colors.accentLight : colors.cardBackground }}><Text variant="labelMd" style={{ color: active ? colors.accent : colors.textPrimary }}>{option.label}</Text></Pressable>; })}</View></View>
+          <View style={{ gap: spacing.sm }}><Text variant="h3">Domestic or international?</Text><ChipSelect options={[{ key: 'domestic', label: 'Domestic' }, { key: 'international', label: 'International' }, { key: 'either', label: 'Either' }]} selected={[answers.travelScope]} multi={false} onChange={([scope]) => scope && setAnswers((current) => ({ ...current, travelScope: scope, travelRanges: deriveTravelRanges(current.maxTravelTimeHours, scope, current.transportModes) }))} /></View>
+          <View style={{ gap: spacing.sm }}><Text variant="h3">How do you want to go?</Text><ChipSelect options={[{ key: 'car', label: 'Car' }, { key: 'train', label: 'Train' }, { key: 'plane', label: 'Plane' }, { key: 'boat', label: 'Boat' }]} selected={answers.transportModes} onChange={(transportModes) => setAnswers((current) => ({ ...current, transportModes, travelRanges: deriveTravelRanges(current.maxTravelTimeHours, current.travelScope, transportModes) }))} /></View>
+        </View>
       ),
     },
     {
@@ -294,33 +392,28 @@ export default function QuizScreen() {
       subtitle: null,
       content: (
         <View style={{ gap: spacing.lg }}>
-          {[3, 5, 7, 10, 14, 21].map((d) => {
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+          {[3, 5, 7, 10, 14].map((d) => {
             const active = answers.duration === d;
             return (
               <Pressable
                 key={d}
                 onPress={() => set('duration', d)}
                 style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: spacing.md,
-                  paddingVertical: spacing.md,
-                  paddingHorizontal: spacing.base,
-                  borderRadius: radius.lg,
+                  paddingVertical: spacing.sm,
+                  paddingHorizontal: spacing.md,
+                  borderRadius: radius.full,
                   borderWidth: 1.5,
                   borderColor: active ? colors.accent : colors.border,
                   backgroundColor: active ? colors.accentLight : colors.cardBackground,
                 }}
               >
-                <Text variant="displaySm" style={{ color: active ? colors.accent : colors.textPrimary, minWidth: 36 }}>
-                  {d}
-                </Text>
-                <Text variant="bodyMd" style={{ color: active ? colors.accent : colors.textSecondary }}>
-                  {d === 1 ? 'night' : 'nights'}
-                </Text>
+                <Text variant="labelLg" style={{ color: active ? colors.accent : colors.textPrimary }}>{d} days</Text>
               </Pressable>
             );
           })}
+          </View>
+          <View style={{ gap: spacing.sm }}><Text variant="h3">Custom number of days</Text><View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}><Pressable onPress={() => set('duration', Math.max(1, answers.duration - 1))} style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}><Text variant="h2">–</Text></Pressable><TextInput value={String(answers.duration)} onChangeText={(value) => { const parsed = Number.parseInt(value, 10); if (Number.isFinite(parsed)) set('duration', Math.min(90, Math.max(1, parsed))); }} keyboardType="number-pad" selectTextOnFocus style={{ width: 70, textAlign: 'center', fontSize: 26, fontWeight: '700', color: colors.textPrimary, borderBottomWidth: 2, borderBottomColor: colors.accent, padding: spacing.xs }} /><Pressable onPress={() => set('duration', Math.min(90, answers.duration + 1))} style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}><Text variant="h2">+</Text></Pressable></View></View>
         </View>
       ),
     },
@@ -329,30 +422,7 @@ export default function QuizScreen() {
       subtitle: null,
       content: (
         <View style={{ gap: spacing.xl }}>
-          <ChipSelect
-            options={GROUP_TYPES}
-            selected={[answers.groupType as never]}
-            onChange={(v) => set('groupType', v[0] ?? 'solo')}
-            multi={false}
-          />
-          <View style={{ gap: spacing.sm }}>
-            <Text variant="labelMd" style={{ color: colors.textSecondary }}>Travelers</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-              <Pressable
-                onPress={() => set('groupSize', Math.max(1, answers.groupSize - 1))}
-                style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Text variant="h2">–</Text>
-              </Pressable>
-              <Text variant="displaySm" style={{ minWidth: 32, textAlign: 'center' }}>{answers.groupSize}</Text>
-              <Pressable
-                onPress={() => set('groupSize', Math.min(20, answers.groupSize + 1))}
-                style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Text variant="h2">+</Text>
-              </Pressable>
-            </View>
-          </View>
+          <TravelerSelector groupType={answers.groupType as GroupType} count={answers.groupSize} onChange={(groupType, count) => setAnswers((current) => ({ ...current, groupType, groupSize: count, collaboratorChoice: groupType === 'solo' ? undefined : current.collaboratorChoice }))} />
         </View>
       ),
     },
@@ -407,7 +477,7 @@ export default function QuizScreen() {
           {(
             [
               { key: 'packed' as const, label: 'Packed — fill the days', hint: 'More stops, fewer free blocks' },
-              { key: 'balanced' as const, label: 'Balanced — classic Gay-i mix', hint: 'Sightseeing + evenings without overload' },
+              { key: 'balanced' as const, label: 'Balanced — classic Outing mix', hint: 'Sightseeing + evenings without overload' },
               { key: 'downtime' as const, label: 'Downtime — soft days', hint: 'Protected rest blocks every day' },
             ]
           ).map((opt) => {
@@ -504,25 +574,55 @@ export default function QuizScreen() {
             />
           </View>
 
-          <View style={{ gap: spacing.md }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text variant="h3">Identity considerations</Text>
-              <Pressable onPress={() => {}}>
-                <Text variant="caption" style={{ color: colors.textTertiary }}>Optional · skip</Text>
-              </Pressable>
-            </View>
-            <ChipSelect
-              options={IDENTITY_OPTS}
-              selected={answers.identityConsiderations as never[]}
-              onChange={(v) => set('identityConsiderations', v as string[])}
-            />
-          </View>
         </View>
       ),
     },
+    ...(answers.groupType !== 'solo' ? [{
+      title: 'Bring your travel buddies in?',
+      subtitle: 'Add them now to keep their contact selections ready for the trip, or invite them later from the trip hub.',
+      content: (
+        <View style={{ gap: spacing.md }}>
+          {([{ key: 'now' as const, label: 'Add your travel buddies now' }, { key: 'later' as const, label: 'I’ll add them later' }]).map((choice) => { const active = answers.collaboratorChoice === choice.key; return <Pressable key={choice.key} onPress={() => set('collaboratorChoice', choice.key)} style={{ padding: spacing.base, borderRadius: radius.lg, borderWidth: 1.5, borderColor: active ? colors.accent : colors.border, backgroundColor: active ? colors.accentLight : colors.cardBackground }}><Text variant="labelLg" style={{ color: active ? colors.accent : colors.textPrimary }}>{choice.label}</Text></Pressable>; })}
+          {answers.collaboratorChoice === 'now' ? <TravelBuddyPicker draftKey={QUIZ_BUDDY_DRAFT_KEY} autoRequest /> : null}
+        </View>
+      ),
+    }] : []),
   ];
 
+  const totalSteps = steps.length;
+  const progress = ((step + 1) / totalSteps) * 100;
+
   const currentStep = steps[step];
+  currentAnalyticsStepRef.current = {
+    id: analyticsStepId(currentStep.title),
+    index: step,
+  };
+
+  useEffect(() => {
+    if (!analyticsInitialized || analyticsStartedRef.current) return;
+    analyticsStartedRef.current = true;
+    analyticsStartedAtRef.current = Date.now();
+    track(ANALYTICS_EVENTS.QUESTIONNAIRE_STARTED, {
+      entryPoint: selectedDestination ? 'destination_detail' : 'trip_planning',
+      destinationPrefilled,
+    });
+    return () => {
+      if (analyticsCompletedRef.current) return;
+      track(ANALYTICS_EVENTS.QUESTIONNAIRE_ABANDONED, {
+        stepId: currentAnalyticsStepRef.current.id,
+        stepIndex: currentAnalyticsStepRef.current.index,
+        activeDurationMs: Date.now() - analyticsStartedAtRef.current,
+      });
+    };
+  }, [analyticsInitialized, destinationPrefilled, track]);
+
+  useEffect(() => {
+    if (!analyticsInitialized) return;
+    track(ANALYTICS_EVENTS.QUESTIONNAIRE_STEP_VIEWED, {
+      stepId: analyticsStepId(currentStep.title),
+      stepIndex: step,
+    });
+  }, [analyticsInitialized, currentStep.title, step, track]);
 
   return (
     <KeyboardAvoidingView
@@ -547,7 +647,9 @@ export default function QuizScreen() {
           <ProgressBar value={progress} />
         </View>
         <Text variant="caption" style={{ color: colors.textTertiary }}>
-          {step + 1}/{TOTAL_STEPS}
+          {selectedDestination
+            ? `${selectedDestination.destinationName} · ${step + 1}/${totalSteps}`
+            : `${step + 1}/${totalSteps}`}
         </Text>
       </View>
 
@@ -571,11 +673,15 @@ export default function QuizScreen() {
         {currentStep.content}
 
         <View style={{ gap: spacing.sm, marginTop: spacing.lg }}>
-          <Button size="lg" fullWidth onPress={goNext}>
-            {step < TOTAL_STEPS - 1 ? 'Continue' : 'See my matches'}
+          <Button size="lg" fullWidth onPress={() => goNext(false)}>
+            {step < totalSteps - 1
+              ? 'Continue'
+              : selectedDestination
+                ? 'Continue to trip'
+                : 'See my matches'}
           </Button>
-          {step < TOTAL_STEPS - 1 && (
-            <Button variant="ghost" fullWidth onPress={goNext}>
+          {step < totalSteps - 1 && (
+            <Button variant="ghost" fullWidth onPress={() => goNext(true)}>
               Skip
             </Button>
           )}

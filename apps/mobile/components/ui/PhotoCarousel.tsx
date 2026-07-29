@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Dimensions,
-  Image,
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
   View,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { Text } from './Text';
 
@@ -19,8 +18,12 @@ type Props = {
 export function PhotoCarousel({ urls, height = 180, attribution }: Props) {
   const { colors, spacing, radius } = useTheme();
   const [index, setIndex] = useState(0);
-  const [width, setWidth] = useState(Dimensions.get('window').width - spacing.base * 2);
-  const valid = (urls ?? []).filter(Boolean);
+  const [width, setWidth] = useState(320);
+  const [failed, setFailed] = useState<string[]>([]);
+  const valid = useMemo(
+    () => [...new Set((urls ?? []).filter((url) => Boolean(url) && !failed.includes(url)))].slice(0, 5),
+    [failed, urls],
+  );
 
   if (valid.length === 0) return null;
 
@@ -50,7 +53,11 @@ export function PhotoCarousel({ urls, height = 180, attribution }: Props) {
             key={uri}
             source={{ uri }}
             style={{ width, height, backgroundColor: colors.backgroundTertiary }}
-            resizeMode="cover"
+            contentFit="cover"
+            transition={180}
+            cachePolicy="memory"
+            accessibilityLabel="Place photo"
+            onError={() => setFailed((current) => [...current, uri])}
           />
         ))}
       </ScrollView>

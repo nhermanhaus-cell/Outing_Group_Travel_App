@@ -122,7 +122,7 @@ export default function ProfileScreen() {
             gap: spacing.xs,
           }}
         >
-          <Text variant="labelMd">Gay-i MVP</Text>
+          <Text variant="labelMd">Outing MVP</Text>
           <Text variant="caption" style={{ color: colors.textTertiary }}>
             Destination data is editorial sample data. Not live.
           </Text>

@@ -1,7 +1,7 @@
 import { defineProviderPlugin } from '../../registry';
 import type { AiReq, AiRes } from '../../interfaces';
 
-/** Simple template-based response builder for common Gay-i prompts. */
+/** Simple template-based response builder for common Outing prompts. */
 function buildSummary(req: AiReq): string {
   const { prompt, context } = req;
   const lower = prompt.toLowerCase();

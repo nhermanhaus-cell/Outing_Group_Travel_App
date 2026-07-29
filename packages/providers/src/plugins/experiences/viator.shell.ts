@@ -1,7 +1,6 @@
 import { defineProviderPlugin, withTimeout } from '../../registry';
 import type { Experience, ExperiencesReq, ExperiencesRes } from '../../interfaces';
 import {
-  buildExternalFallbackExperiences,
   fetchJsonWithTimeout,
   slugToDestinationName,
 } from './shared';
@@ -9,7 +8,6 @@ import {
 const PRODUCTS_SEARCH_URL = 'https://api.viator.com/partner/products/search';
 const DESTINATIONS_URL = 'https://api.viator.com/partner/destinations';
 const FREETEXT_URL = 'https://api.viator.com/partner/search/freetext';
-const FALLBACK_SEARCH_URL = 'https://www.viator.com/searchResults/all?text=';
 const TIMEOUT_MS = 8000;
 
 type JsonRecord = Record<string, unknown>;
@@ -87,9 +85,7 @@ function mapProducts(rawProducts: unknown[], req: ExperiencesReq): Experience[] 
       const currency =
         pickString(rawProduct, ['currency', 'currencyCode']) ??
         (pricing ? pickString(pricing, ['currency', 'currencyCode']) : undefined);
-      const affiliateUrl =
-        pickString(rawProduct, ['productUrl', 'webURL', 'url']) ??
-        `${FALLBACK_SEARCH_URL}${encodeURIComponent(`${destinationName} ${title}`)}`;
+      const affiliateUrl = pickString(rawProduct, ['productUrl', 'webURL', 'url']);
 
       const reviews = isRecord(rawProduct['reviews']) ? rawProduct['reviews'] : null;
       const rating = reviews ? pickNumber(reviews, ['combinedAverageRating', 'averageRating']) : undefined;
@@ -105,8 +101,8 @@ function mapProducts(rawProducts: unknown[], req: ExperiencesReq): Experience[] 
         ...(currency ? { currency } : {}),
         tags: ['bookable', 'viator', ...(rating && rating >= 4.5 ? ['highly_rated'] : [])],
         provider: 'viator',
-        affiliateUrl,
-        bookingMode: 'external',
+        ...(affiliateUrl ? { affiliateUrl } : {}),
+        bookingMode: affiliateUrl ? 'external' : 'none',
       };
     })
     .filter((experience): experience is Experience => experience != null)
@@ -215,22 +211,17 @@ export const experiencesViatorShell = defineProviderPlugin<ExperiencesReq, Exper
   slot: 'experiences',
   label: 'Viator Experiences',
   description:
-    'Live Viator Partner API product search (POST). Falls back to editorial experiences with Viator deep links.',
+    'Server-only Viator Partner API product search. Mobile discovery uses the authenticated travel-api Edge proxy.',
   requiredEnv: ['VIATOR_API_KEY'],
   async healthCheck() {
-    return Boolean(process.env['VIATOR_API_KEY'] || process.env['EXPO_PUBLIC_VIATOR_API_KEY']);
+    return Boolean(process.env['VIATOR_API_KEY']);
   },
   create() {
     const inner = {
       async call(req: ExperiencesReq): Promise<ExperiencesRes> {
         const limit = req.limit ?? 6;
-        const fallbackExperiences = buildExternalFallbackExperiences(
-          req,
-          'viator',
-          FALLBACK_SEARCH_URL,
-        );
-        const apiKey =
-          process.env['VIATOR_API_KEY'] || process.env['EXPO_PUBLIC_VIATOR_API_KEY'];
+        const fallbackExperiences: Experience[] = [];
+        const apiKey = process.env['VIATOR_API_KEY'];
 
         if (!apiKey) {
           return { experiences: fallbackExperiences };

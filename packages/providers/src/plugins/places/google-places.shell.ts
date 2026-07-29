@@ -3,7 +3,8 @@
  * Uses Geocoding API + Places Nearby Search (legacy) — works with standard
  * Google Maps Platform keys that have those APIs enabled.
  *
- * Mobile clients should prefer EXPO_PUBLIC_GOOGLE_PLACES_API_KEY (restricted).
+ * Server runtimes only. Mobile clients use the authenticated travel-api Edge proxy;
+ * only the native Maps SDK key may ship in the app bundle.
  */
 
 import { defineProviderPlugin, withTimeout } from '../../registry';
@@ -13,10 +14,7 @@ const TIMEOUT_MS = 8000;
 
 function apiKey(): string | undefined {
   return (
-    process.env.GOOGLE_PLACES_API_KEY ||
-    process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ||
-    process.env.GOOGLE_MAPS_API_KEY ||
-    process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
+    process.env.GOOGLE_PLACES_API_KEY
   );
 }
 
@@ -114,7 +112,6 @@ export async function nearbySearch(
         bookingRequired: false,
         interests: [],
         source: 'google_places',
-        lgbtqRelevance: undefined,
       } satisfies Place;
     });
 }

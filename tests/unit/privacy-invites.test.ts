@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { toTripPublicPayload, isSafePublicPayload } from '@gayi/domain';
 import { generateInviteToken, validateInviteToken } from '@gayi/domain';
 import type { Trip } from '@gayi/shared';
+import { isExactViatorProductUrl } from '@gayi/shared';
 
 describe('privacy helpers', () => {
   const trip: Trip = {
@@ -38,5 +39,13 @@ describe('invite tokens', () => {
     expect(token.length).toBeGreaterThan(16);
     expect(validateInviteToken(token)).toBe(true);
     expect(validateInviteToken('bad')).toBe(false);
+  });
+});
+
+describe('Viator booking links', () => {
+  it('rejects generic home and search links', () => {
+    expect(isExactViatorProductUrl('https://www.viator.com/')).toBe(false);
+    expect(isExactViatorProductUrl('https://www.viator.com/searchResults/all?text=Berlin')).toBe(false);
+    expect(isExactViatorProductUrl('https://www.viator.com/tours/Berlin/Example/d488-123P1')).toBe(true);
   });
 });

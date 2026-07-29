@@ -68,6 +68,71 @@ export const userPrivacySettings = pgTable('user_privacy_settings', {
   ...timestamps,
 });
 
+export const analyticsPolicy = pgTable('analytics_policy', {
+  policyKey: text('policy_key').primaryKey().default('global'),
+  semanticAnalyticsEnabled: boolean('semantic_analytics_enabled').notNull().default(true),
+  personalizationEnabled: boolean('personalization_enabled').notNull().default(true),
+  sessionReplayEnabled: boolean('session_replay_enabled').notNull().default(false),
+  sessionReplaySampleRate: numeric('session_replay_sample_rate', {
+    precision: 4,
+    scale: 3,
+  }).notNull().default('0.100'),
+  policyVersion: text('policy_version').notNull().default('v1-global-default-on'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const analyticsEvents = pgTable(
+  'analytics_events',
+  {
+    eventId: uuid('event_id').primaryKey(),
+    userId: uuid('user_id').references(() => profiles.id, { onDelete: 'cascade' }),
+    subjectId: uuid('subject_id').notNull(),
+    sessionId: uuid('session_id').notNull(),
+    eventName: text('event_name').notNull(),
+    schemaVersion: integer('schema_version').notNull(),
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
+    receivedAt: timestamp('received_at', { withTimezone: true }).defaultNow().notNull(),
+    screenName: text('screen_name'),
+    platform: text('platform').notNull(),
+    appVersion: text('app_version'),
+    properties: jsonb('properties').notNull().default({}),
+    forwardAttempts: integer('forward_attempts').notNull().default(0),
+    forwardedAt: timestamp('forwarded_at', { withTimezone: true }),
+    lastForwardError: text('last_forward_error'),
+  },
+  (table) => [
+    index('analytics_events_received_idx').on(table.receivedAt),
+    index('analytics_events_name_idx').on(table.eventName, table.occurredAt),
+    index('analytics_events_session_idx').on(table.sessionId, table.occurredAt),
+  ],
+);
+
+export const userPreferenceSignals = pgTable(
+  'user_preference_signals',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    subjectType: text('subject_type').notNull(),
+    subjectKey: text('subject_key').notNull(),
+    score: numeric('score', { precision: 6, scale: 5 }).notNull().default('0'),
+    evidenceWeight: numeric('evidence_weight', { precision: 7, scale: 3 }).notNull().default('0'),
+    confidence: numeric('confidence', { precision: 6, scale: 5 }).notNull().default('0'),
+    lastSource: text('last_source').notNull(),
+    lastObservedAt: timestamp('last_observed_at', { withTimezone: true }).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex('user_preference_signals_subject_idx').on(
+      table.userId,
+      table.subjectType,
+      table.subjectKey,
+    ),
+    index('user_preference_signals_user_idx').on(table.userId, table.lastObservedAt),
+  ],
+);
+
 export const destinations = pgTable(
   'destinations',
   {
@@ -294,6 +359,55 @@ export const tripItineraryItems = pgTable('trip_itinerary_items', {
   sortOrder: integer('sort_order').notNull().default(0),
   ...timestamps,
 });
+
+export const tripPlanVersions = pgTable(
+  'trip_plan_versions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tripId: uuid('trip_id')
+      .notNull()
+      .references(() => trips.id, { onDelete: 'cascade' }),
+    revision: integer('revision').notNull(),
+    planId: text('plan_id').notNull(),
+    algorithmVersion: text('algorithm_version').notNull(),
+    inputHash: text('input_hash').notNull(),
+    plan: jsonb('plan').notNull(),
+    createdBy: uuid('created_by').references(() => profiles.id, { onDelete: 'set null' }),
+    isCurrent: boolean('is_current').notNull().default(true),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex('trip_plan_versions_trip_revision_unique').on(t.tripId, t.revision),
+    index('trip_plan_versions_current_idx').on(t.tripId, t.isCurrent, t.revision),
+  ],
+);
+
+export const tripItemFeedback = pgTable(
+  'trip_item_feedback',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tripId: uuid('trip_id')
+      .notNull()
+      .references(() => trips.id, { onDelete: 'cascade' }),
+    planId: text('plan_id'),
+    itemId: text('item_id').notNull(),
+    placeId: text('place_id').notNull(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    reaction: text('reaction').notNull(),
+    reason: text('reason'),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex('trip_item_feedback_trip_item_user_unique').on(
+      t.tripId,
+      t.itemId,
+      t.userId,
+    ),
+    index('trip_item_feedback_trip_idx').on(t.tripId, t.itemId),
+  ],
+);
 
 export const tripSavedPlaces = pgTable(
   'trip_saved_places',

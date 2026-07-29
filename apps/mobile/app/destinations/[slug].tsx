@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
   Linking,
@@ -10,6 +10,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { computePulse } from '@gayi/domain';
 import type { PulseInputs } from '@gayi/domain';
+import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useDestinations } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
@@ -19,17 +20,47 @@ import { Card } from '../../components/ui/Card';
 import { PulseMeter } from '../../components/ui/PulseMeter';
 import { DataSourceBadge } from '../../components/ui/DataSourceBadge';
 import { PhotoCarousel } from '../../components/ui/PhotoCarousel';
-import { lgbtqVibeLabel, lgbtqVibeVariant } from '../../src/lib/lgbtqVibe';
+import { getDestinationContextRating, getDestinationRating } from '../../src/lib/destinationRating';
 import travelAdvisories from '../../assets/public/travel-advisories.json';
+import travelBlogInsights from '../../assets/editorial/travel-blog-insights.json';
 import { getApiKeyStatus } from '../../src/lib/apiKeys';
 import {
   loadDestinationExperiences,
   type MobileExperience,
 } from '../../src/lib/experiences';
+import { lookupPlaceByName } from '../../src/lib/googlePlaces';
+import {
+  loadNearbyParks,
+  loadTicketmasterEvents,
+  loadWeatherForecast,
+  searchCommonsImages,
+} from '../../src/lib/travel-api';
+import { destinationPlanHref } from '../../src/lib/tripPlanningFlow';
+import { ANALYTICS_EVENTS } from '@gayi/shared';
+import { useAnalytics } from '../../src/analytics/analytics-provider';
 
 type TabKey = 'overview' | 'lgbtq' | 'places' | 'events';
 
+type TravelBlogArticle = {
+  id: string;
+  sourceName: string;
+  title: string;
+  url: string;
+  destinationSlugs: string[];
+  signals: string[];
+  editorialRelevance?: number;
+  publishedAt?: string;
+};
+
 const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function priceBand(value?: number): string | undefined {
+  if (value == null) return undefined;
+  if (value < 50) return 'under_50';
+  if (value < 100) return '50_99';
+  if (value < 250) return '100_249';
+  return '250_plus';
+}
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   const { colors, spacing } = useTheme();
@@ -53,12 +84,134 @@ function InfoRow({ label, value, accent }: { label: string; value: string; accen
   );
 }
 
+function rotateImages(urls: string[] | undefined, index: number): string[] {
+  if (!urls?.length) return [];
+  const offset = index % urls.length;
+  return [...urls.slice(offset), ...urls.slice(0, offset)];
+}
+
+function weatherLabel(code?: number) {
+  if (code == null) return 'Current conditions';
+  if (code === 0) return 'Clear';
+  if (code <= 3) return 'Partly cloudy';
+  if (code <= 48) return 'Foggy';
+  if (code <= 67) return 'Rain';
+  if (code <= 77) return 'Snow';
+  if (code <= 82) return 'Showers';
+  return 'Storms possible';
+}
+
+type EditorialPlace = {
+  id: string;
+  name: string;
+  category: string;
+  summary: string;
+  address?: string;
+  lat?: number;
+  lng?: number;
+  lgbtqRelevance?: string;
+  estimatedCostUsd?: number;
+  imageUrl?: string;
+  imageUrls?: string[];
+  imageAttribution?: string;
+};
+
+function DestinationPlaceCard({ place, destinationName, center, index }: { place: EditorialPlace; destinationName: string; center: { lat: number; lng: number }; index: number }) {
+  const { colors, spacing } = useTheme();
+  const { track, observePreference } = useAnalytics();
+  const live = useQuery({
+    queryKey: ['google-place-card-v2', destinationName, place.name, place.address, place.lat, place.lng],
+    queryFn: () => lookupPlaceByName(place.name, destinationName, {
+      center: place.lat != null && place.lng != null ? { lat: place.lat, lng: place.lng } : center,
+      ...(place.address ? { address: place.address } : {}),
+    }),
+    staleTime: 15 * 60_000,
+    retry: 1,
+  });
+  const google = live.data;
+  const commons = useQuery({
+    queryKey: ['commons-place-image-v1', destinationName, place.name],
+    queryFn: () => searchCommonsImages(`${place.name} ${destinationName}`, 3),
+    enabled: !live.isLoading && !google?.imageUrls.length,
+    staleTime: 24 * 60 * 60_000,
+    retry: 1,
+  });
+  const commonsImages = commons.data?.images ?? [];
+  const editorial = place.imageUrls?.length ? place.imageUrls : place.imageUrl ? [place.imageUrl] : [];
+  const rotatedFallback = editorial.length
+    ? [...editorial.slice(index % editorial.length), ...editorial.slice(0, index % editorial.length)]
+    : [];
+  const imageUrls = google?.imageUrls.length
+    ? google.imageUrls
+    : commonsImages.length
+      ? commonsImages.map((image) => image.url)
+      : rotatedFallback.slice(0, 1);
+  const mapsUrl = google?.googleMapsUri ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.name}, ${destinationName}`)}`;
+  const attribution = google?.imageAttributions?.length
+    ? `Photos: ${google.imageAttributions.join(', ')} · Google`
+    : commonsImages.length
+      ? `${commonsImages[0]?.author ?? 'Contributor'} · ${commonsImages[0]?.license ?? 'Wikimedia Commons'} — visual may show the surrounding area`
+      : imageUrls.length
+      ? 'Destination photo via Unsplash · venue photo not yet verified'
+      : undefined;
+
+  return (
+    <Card elevated padded style={{ marginBottom: spacing.sm }}>
+      <View style={{ gap: spacing.sm }}>
+        {live.isLoading ? (
+          <View style={{ height: 160, borderRadius: 12, backgroundColor: colors.backgroundTertiary }} />
+        ) : imageUrls.length > 0 ? (
+          <PhotoCarousel urls={imageUrls} height={160} attribution={attribution} />
+        ) : (
+          <View style={{ height: 88, borderRadius: 12, backgroundColor: colors.backgroundTertiary, alignItems: 'center', justifyContent: 'center', padding: spacing.md }}>
+            <Text variant="caption" style={{ color: colors.textTertiary, textAlign: 'center' }}>
+              No verified place photo yet
+            </Text>
+          </View>
+        )}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text variant="h4" style={{ flex: 1 }}>{place.name}</Text>
+          <Badge label={place.category} variant="default" />
+        </View>
+        <Text variant="bodySm" style={{ color: colors.textSecondary }}>{place.summary}</Text>
+        {google?.address || place.address ? <Text variant="caption" style={{ color: colors.textTertiary }}>{google?.address ?? place.address}</Text> : null}
+        {place.lgbtqRelevance ? <Text variant="caption" style={{ color: colors.accent }}>✦ {place.lgbtqRelevance}</Text> : null}
+        {place.estimatedCostUsd ? <Text variant="caption" style={{ color: colors.textTertiary }}>~${place.estimatedCostUsd}/person</Text> : null}
+        <Button
+          size="sm"
+          variant="secondary"
+          onPress={() => {
+            track(ANALYTICS_EVENTS.EXTERNAL_LINK_OPENED, {
+              linkType: 'map',
+              provider: 'google_maps',
+              sourceScreen: '/destinations/[slug]',
+            });
+            observePreference({
+              subjectType: 'activity_category',
+              subjectKey: place.category,
+              value: 0.4,
+              weight: 1,
+              source: 'accept',
+              observedAt: new Date().toISOString(),
+            });
+            void Linking.openURL(mapsUrl);
+          }}
+        >
+          View on Google Maps
+        </Button>
+      </View>
+    </Card>
+  );
+}
+
 export default function DestinationDetailScreen() {
   const { colors, spacing, radius } = useTheme();
-  const { slug } = useLocalSearchParams<{ slug: string }>();
-  const { getBySlug } = useDestinations();
+  const { slug, quizAnswers } = useLocalSearchParams<{ slug: string; quizAnswers?: string }>();
+  const { getBySlug, getScoringBySlug } = useDestinations();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { track, observePreference } = useAnalytics();
+  const experienceImpressionKeyRef = useRef('');
 
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
   const [destinationExperiences, setDestinationExperiences] = useState<MobileExperience[]>(
@@ -69,6 +222,70 @@ export default function DestinationDetailScreen() {
   >('editorial_fallback');
 
   const destination = useMemo(() => getBySlug(slug ?? ''), [slug, getBySlug]);
+  const scoringDestination = useMemo(() => getScoringBySlug(slug ?? ''), [slug, getScoringBySlug]);
+  const weatherQuery = useQuery({
+    queryKey: ['destination-weather-v1', destination?.slug],
+    queryFn: () => loadWeatherForecast(destination!.lat, destination!.lng),
+    enabled: Boolean(destination),
+    staleTime: 30 * 60_000,
+    retry: 1,
+  });
+  const liveEventsQuery = useQuery({
+    queryKey: ['destination-events-v1', destination?.slug],
+    queryFn: () => loadTicketmasterEvents(destination!.lat, destination!.lng, { limit: 10 }),
+    enabled: Boolean(destination),
+    staleTime: 30 * 60_000,
+    retry: 1,
+  });
+  const parksQuery = useQuery({
+    queryKey: ['destination-parks-v1', destination?.slug],
+    queryFn: () => loadNearbyParks(destination!.name, 4),
+    enabled: destination?.countryCode === 'US',
+    staleTime: 12 * 60 * 60_000,
+    retry: 1,
+  });
+
+  useEffect(() => {
+    if (!destination?.slug) return;
+    track(ANALYTICS_EVENTS.DESTINATION_VIEWED, {
+      destinationSlug: destination.slug,
+      source: quizAnswers ? 'questionnaire_results' : 'discovery',
+    });
+    const timer = setTimeout(() => {
+      observePreference({
+        subjectType: 'destination',
+        subjectKey: destination.slug,
+        value: 0.1,
+        weight: 0.25,
+        source: 'passive_view',
+        observedAt: new Date().toISOString(),
+      });
+    }, 20_000);
+    return () => clearTimeout(timer);
+  }, [destination?.slug, observePreference, quizAnswers, track]);
+
+  useEffect(() => {
+    track(ANALYTICS_EVENTS.FILTER_APPLIED, {
+      filterName: 'destination_tab',
+      valueCategory: activeTab,
+    });
+  }, [activeTab, track]);
+
+  useEffect(() => {
+    if (!destination?.slug || destinationExperiences.length === 0) return;
+    const key = `${destination.slug}:${destinationExperiences.map((item) => item.id).join(',')}`;
+    if (experienceImpressionKeyRef.current === key) return;
+    experienceImpressionKeyRef.current = key;
+    destinationExperiences.slice(0, 10).forEach((experience, index) => {
+      if (!experience.affiliateUrl) return;
+      track(ANALYTICS_EVENTS.AFFILIATE_OFFER_IMPRESSION, {
+        provider: experience.provider,
+        productCategory: 'experience',
+        rank: index + 1,
+        ...(priceBand(experience.priceFrom) ? { priceBand: priceBand(experience.priceFrom) } : {}),
+      });
+    });
+  }, [destination?.slug, destinationExperiences, track]);
 
   useEffect(() => {
     if (!slug) {
@@ -122,6 +339,32 @@ export default function DestinationDetailScreen() {
     return match?.links ?? [];
   }, [destination]);
 
+  const editorialGuides = useMemo(() => {
+    if (!slug) return [] as TravelBlogArticle[];
+    const matches = (travelBlogInsights.articles as TravelBlogArticle[])
+      .filter((article) => article.destinationSlugs.includes(slug))
+      .filter((article) => (article.editorialRelevance ?? 0) >= 4)
+      .sort((a, b) =>
+        (b.editorialRelevance ?? 0) - (a.editorialRelevance ?? 0)
+        || (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''),
+      );
+    const selected: TravelBlogArticle[] = [];
+    const usedSources = new Set<string>();
+    for (const article of matches) {
+      if (!usedSources.has(article.sourceName)) {
+        selected.push(article);
+        usedSources.add(article.sourceName);
+      }
+      if (selected.length === 5) break;
+    }
+    for (const article of matches) {
+      if (selected.some((selectedArticle) => selectedArticle.url === article.url)) continue;
+      selected.push(article);
+      if (selected.length === 5) break;
+    }
+    return selected;
+  }, [slug]);
+
   const hasExternalExperienceBookings = useMemo(
     () =>
       destinationExperiences.some(
@@ -145,7 +388,17 @@ export default function DestinationDetailScreen() {
   const lgbtq = destination.lgbtqContext;
   const legal = lgbtq?.legalEqualityScore ?? 0;
   const opinion = lgbtq?.publicOpinionScore ?? 0;
-  const legalVariant = lgbtqVibeVariant(legal);
+  const destinationRating = getDestinationRating({
+    reviewScore: scoringDestination?.reviewScore,
+    communityScore: scoringDestination?.communityScore,
+    nightlifeScore: scoringDestination?.nightlifeScore,
+    legalEqualityScore: lgbtq?.legalEqualityScore,
+    publicOpinionScore: lgbtq?.publicOpinionScore,
+  });
+  const contextRating = getDestinationContextRating({
+    legalEqualityScore: lgbtq?.legalEqualityScore,
+    publicOpinionScore: lgbtq?.publicOpinionScore,
+  });
 
   const TABS: Array<{ key: TabKey; label: string }> = [
     { key: 'overview', label: 'Overview' },
@@ -171,7 +424,10 @@ export default function DestinationDetailScreen() {
             <DataSourceBadge label={destination.sourceLabel ?? 'editorial_demo'} />
           </View>
           <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(15,13,10,0.55)', paddingHorizontal: spacing['2xl'], paddingVertical: spacing.xl }}>
-            <Badge label={lgbtqVibeLabel(legal)} variant={legalVariant} style={{ marginBottom: spacing.sm }} />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.sm }}>
+              {destinationRating ? <Badge label={`${destinationRating.label} · ${destinationRating.score}`} variant={destinationRating.variant} /> : null}
+              {contextRating ? <Badge label={contextRating.label} variant={contextRating.variant} /> : null}
+            </View>
             <Text variant="displayMd" style={{ color: colors.white }}>{destination.name}</Text>
             <Text variant="bodyLg" style={{ color: 'rgba(255,255,255,0.8)' }}>{destination.country}</Text>
           </View>
@@ -200,6 +456,16 @@ export default function DestinationDetailScreen() {
               <Text variant="bodyLg" style={{ color: colors.textSecondary, lineHeight: 26 }}>
                 {destination.editorialSummary}
               </Text>
+              {destinationRating ? (
+                <Text variant="caption" style={{ color: colors.textTertiary }}>
+                  Destination rating {destinationRating.score}/100 blends assigned review, community, nightlife, legal-equality, and public-opinion scores. It is not a safety rating.
+                </Text>
+              ) : null}
+              {contextRating ? (
+                <Text variant="caption" style={{ color: colors.textTertiary }}>
+                  LGBTQ+ context: {contextRating.label} ({contextRating.score}/100), based on assigned legal and public-opinion data. Experiences vary by neighborhood and traveler; verify current local sources.
+                </Text>
+              ) : null}
 
               {(destination.galleryImageUrls?.length > 0 || destination.heroImageUrl) && (
                 <>
@@ -229,6 +495,29 @@ export default function DestinationDetailScreen() {
                   <Badge key={m} label={MONTH_NAMES[m]} variant="info" />
                 ))}
               </View>
+
+              {weatherQuery.data?.weather ? (
+                <>
+                  <SectionTitle>Weather now</SectionTitle>
+                  <Card elevated padded>
+                    <View style={{ gap: spacing.xs }}>
+                      <Text variant="h3">
+                        {weatherQuery.data.weather.currentTemperatureC == null ? '—' : `${Math.round(weatherQuery.data.weather.currentTemperatureC)}°C`} · {weatherLabel(weatherQuery.data.weather.currentWeatherCode)}
+                      </Text>
+                      <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                        {weatherQuery.data.weather.daily.slice(0, 4).map((day) => (
+                          <View key={day.date} style={{ flex: 1, gap: spacing.xxs }}>
+                            <Text variant="caption" style={{ color: colors.textTertiary }}>{new Date(`${day.date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short' })}</Text>
+                            <Text variant="labelSm">{day.temperatureMaxC == null ? '—' : `${Math.round(day.temperatureMaxC)}°`} / {day.temperatureMinC == null ? '—' : `${Math.round(day.temperatureMinC)}°`}</Text>
+                            <Text variant="caption" style={{ color: colors.textTertiary }}>{day.precipitationProbabilityMax ?? 0}% rain</Text>
+                          </View>
+                        ))}
+                      </View>
+                      <Text variant="caption" style={{ color: colors.textTertiary }}>Forecast by Open-Meteo · updated {new Date(weatherQuery.data.weather.retrievedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</Text>
+                    </View>
+                  </Card>
+                </>
+              ) : null}
 
               <SectionTitle>Budget</SectionTitle>
               {destination.priceBands && (
@@ -272,11 +561,11 @@ export default function DestinationDetailScreen() {
               {destinationExperiences.length > 0 && (
                 <>
                   <SectionTitle>Things to do</SectionTitle>
-                  {destinationExperiences.map((experience) => (
+                  {destinationExperiences.map((experience, index) => (
                     <Card key={experience.id} elevated padded style={{ marginBottom: spacing.sm }}>
                       <View style={{ gap: spacing.sm }}>
                         <PhotoCarousel
-                          urls={experience.imageUrls ?? []}
+                          urls={rotateImages(experience.imageUrls, index)}
                           height={150}
                           attribution={
                             experience.provider === 'viator' ? undefined : 'Photo via Unsplash'
@@ -301,7 +590,21 @@ export default function DestinationDetailScreen() {
                             onPress={() => {
                               const affiliateUrl = experience.affiliateUrl;
                               if (affiliateUrl) {
-                                Linking.openURL(affiliateUrl);
+                                track(ANALYTICS_EVENTS.AFFILIATE_CLICKED, {
+                                  provider: experience.provider,
+                                  productCategory: 'experience',
+                                  rank: index + 1,
+                                  ...(priceBand(experience.priceFrom) ? { priceBand: priceBand(experience.priceFrom) } : {}),
+                                });
+                                observePreference({
+                                  subjectType: 'activity_category',
+                                  subjectKey: experience.tags?.[0] ?? 'experience',
+                                  value: 0.4,
+                                  weight: 1,
+                                  source: 'affiliate_handoff',
+                                  observedAt: new Date().toISOString(),
+                                });
+                                void Linking.openURL(affiliateUrl);
                               }
                             }}
                           >
@@ -313,7 +616,7 @@ export default function DestinationDetailScreen() {
                   ))}
                   {hasExternalExperienceBookings ? (
                     <Text variant="caption" style={{ color: colors.textTertiary, marginBottom: spacing.sm }}>
-                      Partner bookings open on Viator. Gay-i may earn a commission.
+                      Partner bookings open on Viator. Outing may earn a commission.
                     </Text>
                   ) : null}
                 </>
@@ -336,11 +639,59 @@ export default function DestinationDetailScreen() {
                 </>
               )}
 
+              {editorialGuides.length > 0 && (
+                <>
+                  <SectionTitle>From queer travel writers</SectionTitle>
+                  <Text variant="bodySm" style={{ color: colors.textTertiary, marginBottom: spacing.sm }}>
+                    Independent perspectives for deeper trip research. Open the original article to verify current venue details and dates.
+                  </Text>
+                  {editorialGuides.map((article) => (
+                    <Pressable
+                      key={article.id}
+                      onPress={() => void Linking.openURL(article.url)}
+                      accessibilityRole="link"
+                      accessibilityLabel={`Read ${article.title} on ${article.sourceName}`}
+                      style={{
+                        paddingVertical: spacing.md,
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.borderSubtle,
+                        gap: spacing.xs,
+                      }}
+                    >
+                      <Text variant="h4">{article.title}</Text>
+                      <Text variant="caption" style={{ color: colors.accent }}>
+                        {article.sourceName} ↗
+                      </Text>
+                      {article.signals.length > 0 ? (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+                          {article.signals.slice(0, 4).map((signal) => (
+                            <Badge key={signal} label={signal} variant="default" />
+                          ))}
+                        </View>
+                      ) : null}
+                    </Pressable>
+                  ))}
+                </>
+              )}
+
+              {(parksQuery.data?.parks.length ?? 0) > 0 ? (
+                <>
+                  <SectionTitle>Official outdoor ideas nearby</SectionTitle>
+                  {parksQuery.data!.parks.map((park) => (
+                    <Pressable key={park.id} onPress={() => void Linking.openURL(park.url)} style={{ paddingVertical: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle, gap: spacing.xs }}>
+                      <Text variant="h4">{park.name}</Text>
+                      {park.designation ? <Text variant="caption" style={{ color: colors.accent }}>{park.designation} · National Park Service ↗</Text> : null}
+                      {park.description ? <Text variant="bodySm" numberOfLines={3} style={{ color: colors.textSecondary }}>{park.description}</Text> : null}
+                    </Pressable>
+                  ))}
+                </>
+              ) : null}
+
               {(destination.sources?.length ?? 0) > 0 && (
                 <>
                   <SectionTitle>Sources</SectionTitle>
                   <Text variant="bodySm" style={{ color: colors.textTertiary, marginBottom: spacing.sm }}>
-                    Attribution for editorial further reading and public datasets. Gay-i never claims a destination is universally safe.
+                    Attribution for editorial further reading and public datasets. Outing never claims a destination is universally safe.
                   </Text>
                   {(destination.sources as Array<{ type: string; label: string; url: string }>).map((s, i) => (
                     <View
@@ -369,6 +720,7 @@ export default function DestinationDetailScreen() {
               <View style={{ gap: spacing.xs }}>
                 <InfoRow label="Legal equality" value={`${legal}/100`} accent />
                 <InfoRow label="Public opinion" value={`${opinion}/100`} accent />
+                {contextRating ? <InfoRow label="Overall context" value={`${contextRating.label} · ${contextRating.score}/100`} /> : null}
                 <InfoRow label="Criminalization" value={lgbtq?.criminalizationStatus ?? '—'} />
                 <InfoRow label="Same-sex recognition" value={lgbtq?.sameSexRecognition ? 'Yes' : 'No'} />
                 <InfoRow label="Anti-discrimination" value={lgbtq?.antiDiscrimination ? 'Yes' : 'No'} />
@@ -471,7 +823,7 @@ export default function DestinationDetailScreen() {
                 <>
                   <SectionTitle>Official advisories</SectionTitle>
                   <Text variant="bodySm" style={{ color: colors.textTertiary, marginBottom: spacing.sm }}>
-                    Government links only — not a Gay-i safety rating.
+                    Government links only — not an Outing safety rating.
                   </Text>
                   {advisoryLinks.map((link) => (
                     <Text key={link.url} variant="bodyMd" style={{ color: colors.accent, marginBottom: spacing.xs }}>
@@ -504,37 +856,8 @@ export default function DestinationDetailScreen() {
               {(destination.places ?? []).length === 0 ? (
                 <Text variant="bodyMd" style={{ color: colors.textTertiary }}>No places listed.</Text>
               ) : (
-                (destination.places ?? []).map((p: {
-                  id: string;
-                  name: string;
-                  category: string;
-                  summary: string;
-                  lgbtqRelevance?: string;
-                  estimatedCostUsd?: number;
-                  imageUrl?: string;
-                  imageUrls?: string[];
-                  imageAttribution?: string;
-                }) => (
-                  <Card key={p.id} elevated padded style={{ marginBottom: spacing.sm }}>
-                    <View style={{ gap: spacing.sm }}>
-                      <PhotoCarousel
-                        urls={p.imageUrls?.length ? p.imageUrls : p.imageUrl ? [p.imageUrl] : []}
-                        height={160}
-                        attribution={p.imageAttribution ?? 'Photo via Unsplash'}
-                      />
-                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Text variant="h4" style={{ flex: 1 }}>{p.name}</Text>
-                        <Badge label={p.category} variant="default" />
-                      </View>
-                      <Text variant="bodySm" style={{ color: colors.textSecondary }}>{p.summary}</Text>
-                      {p.lgbtqRelevance ? (
-                        <Text variant="caption" style={{ color: colors.accent }}>✦ {p.lgbtqRelevance}</Text>
-                      ) : null}
-                      {p.estimatedCostUsd ? (
-                        <Text variant="caption" style={{ color: colors.textTertiary }}>~${p.estimatedCostUsd}/person</Text>
-                      ) : null}
-                    </View>
-                  </Card>
+                (destination.places ?? []).map((p: EditorialPlace, index: number) => (
+                  <DestinationPlaceCard key={p.id} place={p} destinationName={destination.name} center={{ lat: destination.lat, lng: destination.lng }} index={index} />
                 ))
               )}
             </View>
@@ -543,6 +866,23 @@ export default function DestinationDetailScreen() {
           {/* ─── Events ─── */}
           {activeTab === 'events' && (
             <View style={{ gap: spacing.xs }}>
+              {(liveEventsQuery.data?.events.length ?? 0) > 0 ? (
+                <>
+                  <SectionTitle>Live event listings</SectionTitle>
+                  {liveEventsQuery.data!.events.map((event) => (
+                    <Card key={event.id} elevated padded style={{ marginBottom: spacing.sm }}>
+                      <View style={{ gap: spacing.xs }}>
+                        {event.imageUrl ? <Image source={{ uri: event.imageUrl }} style={{ width: '100%', height: 150, borderRadius: 12 }} resizeMode="cover" /> : null}
+                        <Text variant="h4">{event.name}</Text>
+                        <Text variant="caption" style={{ color: colors.textSecondary }}>{[event.startDate, event.startTime, event.venueName].filter(Boolean).join(' · ')}</Text>
+                        {event.genre ? <Badge label={event.genre} variant="default" /> : null}
+                        <Button size="sm" variant="secondary" onPress={() => void Linking.openURL(event.url)}>View official listing</Button>
+                      </View>
+                    </Card>
+                  ))}
+                  <Text variant="caption" style={{ color: colors.textTertiary }}>Live listings via Ticketmaster. A listing is not an Outing endorsement; verify venue and event details.</Text>
+                </>
+              ) : null}
               <SectionTitle>Upcoming events</SectionTitle>
               {(destination.events ?? []).length === 0 ? (
                 <Text variant="bodyMd" style={{ color: colors.textTertiary }}>No events listed.</Text>
@@ -587,12 +927,19 @@ export default function DestinationDetailScreen() {
       >
         <Button
           fullWidth
-          onPress={() =>
-            router.push({
-              pathname: '/trips/new',
-              params: { destinationSlug: destination.slug, destinationName: destination.name },
-            })
-          }
+          onPress={() => {
+            track(ANALYTICS_EVENTS.TRIP_CREATION_PATH_SELECTED, {
+              path: 'recommendations',
+              entryPoint: 'destination_detail',
+            });
+            router.push(destinationPlanHref(
+              {
+                destinationSlug: destination.slug,
+                destinationName: destination.name,
+              },
+              quizAnswers,
+            ));
+          }}
         >
           Plan a trip to {destination.name}
         </Button>

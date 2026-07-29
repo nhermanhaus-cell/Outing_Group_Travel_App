@@ -124,7 +124,7 @@ export default function HomeScreen() {
             variant="h3"
             style={{ color: colors.white, letterSpacing: 1, fontWeight: '800' }}
           >
-            GAY-I
+            OUTING
           </Text>
           <Pressable
             onPress={() => router.push('/settings')}

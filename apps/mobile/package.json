@@ -7,23 +7,33 @@
     "@gayi/domain": "workspace:*",
     "@gayi/providers": "workspace:*",
     "@gayi/shared": "workspace:*",
+    "@posthog/react-native-plugin": "^2.2.3",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/datetimepicker": "8.4.4",
     "@supabase/supabase-js": "^2.50.0",
     "@tanstack/react-query": "^5.80.7",
     "expo": "~54.0.36",
     "expo-apple-authentication": "~8.0.8",
+    "expo-application": "~7.0.8",
     "expo-auth-session": "~7.0.11",
+    "expo-calendar": "~15.0.8",
     "expo-clipboard": "~8.0.8",
     "expo-constants": "~18.0.13",
+    "expo-contacts": "~15.0.11",
     "expo-crypto": "~15.0.9",
     "expo-dev-client": "~6.0.21",
+    "expo-device": "~8.0.10",
     "expo-file-system": "~19.0.23",
     "expo-font": "~14.0.12",
     "expo-haptics": "~15.0.8",
+    "expo-image": "~3.0.11",
     "expo-linking": "~8.0.12",
+    "expo-location": "~19.0.8",
+    "expo-localization": "~17.0.9",
     "expo-router": "~6.0.24",
     "expo-secure-store": "~15.0.8",
     "expo-sharing": "~14.0.8",
+    "expo-sms": "~14.0.8",
     "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
     "expo-symbols": "~1.0.8",
@@ -40,6 +50,7 @@
     "react-native-svg": "15.12.1",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.5.1",
+    "posthog-react-native": "^4.61.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -48,11 +59,13 @@
     "typescript": "~5.9.2"
   },
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "start": "expo start",
     "start:go": "expo start --go",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "export:hosting": "node scripts/generate-link-associations.mjs && expo export --platform web"
   },
   "private": true
 }

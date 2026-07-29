@@ -7,7 +7,10 @@ export type {
   CategoryOverrides,
   ComponentScores,
   CostRange,
+  FlightPriceGuidance,
+  FreeWindowSuggestion,
   ItineraryItem,
+  ItineraryTravelLeg,
   PersonBudget,
   PulseComponentBreakdown,
   PulseInputs,
@@ -15,6 +18,11 @@ export type {
   PulseResult,
   RecommendationResult,
   TravelWindow,
+  TripPlan,
+  TripPlanBookingAction,
+  TripPlanDay,
+  TripPlanFeedback,
+  TripPlanReaction,
   TripPublicPayload,
   WeightConfig,
   WeightKey,
@@ -72,6 +80,18 @@ export type { BudgetEngineInput } from './budget/engine';
 // ─── Itinerary ────────────────────────────────────────────────────────────────
 export { generateItinerary } from './itinerary/engine';
 export type { ItineraryInput } from './itinerary/engine';
+export type { ItineraryRouteEstimate } from './itinerary/engine';
+export {
+  createLegacyTripPlan,
+  generateTripPlan,
+  refineTripPlan,
+  replaceTripPlanItems,
+} from './itinerary/tripPlan';
+export type {
+  PlannerTraveler,
+  TripPlanFlightPriceContext,
+  TripPlanInput,
+} from './itinerary/tripPlan';
 
 // ─── Privacy ─────────────────────────────────────────────────────────────────
 export { isSafePublicPayload, toTripPublicPayload } from './privacy/tripPublicPayload';

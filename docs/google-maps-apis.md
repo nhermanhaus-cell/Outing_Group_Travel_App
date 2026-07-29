@@ -1,6 +1,6 @@
-# Google Cloud APIs for Gay-i (in-app maps)
+# Google Cloud APIs for Outing (in-app maps)
 
-Gay-i keeps maps, places, and travel times **inside the app**. Enable these APIs on the Google Cloud project tied to your key:
+Outing keeps maps, places, and travel times **inside the app**. Enable these APIs on the Google Cloud project tied to your key:
 
 ## Required
 
@@ -31,7 +31,7 @@ Confirm Metro prints `[gayi] API keys loaded — maps:true places:true …`.
 Application restrictions → **iOS apps**, add:
 
 - `host.exp.Exponent` (Expo Go testing)  
-- `com.gayi.app` (Gay-i builds)
+- `com.gayi.app` (Outing builds)
 
 API restrictions → enable only the five APIs above.
 

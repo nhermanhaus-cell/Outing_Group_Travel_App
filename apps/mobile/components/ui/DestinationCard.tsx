@@ -5,7 +5,8 @@ import { useTheme } from '../../src/theme/ThemeProvider';
 import { Text } from './Text';
 import { Badge } from './Badge';
 import type { CatalogDestination } from '../../src/providers/AppProviders';
-import { lgbtqVibeLabel, lgbtqVibeVariant } from '../../src/lib/lgbtqVibe';
+import { getDestinationContextRating, getDestinationRating } from '../../src/lib/destinationRating';
+import { useDestinations } from '../../src/providers/AppProviders';
 
 interface DestinationCardProps {
   destination: CatalogDestination;
@@ -15,13 +16,23 @@ interface DestinationCardProps {
 
 export function DestinationCard({ destination, compact = false, onPress }: DestinationCardProps) {
   const { colors, spacing, radius, shadows } = useTheme();
+  const { getScoringBySlug } = useDestinations();
   const router = useRouter();
 
   const handlePress = onPress ?? (() => router.push(`/destinations/${destination.slug}`));
 
-  const legal = destination.lgbtqContext?.legalEqualityScore ?? 0;
-  const legalLabel = lgbtqVibeLabel(legal);
-  const legalVariant = lgbtqVibeVariant(legal);
+  const scoring = getScoringBySlug(destination.slug);
+  const rating = getDestinationRating({
+    reviewScore: scoring?.reviewScore,
+    communityScore: scoring?.communityScore,
+    nightlifeScore: scoring?.nightlifeScore,
+    legalEqualityScore: destination.lgbtqContext?.legalEqualityScore,
+    publicOpinionScore: destination.lgbtqContext?.publicOpinionScore,
+  });
+  const contextRating = getDestinationContextRating({
+    legalEqualityScore: destination.lgbtqContext?.legalEqualityScore,
+    publicOpinionScore: destination.lgbtqContext?.publicOpinionScore,
+  });
 
   if (compact) {
     return (
@@ -83,7 +94,12 @@ export function DestinationCard({ destination, compact = false, onPress }: Desti
               {destination.country}
             </Text>
           </View>
-          <Badge label={legalLabel} variant={legalVariant as 'success' | 'info' | 'warning' | 'error'} />
+          <View style={{ alignItems: 'flex-end', gap: spacing.xs }}>
+            {rating ? <Badge label={`${rating.label} · ${rating.score}`} variant={rating.variant} /> : null}
+            {contextRating && ['mixed', 'limited', 'caution'].includes(contextRating.level) ? (
+              <Badge label={contextRating.label} variant={contextRating.variant} />
+            ) : null}
+          </View>
         </View>
         {destination.editorialSummary ? (
           <Text variant="bodySm" style={{ color: colors.textSecondary }} numberOfLines={2}>

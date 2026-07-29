@@ -45,41 +45,38 @@ function presentKey(value) {
 
 /** @type {import('expo/config').ExpoConfig} */
 module.exports = () => {
-  const appJson = require('./app.json');
-  const expo = appJson.expo;
+  const expo = require('./app.base.json');
 
   const mapsKey = presentKey(
     process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ||
       process.env.GOOGLE_MAPS_API_KEY ||
-      process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ||
-      process.env.GOOGLE_PLACES_API_KEY ||
       '',
   );
-
-  const placesKey = presentKey(
-    process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ||
-      process.env.GOOGLE_PLACES_API_KEY ||
-      mapsKey,
-  );
-
-  const viatorKey = presentKey(
-    process.env.EXPO_PUBLIC_VIATOR_API_KEY || process.env.VIATOR_API_KEY || '',
-  );
+  const appDomain = (process.env.EXPO_PUBLIC_APP_DOMAIN || 'gayi.expo.app')
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '');
 
   // Helpful at `expo start` time (does not print secret values)
   const keyStatus = {
     maps: Boolean(mapsKey),
-    places: Boolean(placesKey),
-    viator: Boolean(viatorKey),
+    places: Boolean(process.env.EXPO_PUBLIC_SUPABASE_URL),
+    viator: Boolean(process.env.EXPO_PUBLIC_SUPABASE_URL),
   };
   console.log(
-    `[gayi] API keys loaded — maps:${keyStatus.maps} places:${keyStatus.places} viator:${keyStatus.viator}`,
+    `[gayi] integrations configured — maps-sdk:${keyStatus.maps} places-proxy:${keyStatus.places} viator-proxy:${keyStatus.viator}`,
   );
 
   return {
     ...expo,
     ios: {
       ...(expo.ios ?? {}),
+      associatedDomains: [`applinks:${appDomain}`],
+      infoPlist: {
+        ...((expo.ios && expo.ios.infoPlist) || {}),
+        NSContactsUsageDescription: 'Outing uses contacts only when you choose travel buddies to invite. Phone numbers stay on this device.',
+        NSCalendarsUsageDescription: 'Outing uses calendar access only when you choose to add or update itinerary events.',
+        NSLocationWhenInUseUsageDescription: 'Outing uses an approximate one-time location only when you ask for nearby airport suggestions.',
+      },
       config: {
         ...((expo.ios && expo.ios.config) || {}),
         googleMapsApiKey: mapsKey,
@@ -87,6 +84,15 @@ module.exports = () => {
     },
     android: {
       ...(expo.android ?? {}),
+      intentFilters: [
+        ...((expo.android && expo.android.intentFilters) || []),
+        {
+          action: 'VIEW',
+          autoVerify: true,
+          data: [{ scheme: 'https', host: appDomain, pathPrefix: '/invite' }],
+          category: ['BROWSABLE', 'DEFAULT'],
+        },
+      ],
       config: {
         ...((expo.android && expo.android.config) || {}),
         googleMaps: {
@@ -96,15 +102,14 @@ module.exports = () => {
     },
     extra: {
       ...(expo.extra ?? {}),
-      googlePlacesApiKey: placesKey,
       googleMapsApiKey: mapsKey,
-      viatorApiKey: viatorKey,
       getYourGuideApiKey: presentKey(
         process.env.EXPO_PUBLIC_GETYOURGUIDE_API_KEY ||
           process.env.GETYOURGUIDE_API_KEY ||
           '',
       ),
       apiKeyStatus: keyStatus,
+      appDomain,
     },
   };
 };

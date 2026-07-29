@@ -1,6 +1,6 @@
 # Provider plug-ins
 
-Gay-i uses a **provider registry** so each data capability is a swappable plugin.
+Outing uses a **provider registry** so each data capability is a swappable plugin.
 
 ## Slots
 
@@ -26,6 +26,13 @@ All integrations are **fixture-first**. Live adapters run only when keyed / onli
 | **Equaldex Equality Index** | `lgbtqContext:equaldex-cited` | Credit Equaldex page URLs | **Editorial cited snapshot only** (`fixtures/public/equaldex-cited-scores.json`). Live `lgbtqContext:equaldex-api` stays **OFF** until a commercial license |
 | **Experiences (excursions)** | `experiences:mock-editorial` / `viator` / `getyourguide` | Affiliate disclosure when linked | Editorial seed + **live Viator** when keyed |
 | **Google Maps (in-app)** | `react-native-maps` + Places / Geocoding / Distance Matrix | Google | See [`docs/google-maps-apis.md`](google-maps-apis.md). Map, nearby places, and travel times stay in-app. |
+| **Booking.com Demand API** | `lodging` via `travel-api` Edge proxy | Booking.com | Live dated stays, guest ratings, imagery, exact property URLs, and Travel Proud program labels. |
+| **Skyscanner Travel APIs** | `flights` via `travel-api` Edge proxy | Skyscanner | Indicative destination discovery from saved home airports; never presented as a live bookable fare. |
+| **OurAirports** | build-time airport index | OurAirports / public domain | 4,000+ scheduled-service airports for city/name/IATA search and nearby suggestions. |
+| **Open-Meteo** | `weather` via `travel-api` Edge proxy | Open-Meteo | Seven-day destination forecast; optional commercial customer key. |
+| **Ticketmaster Discovery API** | `events` via `travel-api` Edge proxy | Ticketmaster | Current official event listings and exact listing URLs. |
+| **National Park Service** | destination context via `travel-api` Edge proxy | U.S. National Park Service | Official park descriptions and links for U.S. destinations. |
+| **Wikimedia Commons** | image fallback via `travel-api` Edge proxy | Per-file author/license | Place-specific search only after Google has no photo; attribution retained on every result. |
 
 ### Google APIs required for in-app maps
 
@@ -66,10 +73,10 @@ GAYI_PROVIDER_LGBTQCONTEXT=mock
 GAYI_PROVIDER_EXPERIENCES=mock
 # or viator / getyourguide when keyed
 
-VIATOR_API_KEY=
+VIATOR_API_KEY= # Supabase Edge secret
 GETYOURGUIDE_API_KEY=
-GOOGLE_PLACES_API_KEY=
-GOOGLE_MAPS_API_KEY=
+GOOGLE_PLACES_API_KEY= # Supabase Edge secret
+GOOGLE_MAPS_API_KEY= # native Maps SDK only
 WEATHER_API_KEY=
 FX_API_KEY=
 EQUALDEX_API_KEY=
@@ -88,7 +95,19 @@ Destination **Sources** sections should list:
 - ILGA-Europe / ILGA World with year + link
 - Equaldex credit link when cited scores are shown
 - Official advisory links
-- Blog further-reading links (homepages only — never scraped article text)
+- Blog further-reading links (exact article URLs and metadata only — never copied article bodies or publisher images)
+
+### Queer travel editorial index
+
+Run `pnpm seed:insights` from the repository root to refresh destination-specific
+further-reading links from the seven configured queer travel publishers. The
+build-time collector respects `robots.txt`, uses public sitemaps, rate-limits
+requests, and caps each source. Its generated records contain article titles,
+canonical URLs, dates when supplied, and derived destination/topic tags.
+
+Collected recommendations remain research leads. Verify a venue against the
+original article and Google Places before adding it to destination or itinerary
+data. Do not ingest article bodies or reuse publisher photography.
 
 ## Adding a plugin
 

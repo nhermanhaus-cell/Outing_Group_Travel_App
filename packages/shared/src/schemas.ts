@@ -51,6 +51,25 @@ export const LookingForSchema = z.enum([
 
 export const ActivityPaceSchema = z.enum(['packed', 'balanced', 'downtime']);
 export const LodgingStatusSchema = z.enum(['none', 'booked']);
+export const TravelRangeSchema = z.enum([
+  'road_trip',
+  'short_flight',
+  'long_domestic',
+  'international',
+]);
+export const PreferredTransportModeSchema = z.enum(['auto', 'walking', 'transit', 'driving']);
+export const LongDistanceTransportModeSchema = z.enum(['car', 'train', 'plane', 'boat']);
+export const TravelScopeSchema = z.enum(['domestic', 'international', 'either']);
+
+export const HomeAirportSchema = z.object({
+  iata: z.string().length(3).toUpperCase(),
+  name: z.string().min(1),
+  city: z.string().min(1).optional(),
+  countryCode: z.string().length(2).toUpperCase().optional(),
+  coords: z.object({ lat: z.number(), lng: z.number() }).optional(),
+  primary: z.boolean(),
+  source: z.enum(['manual', 'nearby_suggestion', 'profile_import']),
+});
 
 export const PlaceCategorySchema = z.enum([
   'bar',
@@ -89,6 +108,26 @@ export const TravelPreferencesSchema = z.object({
   lodgingAddress: z.string().optional(),
   lodgingLat: z.number().optional(),
   lodgingLng: z.number().optional(),
+  travelRanges: z.array(TravelRangeSchema).optional(),
+  homeAirports: z.array(HomeAirportSchema).optional(),
+  preferredTransportMode: PreferredTransportModeSchema.optional(),
+  maxTravelTimeHours: z.number().positive().max(48).optional(),
+  travelScope: TravelScopeSchema.optional(),
+  longDistanceTransportModes: z.array(LongDistanceTransportModeSchema).optional(),
+});
+
+export const UserTravelProfileSchema = z.object({
+  homeAirports: z.array(HomeAirportSchema),
+  coarseHomeRegion: z.string().optional(),
+  defaultInterests: z.array(InterestSchema),
+  defaultGroupSize: z.number().int().min(1).max(50).optional(),
+  defaultTripLengthDays: z.number().int().min(1).max(90).optional(),
+  preferredTravelRanges: z.array(TravelRangeSchema),
+  preferredTransportMode: PreferredTransportModeSchema,
+  maxTravelTimeHours: z.number().positive().max(48).optional(),
+  travelScope: TravelScopeSchema.optional(),
+  longDistanceTransportModes: z.array(LongDistanceTransportModeSchema).optional(),
+  updatedAt: z.string(),
 });
 
 // ─── Destinations ────────────────────────────────────────────────────────────
@@ -148,7 +187,30 @@ export const PlaceSchema = z.object({
   accessibilityNotes: z.string().optional(),
   lgbtqRelevance: z.string().optional(),
   source: z.string().min(1),
-  openingHours: z.array(z.object({ open: z.string(), close: z.string() })).optional(),
+  openingHours: z.array(z.object({
+    dayOfWeek: z.number().int().min(0).max(6).optional(),
+    open: z.string(),
+    close: z.string(),
+  })).optional(),
+  providerPlaceId: z.string().optional(),
+  address: z.string().optional(),
+  rating: z.number().min(0).max(5).optional(),
+  reviewCount: z.number().int().nonnegative().optional(),
+  photos: z.array(z.object({
+    url: z.string().url(),
+    attribution: z.string().optional(),
+    provider: z.string(),
+  })).optional(),
+  businessStatus: z.enum([
+    'operational',
+    'closed_temporarily',
+    'closed_permanently',
+    'unknown',
+  ]).optional(),
+  priceLevel: z.number().int().min(0).max(4).optional(),
+  verifiedAt: z.string().optional(),
+  fixedStartTimes: z.array(z.string()).optional(),
+  timezone: z.string().optional(),
 });
 
 // ─── Trips ────────────────────────────────────────────────────────────────────

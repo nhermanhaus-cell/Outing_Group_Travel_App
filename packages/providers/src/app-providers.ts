@@ -60,6 +60,7 @@ import { authSupabaseShell }             from './plugins/auth/supabase.shell';
 import { aiTemplateSummary }             from './plugins/ai/template-summary';
 import { aiOpenAiShell }                 from './plugins/ai/openai-compatible.shell';
 import { analyticsNoop }                 from './plugins/analytics/noop';
+import { analyticsSupabase }             from './plugins/analytics/supabase';
 import { analyticsPosthogShell }         from './plugins/analytics/posthog.shell';
 import { shareNativeShare }              from './plugins/share/native-share';
 import { eventInvitationPartifulHandoff } from './plugins/eventInvitation/partiful-handoff';
@@ -154,6 +155,7 @@ export async function createAppProviders(registry: ProviderRegistry): Promise<Ap
   registry.register(aiOpenAiShell);
   registry.register(aiTemplateSummary);
 
+  registry.register(analyticsSupabase);
   registry.register(analyticsPosthogShell);
   registry.register(analyticsNoop);
 

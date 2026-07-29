@@ -1,9 +1,7 @@
 import Constants from 'expo-constants';
 
 type Extra = {
-  googlePlacesApiKey?: string;
   googleMapsApiKey?: string;
-  viatorApiKey?: string;
   getYourGuideApiKey?: string;
   apiKeyStatus?: {
     maps?: boolean;
@@ -33,26 +31,20 @@ function present(value: string | undefined): boolean {
 }
 
 export function getGooglePlacesApiKey(): string | undefined {
-  const key =
-    extra().googlePlacesApiKey ||
-    extra().googleMapsApiKey ||
-    process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ||
-    process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
-  return present(key) ? key!.trim() : undefined;
+  // Places web-service credentials stay in Supabase Edge Functions.
+  return undefined;
 }
 
 export function getGoogleMapsApiKey(): string | undefined {
   const key =
     extra().googleMapsApiKey ||
-    extra().googlePlacesApiKey ||
-    process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ||
-    process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
+    process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   return present(key) ? key!.trim() : undefined;
 }
 
 export function getViatorApiKey(): string | undefined {
-  const key = extra().viatorApiKey || process.env.EXPO_PUBLIC_VIATOR_API_KEY;
-  return present(key) ? key!.trim() : undefined;
+  // Viator affiliate credentials stay in Supabase Edge Functions.
+  return undefined;
 }
 
 export type ApiKeyStatus = {
@@ -63,10 +55,13 @@ export type ApiKeyStatus = {
 
 /** Runtime key presence from expo.extra / EXPO_PUBLIC_* (never prints secret values). */
 export function getApiKeyStatus(): ApiKeyStatus {
+  const hasTravelApi = Boolean(
+    process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+  );
   return {
     maps: Boolean(getGoogleMapsApiKey()),
-    places: Boolean(getGooglePlacesApiKey()),
-    viator: Boolean(getViatorApiKey()),
+    places: hasTravelApi,
+    viator: hasTravelApi,
   };
 }
 
@@ -74,11 +69,7 @@ export function googlePlacePhotoUrl(
   photoReference: string,
   maxWidth = 800,
 ): string | undefined {
-  const key = getGooglePlacesApiKey();
-  if (!key || !photoReference) return undefined;
-  const url = new URL('https://maps.googleapis.com/maps/api/place/photo');
-  url.searchParams.set('maxwidth', String(maxWidth));
-  url.searchParams.set('photo_reference', photoReference);
-  url.searchParams.set('key', key);
-  return url.toString();
+  void maxWidth;
+  void photoReference;
+  return undefined;
 }

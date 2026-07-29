@@ -8,6 +8,6 @@ eas build --platform ios --profile preview
 eas submit --platform ios
 ```
 
-Configure `eas.json` when connecting an Expo account. Bundle ID placeholder: `com.gayi.app`.
+Configure `eas.json` when connecting an Expo account. The legacy bundle ID `com.gayi.app` remains intentional after the Outing rename so existing installs and update channels are not orphaned.
 
 Sign in with Apple is required for App Store if other third-party logins are offered.

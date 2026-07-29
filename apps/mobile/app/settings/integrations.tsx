@@ -14,7 +14,7 @@ const PROVIDER_SLOTS = [
     label: 'Destination Data',
     description: 'Source for destination catalog, scores, and LGBTQ+ context.',
     options: [
-      { id: 'gayi-sample', label: 'Gay-i Sample (built-in)', active: true },
+      { id: 'gayi-sample', label: 'Outing Sample (built-in)', active: true },
       { id: 'supabase', label: 'Supabase (env)', active: false },
     ],
   },
@@ -88,7 +88,7 @@ export default function IntegrationsScreen() {
         >
           <Text variant="labelLg">API keys (runtime)</Text>
           <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-            Keys load from the monorepo-root `.env` via `apps/mobile/app.config.js`. After editing keys, restart with `npx expo start --go --clear` and confirm Metro logs `[gayi] API keys loaded — maps:true places:true viator:true`.
+            The restricted native Maps SDK key loads through Expo. Places, Routes, Photos, and Viator are served by authenticated Supabase Edge Functions.
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
             <Badge
@@ -96,16 +96,16 @@ export default function IntegrationsScreen() {
               variant={apiKeys.maps ? 'success' : 'warning'}
             />
             <Badge
-              label={apiKeys.places ? 'Places keyed' : 'Places missing'}
+              label={apiKeys.places ? 'Places proxy connected' : 'Places proxy offline'}
               variant={apiKeys.places ? 'success' : 'warning'}
             />
             <Badge
-              label={apiKeys.viator ? 'Viator keyed' : 'Viator missing'}
+              label={apiKeys.viator ? 'Viator proxy connected' : 'Viator proxy offline'}
               variant={apiKeys.viator ? 'success' : 'warning'}
             />
           </View>
           <Text variant="caption" style={{ color: colors.textTertiary }}>
-            Expected vars: GOOGLE_MAPS_API_KEY / GOOGLE_PLACES_API_KEY / VIATOR_API_KEY (EXPO_PUBLIC_* mirrors also work).
+            App vars: GOOGLE_MAPS_API_KEY plus EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY. Provider secrets stay server-side.
           </Text>
         </View>
 

@@ -36,7 +36,7 @@ export const imagesRemotePlaceholder = defineProviderPlugin<ImagesReq, ImagesRes
         const h = req.height ?? 600;
         const images = Array.from({ length: count }, (_, i) => ({
           url: placeholderUrl(w, h, req.destinationSlug ?? req.query, i),
-          altText: req.destinationSlug ?? req.query ?? 'Gay-i destination',
+          altText: req.destinationSlug ?? req.query ?? 'Outing destination',
         }));
         return { images };
       },
