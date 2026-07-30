@@ -559,3 +559,75 @@ export const notificationPreferences = pgTable('notification_preferences', {
   preferences: jsonb('preferences').notNull().default({}),
   ...timestamps,
 });
+
+export const savedDestinations = pgTable(
+  'saved_destinations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+    destinationSlug: text('destination_slug').notNull(),
+    source: text('source').notNull().default('user'),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex('saved_destinations_user_slug_idx').on(table.userId, table.destinationSlug)],
+);
+
+export const assistantConversations = pgTable(
+  'assistant_conversations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    ownerId: uuid('owner_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+    tripId: uuid('trip_id').references(() => trips.id, { onDelete: 'cascade' }),
+    scopeKind: text('scope_kind').notNull(),
+    destinationSlug: text('destination_slug'),
+    visibility: text('visibility').notNull(),
+    title: text('title'),
+    provider: text('provider').notNull().default('mistral'),
+    model: text('model').notNull().default('mistral-small-2603'),
+    ...timestamps,
+  },
+  (table) => [
+    index('assistant_conversations_owner_idx').on(table.ownerId, table.updatedAt),
+    index('assistant_conversations_trip_idx').on(table.tripId, table.updatedAt),
+  ],
+);
+
+export const assistantMessages = pgTable(
+  'assistant_messages',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    conversationId: uuid('conversation_id').notNull().references(() => assistantConversations.id, { onDelete: 'cascade' }),
+    authorId: uuid('author_id').references(() => profiles.id, { onDelete: 'set null' }),
+    role: text('role').notNull(),
+    content: text('content').notNull(),
+    sources: jsonb('sources').notNull().default([]),
+    toolName: text('tool_name'),
+    latencyMs: integer('latency_ms'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index('assistant_messages_conversation_idx').on(table.conversationId, table.createdAt)],
+);
+
+export const assistantProposals = pgTable(
+  'assistant_proposals',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    conversationId: uuid('conversation_id').notNull().references(() => assistantConversations.id, { onDelete: 'cascade' }),
+    tripId: uuid('trip_id').references(() => trips.id, { onDelete: 'cascade' }),
+    createdBy: uuid('created_by').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    title: text('title').notNull(),
+    summary: text('summary').notNull(),
+    payload: jsonb('payload').notNull().default({}),
+    sources: jsonb('sources').notNull().default([]),
+    status: text('status').notNull().default('proposed'),
+    pollId: uuid('poll_id').references(() => tripPolls.id, { onDelete: 'set null' }),
+    decidedBy: uuid('decided_by').references(() => profiles.id, { onDelete: 'set null' }),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    index('assistant_proposals_conversation_idx').on(table.conversationId, table.createdAt),
+    index('assistant_proposals_trip_idx').on(table.tripId, table.status),
+  ],
+);

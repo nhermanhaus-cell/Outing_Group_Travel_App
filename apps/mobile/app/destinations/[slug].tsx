@@ -18,13 +18,11 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
 import { PulseMeter } from '../../components/ui/PulseMeter';
-import { DataSourceBadge } from '../../components/ui/DataSourceBadge';
 import { PhotoCarousel } from '../../components/ui/PhotoCarousel';
 import { DestinationHeroImage } from '../../components/ui/DestinationHeroImage';
 import { getDestinationContextRating, getDestinationRating } from '../../src/lib/destinationRating';
 import travelAdvisories from '../../assets/public/travel-advisories.json';
 import travelBlogInsights from '../../assets/editorial/travel-blog-insights.json';
-import { getApiKeyStatus } from '../../src/lib/apiKeys';
 import {
   loadDestinationExperiences,
   type MobileExperience,
@@ -41,6 +39,9 @@ import { destinationPlanHref } from '../../src/lib/tripPlanningFlow';
 import { ANALYTICS_EVENTS } from '@gayi/shared';
 import { useAnalytics } from '../../src/analytics/analytics-provider';
 import { useDestinationImages } from '../../src/lib/destinationImages';
+import { useSavedDestinations } from '../../src/providers/SavedDestinationsProvider';
+import { OutingIcon } from '../../components/ui/OutingIcon';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 type TabKey = 'overview' | 'lgbtq' | 'places' | 'events';
 
@@ -239,6 +240,7 @@ function DestinationPlaceCard({ place, destinationName, center, index }: { place
 
 export default function DestinationDetailScreen() {
   const { colors, spacing, radius } = useTheme();
+  const { isSaved, toggleSaved } = useSavedDestinations();
   const { slug, quizAnswers } = useLocalSearchParams<{ slug: string; quizAnswers?: string }>();
   const { getBySlug, getScoringBySlug } = useDestinations();
   const router = useRouter();
@@ -408,7 +410,6 @@ export default function DestinationDetailScreen() {
     [destinationExperiences],
   );
 
-  const apiKeys = getApiKeyStatus();
 
   if (!destination) {
     return (
@@ -455,7 +456,13 @@ export default function DestinationDetailScreen() {
             <Pressable onPress={() => router.back()} style={{ backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: radius.full, padding: spacing.sm }}>
               <Text style={{ color: colors.white, fontSize: 16 }}>←</Text>
             </Pressable>
-            <DataSourceBadge label={destination.sourceLabel ?? 'editorial_demo'} />
+            <Pressable
+              accessibilityLabel={isSaved(destination.slug) ? 'Remove saved destination' : 'Save destination'}
+              onPress={() => void toggleSaved(destination.slug)}
+              style={{ backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: radius.full, padding: spacing.sm }}
+            >
+              <OutingIcon name="bookmark" size={20} color={colors.white} filled={isSaved(destination.slug)} />
+            </Pressable>
           </View>
           <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(15,13,10,0.55)', paddingHorizontal: spacing['2xl'], paddingVertical: spacing.xl }}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.sm }}>
@@ -538,6 +545,13 @@ export default function DestinationDetailScreen() {
                 ))}
               </View>
 
+              {weatherQuery.isLoading ? (
+                <View style={{ marginTop: spacing.lg, gap: spacing.sm }}>
+                  <Skeleton width="34%" height={12} />
+                  <Skeleton height={78} borderRadius={radius.lg} />
+                </View>
+              ) : null}
+
               {weatherQuery.data?.weather ? (
                 <>
                   <SectionTitle>Weather now</SectionTitle>
@@ -561,6 +575,25 @@ export default function DestinationDetailScreen() {
                 </>
               ) : null}
 
+              {weatherQuery.isError && liveEventsQuery.isError ? (
+                <View style={{ marginTop: spacing.lg, padding: spacing.base, borderRadius: radius.lg, backgroundColor: colors.backgroundSecondary, gap: spacing.sm }}>
+                  <Text variant="h4">Current details couldn’t refresh.</Text>
+                  <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                    The saved destination guide is still here. Reconnect to update weather and events.
+                  </Text>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onPress={() => {
+                      void weatherQuery.refetch();
+                      void liveEventsQuery.refetch();
+                    }}
+                  >
+                    Try again
+                  </Button>
+                </View>
+              ) : null}
+
               <SectionTitle>Budget</SectionTitle>
               {destination.priceBands && (
                 <View style={{ gap: spacing.xs }}>
@@ -576,29 +609,6 @@ export default function DestinationDetailScreen() {
                   <Badge key={i} label={i.replace('_', ' ')} variant="default" />
                 ))}
               </View>
-
-              <SectionTitle>Live APIs</SectionTitle>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.sm }}>
-                <Badge
-                  label={apiKeys.places ? 'Places keyed' : 'Places offline'}
-                  variant={apiKeys.places ? 'success' : 'warning'}
-                />
-                <Badge
-                  label={apiKeys.viator ? 'Viator keyed' : 'Viator offline'}
-                  variant={apiKeys.viator ? 'success' : 'warning'}
-                />
-                <Badge
-                  label={
-                    experienceSource === 'viator_live' ? 'Experiences: live' : 'Experiences: editorial'
-                  }
-                  variant={experienceSource === 'viator_live' ? 'info' : 'default'}
-                />
-              </View>
-              {!apiKeys.places || !apiKeys.viator ? (
-                <Text variant="caption" style={{ color: colors.textTertiary, marginBottom: spacing.sm }}>
-                  Put keys in the repo-root `.env`, then restart with `npx expo start --go --clear`. Watch the Metro terminal for `[gayi] API keys loaded`.
-                </Text>
-              ) : null}
 
               {destinationExperiences.length > 0 && (
                 <>
@@ -880,13 +890,13 @@ export default function DestinationDetailScreen() {
 
               {lgbtq?.lastReviewedAt && (
                 <Text variant="caption" style={{ color: colors.textTertiary, marginTop: spacing.md }}>
-                  Reviewed: {lgbtq.lastReviewedAt} · {lgbtq.dataLabel ?? 'editorial_demo'}
+                  Reviewed {lgbtq.lastReviewedAt}
                 </Text>
               )}
 
               <View style={{ marginTop: spacing.lg, padding: spacing.md, backgroundColor: colors.warningLight ?? colors.backgroundSecondary, borderRadius: radius.md }}>
                 <Text variant="bodySm" style={{ color: colors.textSecondary }}>
-                  Context is sample data only. Always verify with current local sources before travel.
+                  Conditions and local experiences can change. Check current official and local sources before travel.
                 </Text>
               </View>
             </View>

@@ -24,6 +24,7 @@ import {
   useAnalytics,
 } from '../analytics/analytics-provider';
 import type {
+  AssistantProposal,
   Interest,
   LookingFor,
   PendingInvite,
@@ -34,6 +35,7 @@ import type {
 } from '@gayi/shared';
 import destinationsCatalog from '../../assets/seed/destinations.json';
 import destinationsScoring from '../../assets/seed/destinations.scoring.json';
+import { SavedDestinationsProvider } from './SavedDestinationsProvider';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -115,6 +117,8 @@ export interface TripPoll {
   question: string;
   options: Array<{ id: string; label: string; votes: string[] }>;
   createdAt: string;
+  assistantProposal?: AssistantProposal;
+  resolution?: 'accepted' | 'dismissed' | 'tie';
 }
 
 export interface TripsContext {
@@ -562,7 +566,29 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
     if (!error && data) {
-      const remote = (data as TripRow[]).map(rowToLocalTrip);
+      const tripIds = (data as TripRow[]).map((row) => row.id);
+      const { data: memberRows } = tripIds.length
+        ? await tripClient
+          .from('trip_members')
+          .select('trip_id,user_id,role')
+          .in('trip_id', tripIds)
+        : { data: [] };
+      const remote = (data as TripRow[]).map((row) => {
+        const trip = rowToLocalTrip(row);
+        const syncedMembers = (memberRows ?? [])
+          .filter((member) => member.trip_id === row.id)
+          .map((member) => ({
+            id: member.user_id,
+            displayName: member.user_id === auth.user?.id
+              ? auth.user?.displayName ?? 'You'
+              : 'Trip member',
+            role: member.role === 'viewer' ? 'member' : member.role as TripMember['role'],
+          }));
+        return {
+          ...trip,
+          members: syncedMembers.length > 0 ? syncedMembers : trip.members,
+        };
+      });
       setTrips(remote);
       await storeSet(TRIPS_KEY, JSON.stringify(remote));
     }
@@ -621,7 +647,14 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           user_id: auth.user.id,
           role: 'owner',
         });
-        const trip = rowToLocalTrip(row as TripRow);
+        const trip = {
+          ...rowToLocalTrip(row as TripRow),
+          members: [{
+            id: auth.user.id,
+            displayName: auth.user.displayName ?? 'You',
+            role: 'owner' as const,
+          }],
+        };
         await persist([trip, ...trips]);
         return trip;
       }
@@ -771,9 +804,11 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           <AuthProvider>
             <TravelProfileProvider>
               <DestinationsProvider>
-                <TripsProvider>
-                  <IntegrationsProvider>{children}</IntegrationsProvider>
-                </TripsProvider>
+                <SavedDestinationsProvider>
+                  <TripsProvider>
+                    <IntegrationsProvider>{children}</IntegrationsProvider>
+                  </TripsProvider>
+                </SavedDestinationsProvider>
               </DestinationsProvider>
             </TravelProfileProvider>
           </AuthProvider>

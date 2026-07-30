@@ -1,0 +1,15 @@
+appId: com.gayi.app
+---
+- launchApp
+- tapOn: "You"
+- tapOn: "Settings"
+- tapOn: "Dark"
+- assertVisible: "Dark"
+- tapOn:
+    point: "8%,7%"
+- tapOn: "Home"
+- assertVisible: "What are we getting into?"
+- takeScreenshot: "screenshots/home-dark"
+- tapOn: "Discover"
+- assertVisible: "Discover"
+- takeScreenshot: "screenshots/discover-dark"

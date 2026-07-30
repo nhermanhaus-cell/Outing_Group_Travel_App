@@ -1,0 +1,14 @@
+appId: com.gayi.app
+---
+- launchApp
+- tapOn: "Trips"
+- tapOn:
+    index: 0
+- tapOn:
+    id: "ask-outing-trip"
+    optional: true
+- assertVisible: "Who should see this conversation?"
+- assertVisible: "Just me"
+- assertVisible: "Trip members"
+- tapOn: "Trip members"
+- assertVisible: "Visibility locks after your first message."

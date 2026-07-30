@@ -37,7 +37,11 @@ import { Badge } from '../../../components/ui/Badge';
 import { PhotoCarousel } from '../../../components/ui/PhotoCarousel';
 import { GlamourSelector } from '../../../components/ui/GlamourSelector';
 import { ProgressBar } from '../../../components/ui/ProgressBar';
-import { ANALYTICS_EVENTS, type GlamourLevel } from '@gayi/shared';
+import {
+  ANALYTICS_EVENTS,
+  decideProposalVote,
+  type GlamourLevel,
+} from '@gayi/shared';
 import type {
   ActivityPace,
   Destination,
@@ -81,6 +85,10 @@ import { nearestAirports } from '../../../src/content/airports';
 import { CalendarExportSheet } from '../../../components/trips/CalendarExportSheet';
 import { openItineraryItemInCalendar } from '../../../src/lib/calendarExport';
 import { useAnalytics } from '../../../src/analytics/analytics-provider';
+import { OutingIcon } from '../../../components/ui/OutingIcon';
+import { featureFlags } from '../../../src/lib/featureFlags';
+import { applyAssistantProposalToTrip } from '../../../src/lib/assistantProposals';
+import { reviewAssistantProposal } from '../../../src/lib/assistant-api';
 
 type SectionKey =
   | 'overview'
@@ -91,6 +99,8 @@ type SectionKey =
   | 'places'
   | 'map'
   | 'comments';
+
+type HubSectionKey = 'plan' | 'explore' | 'group';
 
 type GeocodeStatus = 'idle' | 'locating' | 'located' | 'failed';
 
@@ -124,16 +134,20 @@ type MarkerItem = {
   day?: number;
 };
 
-const SECTIONS: Array<{ key: SectionKey; label: string }> = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'itinerary', label: 'Itinerary' },
-  { key: 'budget', label: 'Budget' },
-  { key: 'polls', label: 'Polls' },
-  { key: 'members', label: 'Members' },
-  { key: 'places', label: 'Places' },
-  { key: 'map', label: 'Map' },
-  { key: 'comments', label: 'Chat' },
-];
+const HUB_SECTIONS: Record<HubSectionKey, Array<{ key: SectionKey; label: string }>> = {
+  plan: [
+    { key: 'overview', label: 'Details' },
+    { key: 'itinerary', label: 'Itinerary' },
+    { key: 'map', label: 'Daily map' },
+    { key: 'budget', label: 'Budget' },
+  ],
+  explore: [{ key: 'places', label: 'Places & experiences' }],
+  group: [
+    { key: 'polls', label: 'Decisions' },
+    { key: 'members', label: 'People' },
+    { key: 'comments', label: 'Chat' },
+  ],
+};
 
 const INTEREST_OPTIONS: Interest[] = [
   'food',
@@ -195,7 +209,7 @@ export default function TripHubScreen() {
   const { colors, spacing, radius } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { tripId } = useLocalSearchParams<{ tripId: string }>();
+  const { tripId, section: requestedSection } = useLocalSearchParams<{ tripId: string; section?: string }>();
   const { getTrip, updateTrip, deleteTrip } = useTrips();
   const { user } = useAuth();
   const { profile } = useTravelProfile();
@@ -236,6 +250,15 @@ export default function TripHubScreen() {
   const [calendarExportVisible, setCalendarExportVisible] = useState(false);
   const lastGeocodeAttemptKeyRef = useRef<string | null>(null);
   const lastNearbyFetchKeyRef = useRef<string | null>(null);
+  const activeHub = (Object.entries(HUB_SECTIONS).find(([, items]) =>
+    items.some((item) => item.key === section),
+  )?.[0] ?? 'plan') as HubSectionKey;
+
+  useEffect(() => {
+    if (requestedSection === 'plan') setSection('overview');
+    if (requestedSection === 'explore') setSection('places');
+    if (requestedSection === 'group') setSection('polls');
+  }, [requestedSection]);
 
   useEffect(() => {
     track(ANALYTICS_EVENTS.TRIP_SECTION_VIEWED, { section });
@@ -1386,7 +1409,7 @@ export default function TripHubScreen() {
     const changedVote = Boolean(
       currentPoll?.options.some((option) => option.votes.includes(user.id)),
     );
-    const polls = (trip.polls ?? []).map((poll) => {
+    let polls = (trip.polls ?? []).map((poll) => {
       if (poll.id !== pollId) return poll;
       return {
         ...poll,
@@ -1396,11 +1419,57 @@ export default function TripHubScreen() {
         }),
       };
     });
-    await updateTrip(trip.tripId, { polls });
+    const nextPoll = polls.find((poll) => poll.id === pollId);
+    let proposalUpdates = {};
+    if (nextPoll?.assistantProposal) {
+      const memberIds = (trip.members ?? []).map((member) => member.id);
+      const votes = nextPoll.options.flatMap((option, index) =>
+        option.votes.map((userId) => ({
+          userId,
+          choice: index === 0 ? 'accept' as const : 'dismiss' as const,
+        })),
+      );
+      const decision = decideProposalVote({ memberIds, votes });
+      if (decision.result === 'accepted') {
+        proposalUpdates = applyAssistantProposalToTrip(trip, nextPoll.assistantProposal);
+        polls = polls.map((poll) => poll.id === pollId ? { ...poll, resolution: 'accepted' as const } : poll);
+      } else if (decision.result === 'dismissed') {
+        polls = polls.map((poll) => poll.id === pollId ? { ...poll, resolution: 'dismissed' as const } : poll);
+      } else if (decision.result === 'tie') {
+        polls = polls.map((poll) => poll.id === pollId ? { ...poll, resolution: 'tie' as const } : poll);
+      }
+    }
+    await updateTrip(trip.tripId, { polls, ...proposalUpdates });
     track(ANALYTICS_EVENTS.POLL_VOTE_SUBMITTED, {
       optionCount: currentPoll?.options.length ?? 0,
       changedVote,
     });
+  };
+
+  const resolveAssistantPollTie = async (
+    pollId: string,
+    choice: 'accept' | 'dismiss',
+  ) => {
+    if (!trip || !user) return;
+    const poll = (trip.polls ?? []).find((item) => item.id === pollId);
+    if (!poll?.assistantProposal) return;
+    const role = trip.members?.find((member) => member.id === user.id)?.role;
+    if (role !== 'owner' && role !== 'organizer') return;
+    const polls = (trip.polls ?? []).map((item) =>
+      item.id === pollId
+        ? { ...item, resolution: choice === 'accept' ? 'accepted' as const : 'dismissed' as const }
+        : item,
+    );
+    await updateTrip(trip.tripId, {
+      polls,
+      ...(choice === 'accept'
+        ? applyAssistantProposalToTrip(trip, poll.assistantProposal)
+        : {}),
+    });
+    await reviewAssistantProposal(
+      poll.assistantProposal.id,
+      choice === 'accept' ? 'apply' : 'dismiss',
+    ).catch(() => undefined);
   };
 
   if (!trip) {
@@ -1449,9 +1518,44 @@ export default function TripHubScreen() {
           </Pressable>
         </View>
 
-        {/* Section tabs */}
+        {featureFlags.tripHubV2 ? (
+          <View style={{ flexDirection: 'row', gap: spacing.xs, paddingTop: spacing.sm }}>
+            {([
+              { key: 'plan', label: 'Plan' },
+              { key: 'explore', label: 'Explore' },
+              { key: 'group', label: 'Group' },
+            ] as const).map((hub) => (
+              <Pressable
+                key={hub.key}
+                onPress={() => setSection(HUB_SECTIONS[hub.key][0]!.key)}
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  paddingVertical: spacing.sm,
+                  borderBottomWidth: 2,
+                  borderBottomColor: activeHub === hub.key ? colors.accent : 'transparent',
+                }}
+              >
+                <Text variant="labelLg" style={{ color: activeHub === hub.key ? colors.accent : colors.textSecondary }}>
+                  {hub.label}
+                </Text>
+              </Pressable>
+            ))}
+            {featureFlags.assistantV1 ? (
+              <Pressable
+                testID="ask-outing-trip"
+                accessibilityLabel="Ask Outing about this trip"
+                onPress={() => router.push(`/trips/${trip.tripId}/ask`)}
+                style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.plumLight, alignItems: 'center', justifyContent: 'center' }}
+              >
+                <OutingIcon name="ask" size={20} color={colors.plum} />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingTop: spacing.xs }}>
-          {SECTIONS.map((s) => (
+          {HUB_SECTIONS[activeHub].map((s) => (
             <Pressable
               key={s.key}
               onPress={() => setSection(s.key)}
@@ -1525,7 +1629,7 @@ export default function TripHubScreen() {
             <Card>
               <View style={{ gap: spacing.md }}>
                 <View style={{ gap: spacing.xs }}>
-                  <Text variant="labelLg">Phase 1 planning intel</Text>
+                  <Text variant="labelLg">How this trip should feel</Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
                     <Badge
                       label={`Pace: ${formatPaceLabel(trip.activityPace ?? blendedPreferences?.activityPace ?? 'balanced')}`}
@@ -1594,60 +1698,6 @@ export default function TripHubScreen() {
               </Button>
             </View>
 
-            {destinationExperiences.length > 0 ? (
-              <View style={{ gap: spacing.sm }}>
-                <Text variant="h3">Suggested experiences</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
-                  <Badge
-                      label={apiKeys.viator ? 'Viator proxy connected' : 'Viator offline'}
-                    variant={apiKeys.viator ? 'success' : 'warning'}
-                  />
-                  <Badge
-                    label={
-                      destinationExperienceSource === 'viator_live'
-                        ? 'Live results'
-                        : 'Editorial fallback'
-                    }
-                    variant={destinationExperienceSource === 'viator_live' ? 'info' : 'default'}
-                  />
-                </View>
-                {destinationExperiences.map((experience) => (
-                  <Card key={experience.id} elevated>
-                    <View style={{ gap: spacing.sm }}>
-                      <PhotoCarousel
-                        urls={experience.imageUrls ?? []}
-                        height={140}
-                        attributions={experience.imageAttributions}
-                        attribution={
-                          experience.provider === 'editorial' ? 'Photo via Unsplash' : undefined
-                        }
-                      />
-                      <Text variant="labelLg">{experience.title}</Text>
-                      <Text variant="bodySm" style={{ color: colors.textSecondary }}>
-                        {experience.summary}
-                      </Text>
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
-                        {destinationExperienceSource === 'viator_live' ||
-                        experience.provider === 'viator' ? (
-                          <Badge label="Viator" variant="warning" />
-                        ) : null}
-                        {experience.tags?.slice(0, 4).map((tag) => (
-                          <Badge key={tag} label={tag} variant="default" />
-                        ))}
-                      </View>
-                      <Button size="sm" variant="secondary" onPress={() => router.push({ pathname: '/experiences/[productCode]', params: { productCode: experience.productCode ?? experience.id, destinationSlug: trip.destinationSlug ?? '', seed: JSON.stringify(experience) } })}>
-                        View details in Outing
-                      </Button>
-                    </View>
-                  </Card>
-                ))}
-                {hasExternalExperienceBookings ? (
-                  <Text variant="caption" style={{ color: colors.textTertiary }}>
-                    Partner bookings open on Viator. Outing may earn a commission.
-                  </Text>
-                ) : null}
-              </View>
-            ) : null}
           </View>
         )}
 
@@ -1803,11 +1853,6 @@ export default function TripHubScreen() {
                       );
                     })}
                   </View>
-                  {!apiKeys.places ? (
-                    <Text variant="caption" style={{ color: colors.textTertiary }}>
-                      Enable Distance Matrix API on your Google key to show live travel times.
-                    </Text>
-                  ) : null}
                 </View>
 
                 <Button
@@ -2095,6 +2140,9 @@ export default function TripHubScreen() {
             ) : (
               (trip.polls ?? []).map((poll) => (
                 <Card key={poll.id} elevated>
+                  {poll.assistantProposal ? (
+                    <Badge label="Ask Outing proposal" variant="info" />
+                  ) : null}
                   <Text variant="h4" style={{ marginBottom: spacing.sm }}>{poll.question}</Text>
                   {poll.options.map((opt) => {
                     const totalVotes = poll.options.reduce((s, o) => s + o.votes.length, 0);
@@ -2114,6 +2162,27 @@ export default function TripHubScreen() {
                       </Pressable>
                     );
                   })}
+                  {poll.resolution === 'accepted' ? (
+                    <Text variant="labelMd" style={{ color: colors.pool }}>Majority accepted · added to the plan</Text>
+                  ) : poll.resolution === 'dismissed' ? (
+                    <Text variant="labelMd" style={{ color: colors.textSecondary }}>Group dismissed this change</Text>
+                  ) : poll.resolution === 'tie' ? (
+                    (() => {
+                      const role = trip.members?.find((member) => member.id === user?.id)?.role;
+                      const isOrganizer = role === 'owner' || role === 'organizer';
+                      return isOrganizer ? (
+                        <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+                          <Text variant="caption" style={{ color: colors.textSecondary }}>The vote is tied. An organizer makes the call.</Text>
+                          <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                            <Button size="sm" onPress={() => void resolveAssistantPollTie(poll.id, 'accept')}>Accept</Button>
+                            <Button size="sm" variant="ghost" onPress={() => void resolveAssistantPollTie(poll.id, 'dismiss')}>Dismiss</Button>
+                          </View>
+                        </View>
+                      ) : (
+                        <Text variant="caption" style={{ color: colors.textSecondary }}>Tie · waiting for an organizer</Text>
+                      );
+                    })()
+                  ) : null}
                 </Card>
               ))
             )}
@@ -2223,24 +2292,65 @@ export default function TripHubScreen() {
         {/* ─── Places ─── */}
         {section === 'places' && (
           <View style={{ gap: spacing.md }}>
-            <Text variant="h3">Near stay & neighborhoods</Text>
+            <Text variant="h3">Explore this destination</Text>
             <Text variant="caption" style={{ color: colors.textTertiary }}>
-              Suggestions highlight queer venue density and neighborhood vibe tags. They are not a universal safety claim.
+              Restaurants, places, neighborhoods, and bookable experiences that fit the trip. Context is not a universal safety claim.
             </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+            {destinationExperiences.length > 0 ? (
+              <View style={{ gap: spacing.sm }}>
+                <Text variant="labelLg">Experiences</Text>
+                {destinationExperiences.map((experience) => (
+                  <Card key={experience.id} elevated>
+                    <View style={{ gap: spacing.sm }}>
+                      <PhotoCarousel
+                        urls={experience.imageUrls ?? []}
+                        height={140}
+                        attributions={experience.imageAttributions}
+                        attribution={experience.provider === 'editorial' ? 'Photo via Unsplash' : undefined}
+                      />
+                      <Text variant="labelLg">{experience.title}</Text>
+                      <Text variant="bodySm" style={{ color: colors.textSecondary }}>{experience.summary}</Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+                        {destinationExperienceSource === 'viator_live' || experience.provider === 'viator'
+                          ? <Badge label="Viator" variant="warning" />
+                          : null}
+                        {experience.tags?.slice(0, 4).map((tag) => <Badge key={tag} label={tag} variant="default" />)}
+                      </View>
+                      <Button size="sm" variant="secondary" onPress={() => router.push({ pathname: '/experiences/[productCode]', params: { productCode: experience.productCode ?? experience.id, destinationSlug: trip.destinationSlug ?? '', seed: JSON.stringify(experience) } })}>
+                        View details
+                      </Button>
+                    </View>
+                  </Card>
+                ))}
+                {hasExternalExperienceBookings ? (
+                  <Text variant="caption" style={{ color: colors.textTertiary }}>Partner bookings open on Viator. Outing may earn a commission.</Text>
+                ) : null}
+              </View>
+            ) : null}
+            {(catalogDestination?.events ?? []).length > 0 ? (
+              <View style={{ gap: spacing.sm }}>
+                <Text variant="labelLg">Events</Text>
+                {(catalogDestination?.events ?? []).map((event) => (
+                  <Card key={event.id}>
+                    <View style={{ gap: spacing.xs }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md }}>
+                        <Text variant="h4" style={{ flex: 1 }}>{event.title}</Text>
+                        <Badge label={formatTokenLabel(event.category ?? 'event')} variant="accent" />
+                      </View>
+                      <Text variant="caption" style={{ color: colors.pool }}>
+                        {event.startDate}{event.endDate && event.endDate !== event.startDate ? ` – ${event.endDate}` : ''}
+                      </Text>
+                      {event.summary ? <Text variant="bodySm" style={{ color: colors.textSecondary }}>{event.summary}</Text> : null}
+                    </View>
+                  </Card>
+                ))}
+              </View>
+            ) : null}
+            {liveNearbyPlaces.length > 0 ? (
               <Badge
-                label={apiKeys.places ? 'Places API keyed' : 'Places API offline'}
-                variant={apiKeys.places ? 'success' : 'warning'}
+                label={`${liveNearbyPlaces.length} current suggestions nearby`}
+                variant="info"
               />
-              <Badge
-                label={liveNearbyPlaces.length > 0 ? `${liveNearbyPlaces.length} live nearby` : 'Editorial nearby'}
-                variant={liveNearbyPlaces.length > 0 ? 'info' : 'default'}
-              />
-            </View>
-            {trip.lodgingStatus === 'booked' && !apiKeys.places ? (
-              <Text variant="caption" style={{ color: colors.textTertiary }}>
-                Configure the Supabase travel-api function to load live nearby places.
-              </Text>
             ) : null}
 
             {!catalogDestination ? (

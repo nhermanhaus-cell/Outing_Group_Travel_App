@@ -1,0 +1,7 @@
+appId: com.gayi.app
+---
+- launchApp
+- tapOn: "Ask"
+- assertVisible: "Sign in to Ask Outing"
+- tapOn: "Sign in to Ask Outing"
+- assertVisible: "Sign in"

@@ -7,7 +7,6 @@ import { useDestinations, useTravelProfile } from '../../src/providers/AppProvid
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { Text } from '../../components/ui/Text';
 import { DestinationCard } from '../../components/ui/DestinationCard';
-import { DataSourceBadge } from '../../components/ui/DataSourceBadge';
 import { featureFlags } from '../../src/lib/featureFlags';
 import { useQuery } from '@tanstack/react-query';
 import { loadIndicativeFlightDeals } from '../../src/lib/travel-api';
@@ -95,8 +94,8 @@ export default function DiscoverScreen() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentInsetAdjustmentBehavior="automatic">
       <View style={{ paddingTop: insets.top + spacing.base, paddingHorizontal: spacing.base, gap: spacing.xs }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><Text variant="displayMd">Discover</Text><DataSourceBadge /></View>
-        <Text variant="bodyLg" style={{ color: colors.textSecondary }}>Editorial trips worth looking forward to.</Text>
+        <Text variant="displayMd">Discover</Text>
+        <Text variant="bodyLg" style={{ color: colors.textSecondary }}>Places picked for the way you like to travel.</Text>
       </View>
 
       {destinationDeals.length > 0 ? (
@@ -122,7 +121,7 @@ export default function DiscoverScreen() {
                   <Text variant="h4">{destination.name}</Text>
                   <Text variant="h3">from {new Intl.NumberFormat(undefined, { style: 'currency', currency: deal.currency, maximumFractionDigits: 0 }).format(deal.price)}</Text>
                   {deal.savingsPercent && deal.savingsPercent > 0 ? <Text variant="labelSm" style={{ color: colors.accent }}>{deal.savingsPercent}% below our recent median</Text> : null}
-                  <Text variant="caption" style={{ color: colors.textTertiary }}>{deal.direct ? 'Direct quote' : 'Stops may apply'} · recently observed via Skyscanner</Text>
+                  <Text variant="caption" style={{ color: colors.textTertiary }}>{deal.direct ? 'Direct flight' : 'Stops may apply'} · recently observed via Skyscanner</Text>
                 </View>
               </Pressable>
             ))}

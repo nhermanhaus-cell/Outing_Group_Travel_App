@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   darkColors,
   lightColors,
@@ -19,13 +20,29 @@ interface Theme {
   typography: typeof typography;
   shadows: typeof shadows;
   isDark: boolean;
+  colorSchemePreference: 'system' | 'light' | 'dark';
+  setColorSchemePreference: (preference: 'system' | 'light' | 'dark') => void;
 }
 
 const ThemeContext = createContext<Theme | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
+  const [colorSchemePreference, setPreference] = useState<'system' | 'light' | 'dark'>('system');
+  const isDark = colorSchemePreference === 'system'
+    ? scheme === 'dark'
+    : colorSchemePreference === 'dark';
+
+  useEffect(() => {
+    void AsyncStorage.getItem('outing:appearance').then((value) => {
+      if (value === 'system' || value === 'light' || value === 'dark') setPreference(value);
+    });
+  }, []);
+
+  const setColorSchemePreference = (preference: 'system' | 'light' | 'dark') => {
+    setPreference(preference);
+    void AsyncStorage.setItem('outing:appearance', preference);
+  };
 
   const theme = useMemo<Theme>(
     () => ({
@@ -36,8 +53,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       typography,
       shadows,
       isDark,
+      colorSchemePreference,
+      setColorSchemePreference,
     }),
-    [isDark],
+    [colorSchemePreference, isDark],
   );
 
   return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;

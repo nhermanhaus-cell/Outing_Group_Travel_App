@@ -1,0 +1,9 @@
+appId: com.gayi.app
+---
+- launchApp
+- tapOn: "Discover"
+- tapOn:
+    text: "Barcelona"
+- tapOn: "Plan a trip"
+- assertVisible: "What are you into?"
+- assertNotVisible: "How far—and how—do you want to go?"

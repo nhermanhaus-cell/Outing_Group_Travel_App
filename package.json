@@ -8,6 +8,7 @@
     "typecheck": "pnpm -r --filter '@gayi/*' --filter mobile typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:journeys": "maestro test tests/maestro",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0 || true",
     "db:seed": "node scripts/print-seed-info.mjs",
     "seed:sync": "node scripts/seed-sync.mjs",

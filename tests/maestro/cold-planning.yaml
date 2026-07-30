@@ -1,0 +1,6 @@
+appId: com.gayi.app
+---
+- launchApp
+- tapOn: "Home"
+- tapOn: "Plan a trip"
+- assertVisible: "Who’s going?"

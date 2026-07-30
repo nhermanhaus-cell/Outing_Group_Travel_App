@@ -29,6 +29,18 @@ export const palette = {
   coral100: '#FAD8D0',
   coral50: '#FEF1EE',
 
+  // Playful social accents
+  plum700: '#3C123B',
+  plum600: '#552052',
+  plum500: '#71306C',
+  plum100: '#F0DDEF',
+  plum50: '#FAF2F9',
+  pool600: '#147F83',
+  pool500: '#1B9CA0',
+  pool300: '#78D2D0',
+  pool100: '#D7F3F1',
+  pool50: '#F0FBFA',
+
   // Semantic
   success: '#3A7D5C',
   successLight: '#D1EAE0',
@@ -76,6 +88,10 @@ export type ThemeColors = {
   coral300: string;
   ink700: string;
   white: string;
+  plum: string;
+  plumLight: string;
+  pool: string;
+  poolLight: string;
 };
 
 export const lightColors: ThemeColors = {
@@ -117,6 +133,10 @@ export const lightColors: ThemeColors = {
   coral300: palette.coral300,
   ink700: palette.ink700,
   white: palette.white,
+  plum: palette.plum600,
+  plumLight: palette.plum50,
+  pool: palette.pool600,
+  poolLight: palette.pool50,
 };
 
 export const darkColors: ThemeColors = {
@@ -158,6 +178,10 @@ export const darkColors: ThemeColors = {
   coral300: palette.coral300,
   ink700: palette.ink700,
   white: palette.white,
+  plum: palette.plum100,
+  plumLight: palette.plum700,
+  pool: palette.pool300,
+  poolLight: palette.ink700,
 };
 
 export const spacing = {
@@ -186,31 +210,37 @@ export const radius = {
   full: 9999,
 } as const;
 
+const displayFamily = 'Fraunces_700Bold';
+const displayRegularFamily = 'Fraunces_600SemiBold';
+const uiFamily = 'Manrope_400Regular';
+const uiMediumFamily = 'Manrope_600SemiBold';
+const uiBoldFamily = 'Manrope_700Bold';
+
 export const typography = {
   // Display — editorial hero
-  displayLg: { fontSize: 40, lineHeight: 46, fontWeight: '800' as const, letterSpacing: -1 },
-  displayMd: { fontSize: 32, lineHeight: 38, fontWeight: '800' as const, letterSpacing: -0.8 },
-  displaySm: { fontSize: 26, lineHeight: 32, fontWeight: '700' as const, letterSpacing: -0.5 },
+  displayLg: { fontFamily: displayFamily, fontSize: 42, lineHeight: 47, letterSpacing: -1 },
+  displayMd: { fontFamily: displayFamily, fontSize: 34, lineHeight: 40, letterSpacing: -0.8 },
+  displaySm: { fontFamily: displayRegularFamily, fontSize: 27, lineHeight: 33, letterSpacing: -0.5 },
 
   // Headings
-  h1: { fontSize: 22, lineHeight: 28, fontWeight: '700' as const, letterSpacing: -0.3 },
-  h2: { fontSize: 18, lineHeight: 24, fontWeight: '700' as const, letterSpacing: -0.2 },
-  h3: { fontSize: 16, lineHeight: 22, fontWeight: '600' as const, letterSpacing: -0.1 },
-  h4: { fontSize: 14, lineHeight: 20, fontWeight: '600' as const },
+  h1: { fontFamily: displayFamily, fontSize: 24, lineHeight: 30, letterSpacing: -0.3 },
+  h2: { fontFamily: displayRegularFamily, fontSize: 20, lineHeight: 26, letterSpacing: -0.2 },
+  h3: { fontFamily: uiBoldFamily, fontSize: 16, lineHeight: 22, letterSpacing: -0.1 },
+  h4: { fontFamily: uiMediumFamily, fontSize: 14, lineHeight: 20 },
 
   // Body
-  bodyLg: { fontSize: 16, lineHeight: 24, fontWeight: '400' as const },
-  bodyMd: { fontSize: 14, lineHeight: 21, fontWeight: '400' as const },
-  bodySm: { fontSize: 12, lineHeight: 18, fontWeight: '400' as const },
+  bodyLg: { fontFamily: uiFamily, fontSize: 16, lineHeight: 25 },
+  bodyMd: { fontFamily: uiFamily, fontSize: 14, lineHeight: 21 },
+  bodySm: { fontFamily: uiFamily, fontSize: 12, lineHeight: 18 },
 
   // Label / UI
-  labelLg: { fontSize: 14, lineHeight: 18, fontWeight: '600' as const, letterSpacing: 0.1 },
-  labelMd: { fontSize: 12, lineHeight: 16, fontWeight: '600' as const, letterSpacing: 0.2 },
-  labelSm: { fontSize: 11, lineHeight: 14, fontWeight: '600' as const, letterSpacing: 0.4 },
+  labelLg: { fontFamily: uiBoldFamily, fontSize: 14, lineHeight: 18, letterSpacing: 0.1 },
+  labelMd: { fontFamily: uiBoldFamily, fontSize: 12, lineHeight: 16, letterSpacing: 0.2 },
+  labelSm: { fontFamily: uiBoldFamily, fontSize: 11, lineHeight: 14, letterSpacing: 0.4 },
 
   // Caption
-  caption: { fontSize: 11, lineHeight: 15, fontWeight: '400' as const, letterSpacing: 0.2 },
-  captionBold: { fontSize: 11, lineHeight: 15, fontWeight: '600' as const, letterSpacing: 0.3 },
+  caption: { fontFamily: uiFamily, fontSize: 11, lineHeight: 15, letterSpacing: 0.2 },
+  captionBold: { fontFamily: uiBoldFamily, fontSize: 11, lineHeight: 15, letterSpacing: 0.3 },
 } as const;
 
 export const shadows = {

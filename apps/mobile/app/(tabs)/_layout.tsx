@@ -1,9 +1,10 @@
-import { Text } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { OutingIcon, type OutingIconName } from '../../components/ui/OutingIcon';
+import { featureFlags } from '../../src/lib/featureFlags';
 
-function TabIcon({ label, color }: { label: string; color: string }) {
-  return <Text style={{ fontSize: 18, color, lineHeight: 22 }}>{label}</Text>;
+function TabIcon({ name, color, focused }: { name: OutingIconName; color: string; focused: boolean }) {
+  return <OutingIcon name={name} color={color} size={22} filled={focused && name === 'bookmark'} />;
 }
 
 export default function TabsLayout() {
@@ -19,8 +20,11 @@ export default function TabsLayout() {
           backgroundColor: colors.tabBar,
           borderTopColor: colors.tabBarBorder,
           borderTopWidth: 1,
+          height: 66,
+          paddingTop: 7,
+          paddingBottom: 7,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginBottom: 4 },
+        tabBarLabelStyle: { fontFamily: 'Manrope_700Bold', fontSize: 10, marginBottom: 1 },
       }}
     >
       <Tabs.Screen
@@ -28,7 +32,7 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon label={focused ? '◈' : '◇'} color={String(color)} />
+            <TabIcon name="home" focused={focused} color={String(color)} />
           ),
         }}
       />
@@ -37,7 +41,17 @@ export default function TabsLayout() {
         options={{
           title: 'Discover',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon label={focused ? '⊕' : '⊙'} color={String(color)} />
+            <TabIcon name="discover" focused={focused} color={String(color)} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="ask"
+        options={{
+          title: 'Ask',
+          href: featureFlags.assistantV1 ? undefined : null,
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="ask" focused={focused} color={String(color)} />
           ),
         }}
       />
@@ -46,16 +60,16 @@ export default function TabsLayout() {
         options={{
           title: 'Trips',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon label={focused ? '⊠' : '⊡'} color={String(color)} />
+            <TabIcon name="trips" focused={focused} color={String(color)} />
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'You',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon label={focused ? '◉' : '○'} color={String(color)} />
+            <TabIcon name="you" focused={focused} color={String(color)} />
           ),
         }}
       />

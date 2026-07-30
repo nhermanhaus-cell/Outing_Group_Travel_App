@@ -5,3 +5,4 @@ export * from './providerLinks';
 export * from './travelApiContracts';
 export * from './placeMatching';
 export * from './analytics';
+export * from './assistant';

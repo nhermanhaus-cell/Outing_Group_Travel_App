@@ -64,7 +64,13 @@ function RowToggle({ label, subtitle, value }: { label: string; subtitle?: strin
 }
 
 export default function SettingsScreen() {
-  const { colors, spacing } = useTheme();
+  const {
+    colors,
+    spacing,
+    radius,
+    colorSchemePreference,
+    setColorSchemePreference,
+  } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
@@ -96,6 +102,35 @@ export default function SettingsScreen() {
           paddingBottom: insets.bottom + spacing['4xl'],
         }}
       >
+        <Section title="Appearance">
+          <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+            {(['system', 'light', 'dark'] as const).map((preference) => {
+              const selected = colorSchemePreference === preference;
+              return (
+                <Pressable
+                  key={preference}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  onPress={() => setColorSchemePreference(preference)}
+                  style={{
+                    flex: 1,
+                    alignItems: 'center',
+                    paddingVertical: spacing.md,
+                    borderRadius: radius.lg,
+                    borderWidth: 1.5,
+                    borderColor: selected ? colors.accent : colors.border,
+                    backgroundColor: selected ? colors.accentLight : colors.surface,
+                  }}
+                >
+                  <Text variant="labelMd" style={{ color: selected ? colors.accent : colors.textPrimary }}>
+                    {preference === 'system' ? 'Device' : preference === 'light' ? 'Light' : 'Dark'}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </Section>
+
         <Section title="Privacy">
           <RowToggle label="Share trip activity" subtitle="Show trips on community map" value={false} />
         </Section>
@@ -116,16 +151,16 @@ export default function SettingsScreen() {
               gap: spacing.xs,
             }}
           >
-            <Text variant="labelMd">Data source</Text>
+            <Text variant="labelMd">Travel data</Text>
             <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-              All destination data is sample editorial content. No live data is currently loaded.
+              Outing combines reviewed destination context with current results for places, events, routes, fares, stays, and experiences when available.
             </Text>
             <Button
               size="sm"
               variant="secondary"
               onPress={() => router.push('/settings/integrations')}
             >
-              Manage integrations
+              See travel connections
             </Button>
           </View>
         </Section>

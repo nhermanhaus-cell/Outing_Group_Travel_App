@@ -1,0 +1,11 @@
+appId: com.gayi.app
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Find the place that fits."
+- tapOn: "Keep going"
+- assertVisible: "Get the group into the plan."
+- tapOn: "Keep going"
+- assertVisible: "Turn ideas into an Outing."
+- tapOn: "Explore first"
+- assertVisible: "Discover"

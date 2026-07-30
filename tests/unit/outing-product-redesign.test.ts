@@ -1,0 +1,165 @@
+import { describe, expect, it } from 'vitest';
+import {
+  assistantRequestSchema,
+  assistantStreamEventSchema,
+  canAccessAssistantConversation,
+  decideProposalVote,
+  type AssistantProposal,
+} from '@gayi/shared';
+import {
+  ONBOARDING_STORAGE_KEY,
+  shouldOfferOnboarding,
+} from '../../apps/mobile/src/lib/onboardingState';
+import { parseQuizResultsAnswers } from '../../apps/mobile/src/lib/quizResultsState';
+import {
+  mergeSavedDestinationSlugs,
+  normalizeSavedDestinationSlugs,
+} from '../../apps/mobile/src/lib/savedDestinationsState';
+import { applyAssistantProposalToTrip } from '../../apps/mobile/src/lib/assistantProposals';
+
+const proposal: AssistantProposal = {
+  id: '10000000-0000-4000-8000-000000000001',
+  conversationId: '10000000-0000-4000-8000-000000000002',
+  tripId: '10000000-0000-4000-8000-000000000003',
+  kind: 'add_itinerary_item',
+  title: 'Add the museum',
+  summary: 'Fits the open afternoon.',
+  payload: {
+    title: 'Design Museum',
+    startAt: '2026-10-10T14:00:00.000Z',
+    endAt: '2026-10-10T16:00:00.000Z',
+  },
+  status: 'proposed',
+  sources: [],
+  createdAt: '2026-07-30T12:00:00.000Z',
+};
+
+describe('first-open onboarding state', () => {
+  it('uses a versioned storage key and only interrupts ordinary entry routes', () => {
+    expect(ONBOARDING_STORAGE_KEY).toContain('v1');
+    expect(shouldOfferOnboarding({ enabled: true, completed: false, pathname: '/' })).toBe(true);
+    expect(shouldOfferOnboarding({ enabled: true, completed: false, pathname: '/invite' })).toBe(false);
+    expect(shouldOfferOnboarding({ enabled: true, completed: false, pathname: '/share/trip' })).toBe(false);
+    expect(shouldOfferOnboarding({ enabled: true, completed: true, pathname: '/' })).toBe(false);
+  });
+});
+
+describe('saved destinations', () => {
+  it('deduplicates valid slugs and merges guest saves with account saves', () => {
+    expect(normalizeSavedDestinationSlugs(['barcelona', 'barcelona', 'Not Valid'])).toEqual(['barcelona']);
+    expect(mergeSavedDestinationSlugs(['barcelona'], ['lisbon', 'barcelona'])).toEqual(['barcelona', 'lisbon']);
+  });
+});
+
+describe('deep-link recovery', () => {
+  it('rejects missing and malformed quiz result payloads without throwing', () => {
+    expect(parseQuizResultsAnswers(undefined)).toBeNull();
+    expect(parseQuizResultsAnswers('{}')).toBeNull();
+    expect(parseQuizResultsAnswers('{broken')).toBeNull();
+  });
+
+  it('accepts complete result state', () => {
+    expect(parseQuizResultsAnswers(JSON.stringify({
+      months: [6],
+      duration: 5,
+      groupSize: 2,
+      interests: ['food'],
+      socialPrefs: ['community'],
+    }))).toMatchObject({ duration: 5, interests: ['food'] });
+  });
+});
+
+describe('Ask Outing contracts and privacy', () => {
+  it('requires a trip scope for shared conversations', () => {
+    expect(assistantRequestSchema.safeParse({
+      scope: { kind: 'general' },
+      visibility: 'trip_shared',
+      message: 'Help us plan',
+    }).success).toBe(false);
+  });
+
+  it('accepts typed stream events and rejects unknown event shapes', () => {
+    expect(assistantStreamEventSchema.safeParse({
+      type: 'delta',
+      text: 'Try Lisbon.',
+    }).success).toBe(true);
+    expect(assistantStreamEventSchema.safeParse({
+      type: 'delta',
+      prompt: 'private content',
+    }).success).toBe(false);
+  });
+
+  it('limits private access to the owner and shared access to trip members', () => {
+    expect(canAccessAssistantConversation({
+      userId: 'owner',
+      ownerId: 'owner',
+      visibility: 'private',
+      isTripMember: false,
+    })).toBe(true);
+    expect(canAccessAssistantConversation({
+      userId: 'member',
+      ownerId: 'owner',
+      visibility: 'private',
+      isTripMember: true,
+    })).toBe(false);
+    expect(canAccessAssistantConversation({
+      userId: 'member',
+      ownerId: 'owner',
+      visibility: 'trip_shared',
+      isTripMember: true,
+    })).toBe(true);
+  });
+});
+
+describe('assistant proposal review', () => {
+  it('applies a reviewed itinerary addition deterministically', () => {
+    const update = applyAssistantProposalToTrip({ itineraryItems: [] }, proposal);
+    expect(update.itineraryItems).toHaveLength(1);
+    expect(update.itineraryItems?.[0]).toMatchObject({
+      title: 'Design Museum',
+      proposalId: proposal.id,
+      source: 'assistant_proposal',
+    });
+  });
+
+  it('does not mutate a trip for saved-destination proposals', () => {
+    expect(applyAssistantProposalToTrip(
+      { itineraryItems: [] },
+      { ...proposal, kind: 'save_destination', payload: { destinationSlug: 'lisbon' } },
+    )).toEqual({});
+  });
+});
+
+describe('group proposal decisions', () => {
+  const memberIds = ['a', 'b', 'c', 'd'];
+
+  it('accepts and dismisses by majority', () => {
+    expect(decideProposalVote({
+      memberIds,
+      votes: [
+        { userId: 'a', choice: 'accept' },
+        { userId: 'b', choice: 'accept' },
+        { userId: 'c', choice: 'accept' },
+      ],
+    }).result).toBe('accepted');
+    expect(decideProposalVote({
+      memberIds,
+      votes: [
+        { userId: 'a', choice: 'dismiss' },
+        { userId: 'b', choice: 'dismiss' },
+        { userId: 'c', choice: 'dismiss' },
+      ],
+    }).result).toBe('dismissed');
+  });
+
+  it('requires an organizer to resolve a complete tie', () => {
+    const votes = [
+      { userId: 'a', choice: 'accept' as const },
+      { userId: 'b', choice: 'accept' as const },
+      { userId: 'c', choice: 'dismiss' as const },
+      { userId: 'd', choice: 'dismiss' as const },
+    ];
+    expect(decideProposalVote({ memberIds, votes }).result).toBe('tie');
+    expect(decideProposalVote({ memberIds, votes, organizerChoice: 'accept' }).result).toBe('accepted');
+  });
+});
