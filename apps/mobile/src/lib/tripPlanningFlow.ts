@@ -7,7 +7,7 @@ export type SelectedDestination = {
 
 type QuestionnaireHref = {
   pathname: '/quiz';
-  params: SelectedDestination;
+  params: SelectedDestination & { quizAnswers?: string };
 };
 
 type TripDetailsHref = {
@@ -39,18 +39,14 @@ export function selectedDestinationFromParams(params: {
 export function destinationPlanHref(
   destination: SelectedDestination,
   quizAnswers?: SearchParam,
-): QuestionnaireHref | TripDetailsHref {
+): QuestionnaireHref {
   const completedAnswers = firstValue(quizAnswers);
-  if (completedAnswers) {
-    return {
-      pathname: '/trips/new',
-      params: { ...destination, quizAnswers: completedAnswers },
-    };
-  }
-
   return {
     pathname: '/quiz',
-    params: destination,
+    params: {
+      ...destination,
+      ...(completedAnswers ? { quizAnswers: completedAnswers } : {}),
+    },
   };
 }
 

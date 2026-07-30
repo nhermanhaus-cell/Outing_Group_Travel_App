@@ -20,8 +20,12 @@ const attributedImage = z.object({
   thumbnailUrl: z.string().url().optional(),
   sourcePage: z.string().url(),
   author: z.string().optional(),
+  authorUrl: z.string().url().optional(),
   license: z.string().optional(),
   licenseUrl: z.string().url().optional(),
+  provider: z.enum(['pexels', 'wikimedia_commons']).optional(),
+  alt: z.string().optional(),
+  matchType: z.enum(['specific', 'destination_fallback']).optional(),
 });
 
 const weather = z.object({
@@ -104,6 +108,12 @@ const schemas: Record<string, z.ZodTypeAny> = {
   routeMatrix: z.object({ elements: z.array(z.unknown()) }), route: z.object({ routes: z.array(z.unknown()) }),
   viatorSearch: z.object({ products: z.array(experience) }), viatorProduct: z.object({ product: experience.nullable() }), viatorSchedule: z.object({ schedule: z.unknown() }),
   commonsImageSearch: z.object({ images: z.array(attributedImage) }),
+  locationImageSearch: z.object({
+    images: z.array(attributedImage),
+    match: z.enum(['specific', 'destination_fallback', 'none']),
+    query: z.string(),
+    source: z.literal('pexels'),
+  }),
   weatherForecast: z.object({ weather }),
   ticketmasterEvents: z.object({ events: z.array(liveEvent) }),
   npsNearby: z.object({ parks: z.array(park) }),

@@ -49,11 +49,18 @@ function slotsForPace(prefs: TravelPreferences): TimeSlot[] {
   const pace = prefs.activityPace ?? 'balanced';
   const base =
     pace === 'packed' ? PACKED_SLOTS : pace === 'downtime' ? DOWNTIME_SLOTS : BALANCED_SLOTS;
+  const shiftMinutes = prefs.dayRhythm === 'early' ? -30 : prefs.dayRhythm === 'late' ? 90 : 0;
+  const rhythmAdjusted = shiftMinutes === 0
+    ? base
+    : base.map((slot) => ({
+        ...slot,
+        time: clockFromMinutes(minutesFromClock(slot.time) + shiftMinutes),
+      }));
 
   const includeNightlife = prefs.nightlifeImportance >= 0.3;
-  if (includeNightlife) return base;
+  if (includeNightlife) return rhythmAdjusted;
 
-  return base.filter(
+  return rhythmAdjusted.filter(
     (slot) =>
       slot.freeBlock ||
       !slot.bias.every((b) => NIGHTLIFE_BIAS.has(b)) ||

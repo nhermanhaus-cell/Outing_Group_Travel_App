@@ -4,10 +4,12 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
+import { posthog } from '../config/posthog';
 import {
   createLegacyTripPlan,
   type ItineraryItem,
@@ -23,8 +25,10 @@ import {
 } from '../analytics/analytics-provider';
 import type {
   Interest,
+  LookingFor,
   PendingInvite,
   PreferredTransportMode,
+  TripPlanningPreferences,
   TravelRange,
   UserTravelProfile,
 } from '@gayi/shared';
@@ -78,6 +82,9 @@ export interface LocalTrip {
   comments?: TripComment[];
   polls?: TripPoll[];
   interests?: Interest[];
+  nightlifeImportance?: number;
+  lookingFor?: LookingFor[];
+  planningPreferences?: TripPlanningPreferences;
   travelRanges?: TravelRange[];
   preferredTransportMode?: PreferredTransportMode;
   pendingInvites?: PendingInvite[];
@@ -205,6 +212,41 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   const { resetIdentity: resetAnalyticsIdentity } = useAnalytics();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const prevUserIdRef = useRef<string | null>(null);
+  const initialLoadDoneRef = useRef(false);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!initialLoadDoneRef.current) {
+      initialLoadDoneRef.current = true;
+      if (user) {
+        posthog.identify(user.id, {
+          $set: {
+            ...(user.displayName ? { name: user.displayName } : {}),
+            ...(user.avatarUrl ? { avatar: user.avatarUrl } : {}),
+          },
+          $set_once: { first_seen_at: new Date().toISOString() },
+        });
+        prevUserIdRef.current = user.id;
+      }
+      return;
+    }
+    if (user && prevUserIdRef.current !== user.id) {
+      posthog.identify(user.id, {
+        $set: {
+          ...(user.displayName ? { name: user.displayName } : {}),
+          ...(user.avatarUrl ? { avatar: user.avatarUrl } : {}),
+        },
+        $set_once: { first_seen_at: new Date().toISOString() },
+      });
+      posthog.capture('user_signed_in', {});
+      prevUserIdRef.current = user.id;
+    } else if (!user && prevUserIdRef.current !== null) {
+      posthog.capture('user_signed_out', {});
+      posthog.reset();
+      prevUserIdRef.current = null;
+    }
+  }, [user, loading]);
 
   useEffect(() => {
     if (supabase) {

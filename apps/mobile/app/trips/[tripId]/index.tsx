@@ -70,10 +70,11 @@ import {
   type TravelMode,
 } from '../../../src/lib/travelTimes';
 import { TripMap, type TripMapMarker } from '../../../components/maps/TripMap';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import {
   loadBookingStays,
   loadIndicativeFlightDeals,
+  searchLocationImages,
   type ApiFlightDeal,
 } from '../../../src/lib/travel-api';
 import { nearestAirports } from '../../../src/content/airports';
@@ -109,6 +110,7 @@ type MergedNearStayPlace = {
   lgbtqRelevance?: string;
   imageUrls?: string[];
   imageAttribution?: string;
+  imageAttributions?: Array<{ text: string; url?: string } | undefined>;
 };
 
 type MarkerItem = {
@@ -119,6 +121,7 @@ type MarkerItem = {
   kind: 'lodging' | 'itinerary' | 'experience' | 'nearby';
   detail?: string;
   saveKey?: string;
+  day?: number;
 };
 
 const SECTIONS: Array<{ key: SectionKey; label: string }> = [
@@ -390,6 +393,26 @@ export default function TripHubScreen() {
     () => (catalogDestination?.places ?? []) as Array<Record<string, unknown>>,
     [catalogDestination],
   );
+  const catalogPlaceImageQueries = useQueries({
+    queries: catalogPlaces.slice(0, 12).map((place, index) => ({
+      queryKey: [
+        'pexels-trip-place-images-v1',
+        catalogDestination?.slug,
+        String(place.id ?? place.name ?? ''),
+      ],
+      queryFn: () => searchLocationImages({
+        subject: String(place.name ?? 'Destination highlight'),
+        destination: catalogDestination!.name,
+        category: typeof place.category === 'string' ? place.category : undefined,
+        kind: 'place',
+        limit: 3,
+        variant: index,
+      }),
+      enabled: Boolean(catalogDestination?.name && place.name),
+      staleTime: 14 * 24 * 60 * 60_000,
+      retry: 1,
+    })),
+  });
 
   const domainPlaces = useMemo<Place[]>(
     () => catalogPlaces.map((place) => mapCatalogPlaceToDomainPlace(place)),
@@ -539,14 +562,34 @@ export default function TripHubScreen() {
         )
         .map((signal) => [signal.subjectKey, signal]),
     );
+    const hallmarkIds = new Set(trip?.planningPreferences?.hallmarkIds ?? []);
+    const goals = new Set(trip?.planningPreferences?.goals ?? []);
+    const styles = new Set(trip?.planningPreferences?.vacationStyles ?? []);
+    const mealPreferences = new Set(trip?.planningPreferences?.mealPreferences ?? []);
     return Object.fromEntries(itineraryPlaces.map((place) => {
       const signal = categorySignals.get(place.category);
-      const adjustment = signal
+      const preferenceAdjustment = signal
         ? Math.max(-10, Math.min(10, signal.score * signal.confidence * 10))
         : 0;
+      const hallmarkAdjustment = hallmarkIds.has(place.placeId) ? 25 : 0;
+      let questionnaireAdjustment = 0;
+      if (styles.has('iconic_highlights') && ['landmark', 'museum', 'event'].includes(place.category)) questionnaireAdjustment += 8;
+      if (styles.has('local_neighborhoods') && ['cafe', 'restaurant', 'bar', 'shop'].includes(place.category)) questionnaireAdjustment += 6;
+      if (styles.has('reservation_worthy') && place.bookingRequired) questionnaireAdjustment += 6;
+      if (goals.has('recharge') && ['spa', 'park', 'beach'].includes(place.category)) questionnaireAdjustment += 8;
+      if (goals.has('learn') && ['museum', 'landmark', 'tour'].includes(place.category)) questionnaireAdjustment += 8;
+      if (goals.has('celebrate') && ['bar', 'club', 'event'].includes(place.category)) questionnaireAdjustment += 8;
+      if (goals.has('connect') && place.lgbtqRelevance) questionnaireAdjustment += 8;
+      if (goals.has('indulge') && ['spa', 'restaurant', 'shop'].includes(place.category)) questionnaireAdjustment += 6;
+      if (
+        !mealPreferences.has('food_low_priority')
+        && mealPreferences.size > 0
+        && ['restaurant', 'cafe'].includes(place.category)
+      ) questionnaireAdjustment += 6;
+      const adjustment = preferenceAdjustment + hallmarkAdjustment + questionnaireAdjustment;
       return [place.placeId, adjustment];
     }));
-  }, [itineraryPlaces, preferenceSignals]);
+  }, [itineraryPlaces, preferenceSignals, trip?.planningPreferences]);
 
   const routeMatrix = useQuery({
     queryKey: ['candidate-route-matrix', trip?.tripId, routeCandidatePoints.map((point) => `${point.placeId}:${point.lat.toFixed(4)},${point.lng.toFixed(4)}`).join('|')],
@@ -635,6 +678,12 @@ export default function TripHubScreen() {
     (trip?.itineraryItems?.length
       ? trip.itineraryItems as unknown as ItineraryItem[]
       : null);
+  const routableItinerary = useMemo(() => {
+    if (!itinerary) return null;
+    const verifiedPlaceIds = new Set(itineraryPlaces.map((place) => place.placeId));
+    return itinerary.filter((item) =>
+      !item.placeId.startsWith('experience-') || verifiedPlaceIds.has(item.placeId));
+  }, [itinerary, itineraryPlaces]);
 
   useEffect(() => {
     if (!generatedTripPlan || trip?.tripPlan) return;
@@ -852,17 +901,17 @@ export default function TripHubScreen() {
   }, [trip]);
 
   useEffect(() => {
-    if (!itinerary || itinerary.length === 0) {
+    if (!routableItinerary || routableItinerary.length === 0) {
       setTravelLegsByDay({});
       return;
     }
     let cancelled = false;
     void (async () => {
-      const days = Array.from(new Set(itinerary.map((item) => item.day))).sort((a, b) => a - b);
+      const days = Array.from(new Set(routableItinerary.map((item) => item.day))).sort((a, b) => a - b);
       const next: Record<number, TravelLeg[]> = {};
       for (const day of days) {
         const stops = itineraryStopsForDay(
-          itinerary,
+          routableItinerary,
           day,
           lodgingStop,
         );
@@ -883,7 +932,7 @@ export default function TripHubScreen() {
     return () => {
       cancelled = true;
     };
-  }, [itinerary, legModeOverrides, lodgingStop, travelMode]);
+  }, [legModeOverrides, lodgingStop, routableItinerary, travelMode]);
 
   const nearStayPlaces = useMemo(() => {
     if (!hasLodgingCoords || catalogPlaces.length === 0) {
@@ -909,23 +958,40 @@ export default function TripHubScreen() {
   }, [catalogPlaces, hasLodgingCoords, trip?.lodgingLat, trip?.lodgingLng]);
 
   const catalogPlacePhotos = useMemo(() => {
-    const byId = new Map<string, { imageUrls: string[]; imageAttribution?: string }>();
-    for (const place of catalogPlaces) {
+    const byId = new Map<string, {
+      imageUrls: string[];
+      imageAttribution?: string;
+      imageAttributions?: Array<{ text: string; url?: string } | undefined>;
+    }>();
+    for (const [index, place] of catalogPlaces.entries()) {
       const id = String(place.id ?? '');
       if (!id) continue;
+      const pexelsImages = catalogPlaceImageQueries[index]?.data?.images ?? [];
       const imageUrls = Array.isArray(place.imageUrls)
         ? place.imageUrls.filter((url): url is string => typeof url === 'string')
         : typeof place.imageUrl === 'string'
           ? [place.imageUrl]
           : [];
       byId.set(id, {
-        imageUrls,
+        imageUrls: pexelsImages.length
+          ? pexelsImages.map((image) => image.url)
+          : imageUrls,
         imageAttribution:
-          typeof place.imageAttribution === 'string' ? place.imageAttribution : undefined,
+          pexelsImages.length
+            ? undefined
+            : typeof place.imageAttribution === 'string' ? place.imageAttribution : undefined,
+        imageAttributions: pexelsImages.length
+          ? pexelsImages.map((image) => ({
+              text: image.matchType === 'destination_fallback'
+                ? `${catalogDestination?.name ?? 'Destination'} fallback · Photo by ${image.author ?? 'a contributor'} on Pexels`
+                : `Photo by ${image.author ?? 'a contributor'} on Pexels`,
+              url: image.sourcePage,
+            }))
+          : undefined,
       });
     }
     return byId;
-  }, [catalogPlaces]);
+  }, [catalogDestination?.name, catalogPlaceImageQueries, catalogPlaces]);
 
   const mergedNearStayPlaces = useMemo<MergedNearStayPlace[]>(() => {
     const seen = new Set<string>();
@@ -967,6 +1033,7 @@ export default function TripHubScreen() {
         lgbtqRelevance: place.lgbtqRelevance,
         imageUrls: photos?.imageUrls ?? [],
         imageAttribution: photos?.imageAttribution,
+        imageAttributions: photos?.imageAttributions,
       });
     });
 
@@ -1027,7 +1094,7 @@ export default function TripHubScreen() {
 
   const itineraryMarkers = useMemo<MarkerItem[]>(
     () =>
-      (itinerary ?? [])
+      (routableItinerary ?? [])
         .filter(
           (item) =>
             !item.placeId.startsWith('free-') && !item.placeId.startsWith('meal-') &&
@@ -1041,12 +1108,13 @@ export default function TripHubScreen() {
           kind: 'itinerary' as const,
           detail: item.whySelected,
           saveKey: item.placeId,
+          day: item.day,
         })),
-    [itinerary],
+    [routableItinerary],
   );
 
   const selectedDayItineraryMarkers = useMemo(
-    () => itineraryMarkers.filter((marker) => marker.id.includes(`-${selectedItineraryDay}-`)),
+    () => itineraryMarkers.filter((marker) => marker.day === selectedItineraryDay),
     [itineraryMarkers, selectedItineraryDay],
   );
 
@@ -1066,22 +1134,9 @@ export default function TripHubScreen() {
             },
           ];
         }
-        if (hasNumericCoords(catalogDestination?.lat, catalogDestination?.lng)) {
-          return [
-            {
-              id: `experience-${experience.id}`,
-              label: experience.title,
-              lat: Number(catalogDestination?.lat),
-              lng: Number(catalogDestination?.lng),
-              kind: 'experience' as const,
-              detail: experience.summary,
-              saveKey: experience.id,
-            },
-          ];
-        }
         return [];
       }),
-    [catalogDestination?.lat, catalogDestination?.lng, destinationExperiences],
+    [destinationExperiences],
   );
 
   const liveNearbyMarkers = useMemo<MarkerItem[]>(
@@ -1138,9 +1193,9 @@ export default function TripHubScreen() {
   const itineraryRouteCoords = useMemo(() => {
     const routed = (travelLegsByDay[selectedItineraryDay] ?? []).flatMap((leg) => leg.routeCoords ?? []);
     if (routed.length > 1) return routed;
-    if (!itinerary) return [];
+    if (!routableItinerary) return [];
     const stops = itineraryStopsForDay(
-      itinerary,
+      routableItinerary,
       selectedItineraryDay,
       lodgingMarker ? { id: lodgingMarker.id, label: lodgingMarker.label, lat: lodgingMarker.lat, lng: lodgingMarker.lng } : undefined,
     );
@@ -1149,7 +1204,7 @@ export default function TripHubScreen() {
       latitude: marker.lat,
       longitude: marker.lng,
     }));
-  }, [itinerary, lodgingMarker, selectedDayItineraryMarkers, selectedItineraryDay, travelLegsByDay]);
+  }, [lodgingMarker, routableItinerary, selectedDayItineraryMarkers, selectedItineraryDay, travelLegsByDay]);
 
   const exportStops = useMemo(() => {
     const stops = [
@@ -1562,6 +1617,7 @@ export default function TripHubScreen() {
                       <PhotoCarousel
                         urls={experience.imageUrls ?? []}
                         height={140}
+                        attributions={experience.imageAttributions}
                         attribution={
                           experience.provider === 'editorial' ? 'Photo via Unsplash' : undefined
                         }
@@ -2205,6 +2261,7 @@ export default function TripHubScreen() {
                         <PhotoCarousel
                           urls={place.imageUrls ?? []}
                           height={140}
+                          attributions={place.imageAttributions}
                           attribution={
                             place.source === 'editorial'
                               ? place.imageAttribution ?? 'Photo via Unsplash'
@@ -2278,6 +2335,7 @@ export default function TripHubScreen() {
                         <PhotoCarousel
                           urls={photos?.imageUrls ?? []}
                           height={140}
+                          attributions={photos?.imageAttributions}
                           attribution={photos?.imageAttribution ?? 'Photo via Unsplash'}
                         />
                         <Text variant="labelLg">{String(place.name ?? 'Place')}</Text>
@@ -2708,6 +2766,12 @@ function buildOwnerPreferences(
     lodgingLat?: number;
     lodgingLng?: number;
     interests?: Interest[];
+    nightlifeImportance?: number;
+    lookingFor?: LookingFor[];
+    planningPreferences?: {
+      dayRhythm?: TravelPreferences['dayRhythm'];
+      avoidances?: string[];
+    };
     travelRanges?: TravelPreferences['travelRanges'];
     preferredTransportMode?: TravelPreferences['preferredTransportMode'];
   },
@@ -2715,17 +2779,24 @@ function buildOwnerPreferences(
   glamour: GlamourLevel,
 ): TravelPreferences {
   const destinationInterests = normalizeInterests(destination.interests as string[]);
-  const nightlifeImportance = Math.max(
+  const reportedNightlifeImportance = trip.nightlifeImportance ?? Math.max(
     0.2,
     Math.min(0.95, Math.round((destination.nightlifeScore / 100) * 100) / 100),
   );
-  const lookingFor = deriveLookingFor(trip, nightlifeImportance);
+  const nightlifeImportance = trip.planningPreferences?.avoidances?.includes('late_nights')
+    ? Math.min(0.25, reportedNightlifeImportance)
+    : reportedNightlifeImportance;
+  const lookingFor = trip.lookingFor?.length
+    ? trip.lookingFor
+    : deriveLookingFor(trip, nightlifeImportance);
 
   return {
     budgetLevel: glamour,
     departureAirports: trip.origin ? [trip.origin] : [],
     travelRanges: trip.travelRanges ?? [],
-    preferredTransportMode: trip.preferredTransportMode ?? 'auto',
+    preferredTransportMode: trip.planningPreferences?.avoidances?.includes('long_walks')
+      ? 'transit'
+      : trip.preferredTransportMode ?? 'auto',
     travelMonths: [getCurrentMonth(trip.startDate)],
     tripDurationDays: getDuration(trip.startDate, trip.endDate),
     groupSize: trip.travelers,
@@ -2739,6 +2810,9 @@ function buildOwnerPreferences(
     soloTravel: trip.travelers === 1,
     lookingFor,
     activityPace: trip.activityPace ?? 'balanced',
+    dayRhythm: trip.planningPreferences?.avoidances?.includes('early_mornings')
+      ? 'late'
+      : trip.planningPreferences?.dayRhythm ?? 'flexible',
     lodgingStatus: trip.lodgingStatus,
     lodgingAddress: trip.lodgingAddress,
     lodgingLat: trip.lodgingLat,
@@ -2875,27 +2949,31 @@ function mapGooglePlaceToDomainPlace(
 
 function mapExperienceToDomainPlace(
   experience: MobileExperience,
-  catalogDestination: { lat?: unknown; lng?: unknown } | null | undefined,
+  _catalogDestination: { lat?: unknown; lng?: unknown } | null | undefined,
   interests: Interest[],
 ): Place | null {
   const hasExperienceCoords = hasNumericCoords(experience.lat, experience.lng);
-  const hasDestinationCoords = hasNumericCoords(catalogDestination?.lat, catalogDestination?.lng);
-  if (!hasExperienceCoords && !hasDestinationCoords) return null;
+  if (!hasExperienceCoords) return null;
 
   return {
     placeId: `experience-${experience.id}`,
     name: experience.title,
     category: 'tour',
     coords: {
-      lat: hasExperienceCoords ? Number(experience.lat) : Number(catalogDestination?.lat),
-      lng: hasExperienceCoords ? Number(experience.lng) : Number(catalogDestination?.lng),
+      lat: Number(experience.lat),
+      lng: Number(experience.lng),
     },
     durationMinutes: Math.round((experience.durationHours ?? 2.5) * 60),
     estimatedCostPerPerson: experience.priceFrom ?? 60,
     bookingRequired: experience.bookingMode === 'external',
     rating: experience.rating,
     reviewCount: experience.reviewCount,
-    photos: experience.imageUrls.map((url) => ({ url, attribution: experience.provider === 'viator' ? 'Viator' : 'Outing editorial', provider: experience.provider })),
+    photos: experience.imageUrls.map((url, index) => ({
+      url,
+      attribution: experience.imageAttributions?.[index]?.text
+        ?? (experience.provider === 'viator' ? 'Viator' : 'Outing editorial'),
+      provider: experience.provider,
+    })),
     fixedStartTimes: experience.availabilityStartTimes,
     interests: normalizeInterests([...experience.tags, ...interests]),
     lgbtqRelevance: experience.lgbtqRelevance,

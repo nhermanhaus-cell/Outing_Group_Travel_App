@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import {
+  Linking,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Pressable,
   ScrollView,
   View,
 } from 'react-native';
@@ -13,19 +15,28 @@ type Props = {
   urls: string[];
   height?: number;
   attribution?: string;
+  attributions?: Array<{ text: string; url?: string } | undefined>;
 };
 
-export function PhotoCarousel({ urls, height = 180, attribution }: Props) {
+export function PhotoCarousel({ urls, height = 180, attribution, attributions }: Props) {
   const { colors, spacing, radius } = useTheme();
   const [index, setIndex] = useState(0);
   const [width, setWidth] = useState(320);
   const [failed, setFailed] = useState<string[]>([]);
-  const valid = useMemo(
-    () => [...new Set((urls ?? []).filter((url) => Boolean(url) && !failed.includes(url)))].slice(0, 5),
-    [failed, urls],
-  );
+  const valid = useMemo(() => {
+    const seen = new Set<string>();
+    return (urls ?? [])
+      .map((url, originalIndex) => ({ url, attribution: attributions?.[originalIndex] }))
+      .filter((item) => {
+        if (!item.url || failed.includes(item.url) || seen.has(item.url)) return false;
+        seen.add(item.url);
+        return true;
+      })
+      .slice(0, 5);
+  }, [attributions, failed, urls]);
 
   if (valid.length === 0) return null;
+  const activeAttribution = valid[Math.min(index, valid.length - 1)]?.attribution;
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
@@ -48,14 +59,14 @@ export function PhotoCarousel({ urls, height = 180, attribution }: Props) {
         scrollEventThrottle={16}
         style={{ borderRadius: radius.lg, overflow: 'hidden' }}
       >
-        {valid.map((uri) => (
+        {valid.map(({ url: uri }) => (
           <Image
             key={uri}
             source={{ uri }}
             style={{ width, height, backgroundColor: colors.backgroundTertiary }}
             contentFit="cover"
             transition={180}
-            cachePolicy="memory"
+            cachePolicy="memory-disk"
             accessibilityLabel="Place photo"
             onError={() => setFailed((current) => [...current, uri])}
           />
@@ -63,9 +74,9 @@ export function PhotoCarousel({ urls, height = 180, attribution }: Props) {
       </ScrollView>
       {valid.length > 1 ? (
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
-          {valid.map((_, i) => (
+          {valid.map((item, i) => (
             <View
-              key={i}
+              key={item.url}
               style={{
                 width: 6,
                 height: 6,
@@ -76,9 +87,19 @@ export function PhotoCarousel({ urls, height = 180, attribution }: Props) {
           ))}
         </View>
       ) : null}
-      {attribution ? (
+      {activeAttribution?.url ? (
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel={`${activeAttribution.text}; open photo source`}
+          onPress={() => Linking.openURL(activeAttribution.url!).catch(() => undefined)}
+        >
+          <Text variant="caption" style={{ color: colors.textTertiary, textDecorationLine: 'underline' }}>
+            {activeAttribution.text}
+          </Text>
+        </Pressable>
+      ) : activeAttribution?.text || attribution ? (
         <Text variant="caption" style={{ color: colors.textTertiary }}>
-          {attribution}
+          {activeAttribution?.text ?? attribution}
         </Text>
       ) : null}
     </View>

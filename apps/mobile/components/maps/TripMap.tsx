@@ -40,9 +40,18 @@ export function TripMap({
 }: Props) {
   const { colors, radius } = useTheme();
   const mapRef = useRef<MapView>(null);
+  const validMarkers = useMemo(
+    () => markers.filter((marker) =>
+      Number.isFinite(marker.lat)
+      && Number.isFinite(marker.lng)
+      && Math.abs(marker.lat) <= 90
+      && Math.abs(marker.lng) <= 180
+      && !(marker.lat === 0 && marker.lng === 0)),
+    [markers],
+  );
 
   const region = useMemo(() => {
-    if (markers.length === 0) {
+    if (validMarkers.length === 0) {
       return {
         latitude: 37.7749,
         longitude: -122.4194,
@@ -50,8 +59,8 @@ export function TripMap({
         longitudeDelta: 0.08,
       };
     }
-    const lats = markers.map((m) => m.lat);
-    const lngs = markers.map((m) => m.lng);
+    const lats = validMarkers.map((m) => m.lat);
+    const lngs = validMarkers.map((m) => m.lng);
     const minLat = Math.min(...lats);
     const maxLat = Math.max(...lats);
     const minLng = Math.min(...lngs);
@@ -61,17 +70,26 @@ export function TripMap({
     const latitudeDelta = Math.max(0.02, (maxLat - minLat) * 1.4 || 0.04);
     const longitudeDelta = Math.max(0.02, (maxLng - minLng) * 1.4 || 0.04);
     return { latitude, longitude, latitudeDelta, longitudeDelta };
-  }, [markers]);
+  }, [validMarkers]);
 
   useEffect(() => {
-    if (markers.length === 0) return;
+    if (validMarkers.length === 0) return;
     mapRef.current?.fitToCoordinates(
-      markers.map((marker) => ({ latitude: marker.lat, longitude: marker.lng })),
+      validMarkers.map((marker) => ({ latitude: marker.lat, longitude: marker.lng })),
       { edgePadding: { top: 48, right: 48, bottom: 48, left: 48 }, animated: true },
     );
-  }, [fitTrigger, markers]);
+  }, [fitTrigger, validMarkers]);
 
-  if (markers.length === 0) {
+  useEffect(() => {
+    const selected = validMarkers.find((marker) => marker.id === selectedMarkerId);
+    if (!selected) return;
+    mapRef.current?.animateCamera(
+      { center: { latitude: selected.lat, longitude: selected.lng }, zoom: 15 },
+      { duration: 350 },
+    );
+  }, [selectedMarkerId, validMarkers]);
+
+  if (validMarkers.length === 0) {
     return (
       <View
         style={{
@@ -111,7 +129,7 @@ export function TripMap({
         showsCompass
         loadingEnabled
       >
-        {markers.map((marker, index) => (
+        {validMarkers.map((marker, index) => (
           <Marker
             key={marker.id}
             coordinate={{ latitude: marker.lat, longitude: marker.lng }}

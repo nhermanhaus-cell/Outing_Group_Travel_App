@@ -104,6 +104,7 @@ export const TravelPreferencesSchema = z.object({
   soloTravel: z.boolean(),
   lookingFor: z.array(LookingForSchema),
   activityPace: ActivityPaceSchema.optional(),
+  dayRhythm: z.enum(['early', 'flexible', 'late']).optional(),
   lodgingStatus: LodgingStatusSchema.optional(),
   lodgingAddress: z.string().optional(),
   lodgingLat: z.number().optional(),
@@ -127,6 +128,11 @@ export const UserTravelProfileSchema = z.object({
   maxTravelTimeHours: z.number().positive().max(48).optional(),
   travelScope: TravelScopeSchema.optional(),
   longDistanceTransportModes: z.array(LongDistanceTransportModeSchema).optional(),
+  defaultTripGoals: z.array(z.enum(['explore', 'recharge', 'celebrate', 'connect', 'romance', 'learn', 'indulge'])).optional(),
+  defaultVacationStyles: z.array(z.enum(['iconic_highlights', 'local_neighborhoods', 'hidden_gems', 'reservation_worthy', 'spontaneous', 'photogenic'])).optional(),
+  defaultDayRhythm: z.enum(['early', 'flexible', 'late']).optional(),
+  defaultMealPreferences: z.array(z.string()).optional(),
+  defaultAvoidances: z.array(z.string()).optional(),
   updatedAt: z.string(),
 });
 

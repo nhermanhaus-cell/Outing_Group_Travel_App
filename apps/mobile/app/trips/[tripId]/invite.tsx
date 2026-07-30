@@ -12,6 +12,7 @@ import { Text } from '../../../components/ui/Text';
 import { Button } from '../../../components/ui/Button';
 import { ANALYTICS_EVENTS } from '@gayi/shared';
 import { useAnalytics } from '../../../src/analytics/analytics-provider';
+import { posthog } from '../../../src/config/posthog';
 
 type Buddy = { id: string; firstName: string; displayName: string; phone: string };
 
@@ -63,6 +64,7 @@ export default function TripInviteScreen() {
         if (await SMS.isAvailableAsync()) {
           await SMS.sendSMSAsync([buddy.phone], message);
           track(ANALYTICS_EVENTS.INVITE_SENT, { channel: 'sms_handoff' });
+          posthog.capture('invite_sent', { channel: 'sms_handoff' });
         }
       }
       await SecureStore.deleteItemAsync(draftKey);

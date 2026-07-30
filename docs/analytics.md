@@ -8,7 +8,7 @@ Set Supabase Edge Function secrets:
 
 ```sh
 supabase secrets set \
-  POSTHOG_PROJECT_TOKEN=phc_... \
+  POSTHOG_PROJECT_TOKEN=phc_... \ 
   POSTHOG_HOST=https://us.i.posthog.com \
   ANALYTICS_FORWARD_SECRET=... \
   ANALYTICS_HASH_SECRET=...

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -16,13 +16,17 @@ import { Button } from '../../components/ui/Button';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import {
   ANALYTICS_EVENTS,
+  type DayRhythm,
   type GlamourLevel,
   type LongDistanceTransportMode,
+  type TripGoal,
   type TravelRange,
   type TravelScope,
+  type VacationStyle,
 } from '@gayi/shared';
-import { useTravelProfile } from '../../src/providers/AppProviders';
+import { useDestinations, useTravelProfile } from '../../src/providers/AppProviders';
 import { useAnalytics } from '../../src/analytics/analytics-provider';
+import { posthog } from '../../src/config/posthog';
 import { airportDataAttribution, airports, nearestAirports, type AirportRecord } from '../../src/content/airports';
 import { TravelerSelector, type GroupType } from '../../components/trip-wizard/TravelerSelector';
 import { AirportAutocomplete } from '../../components/trip-wizard/airport-autocomplete';
@@ -31,6 +35,10 @@ import {
   questionnaireCompletionHref,
   selectedDestinationFromParams,
 } from '../../src/lib/tripPlanningFlow';
+import {
+  getDestinationHallmarks,
+  getDestinationInterestOptions,
+} from '../../src/lib/destinationQuestionnaire';
 
 // ─── Quiz state ───────────────────────────────────────────────────────────────
 
@@ -50,6 +58,14 @@ export interface QuizAnswers {
   socialPrefs: string[];
   collaboratorChoice?: 'now' | 'later';
   activityPace: 'packed' | 'balanced' | 'downtime';
+  dayRhythm: DayRhythm;
+  tripGoals: TripGoal[];
+  vacationStyles: VacationStyle[];
+  mealPreferences: string[];
+  avoidances: string[];
+  hallmarkIds: string[];
+  hallmarkNames: string[];
+  freeformWish: string;
   lodgingStatus: 'none' | 'booked';
   lodgingAddress: string;
 }
@@ -77,6 +93,14 @@ const DEFAULT_ANSWERS: QuizAnswers = {
   nightlife: 3,
   socialPrefs: [],
   activityPace: 'balanced',
+  dayRhythm: 'flexible',
+  tripGoals: [],
+  vacationStyles: [],
+  mealPreferences: [],
+  avoidances: [],
+  hallmarkIds: [],
+  hallmarkNames: [],
+  freeformWish: '',
   lodgingStatus: 'none',
   lodgingAddress: '',
 };
@@ -86,21 +110,6 @@ const MONTHS = [
   { n: 4, label: 'Apr' }, { n: 5, label: 'May' }, { n: 6, label: 'Jun' },
   { n: 7, label: 'Jul' }, { n: 8, label: 'Aug' }, { n: 9, label: 'Sep' },
   { n: 10, label: 'Oct' }, { n: 11, label: 'Nov' }, { n: 12, label: 'Dec' },
-];
-
-const INTERESTS_OPTIONS = [
-  { key: 'nightlife', label: 'Nightlife' },
-  { key: 'beach', label: 'Beach' },
-  { key: 'food', label: 'Food & Drink' },
-  { key: 'art', label: 'Art & Culture' },
-  { key: 'pride', label: 'Pride Events' },
-  { key: 'hiking', label: 'Outdoors' },
-  { key: 'history', label: 'History' },
-  { key: 'wellness', label: 'Wellness' },
-  { key: 'lgbtq_venues', label: 'Queer Venues' },
-  { key: 'drag', label: 'Drag' },
-  { key: 'music', label: 'Music' },
-  { key: 'shopping', label: 'Shopping' },
 ];
 
 const GLAMOUR_LEVELS: Array<{ key: GlamourLevel; label: string }> = [
@@ -117,6 +126,44 @@ const SOCIAL_PREFS = [
   { key: 'dancing', label: 'Dancing' },
   { key: 'relaxation', label: 'Relaxation' },
   { key: 'exploration', label: 'Exploration' },
+];
+
+const TRIP_GOALS: Array<{ key: TripGoal; label: string }> = [
+  { key: 'explore', label: 'See somewhere deeply' },
+  { key: 'recharge', label: 'Come home restored' },
+  { key: 'celebrate', label: 'Celebrate something' },
+  { key: 'connect', label: 'Meet people & feel community' },
+  { key: 'romance', label: 'Make it romantic' },
+  { key: 'learn', label: 'Learn & understand' },
+  { key: 'indulge', label: 'Treat myself' },
+];
+
+const VACATION_STYLES: Array<{ key: VacationStyle; label: string }> = [
+  { key: 'iconic_highlights', label: 'The icons are icons for a reason' },
+  { key: 'local_neighborhoods', label: 'Live like a local' },
+  { key: 'hidden_gems', label: 'Surprise me with hidden gems' },
+  { key: 'reservation_worthy', label: 'Book the can’t-miss things' },
+  { key: 'spontaneous', label: 'Leave room to improvise' },
+  { key: 'photogenic', label: 'Beautiful, memorable settings' },
+];
+
+const MEAL_PREFERENCES = [
+  { key: 'local_specialties', label: 'Local specialties' },
+  { key: 'casual_gems', label: 'Casual neighborhood gems' },
+  { key: 'fine_dining', label: 'Destination dining' },
+  { key: 'markets_cafes', label: 'Markets & cafés' },
+  { key: 'dietary_friendly', label: 'Dietary-friendly options' },
+  { key: 'food_low_priority', label: 'Food is not a focus' },
+];
+
+const AVOIDANCES = [
+  { key: 'early_mornings', label: 'Early mornings' },
+  { key: 'late_nights', label: 'Late nights' },
+  { key: 'crowds', label: 'Big crowds' },
+  { key: 'long_walks', label: 'Long walks' },
+  { key: 'long_lines', label: 'Long lines' },
+  { key: 'too_many_reservations', label: 'Too many reservations' },
+  { key: 'expensive_surprises', label: 'Expensive surprises' },
 ];
 
 const JOURNEY_TIMES = [
@@ -235,21 +282,75 @@ export default function QuizScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { profile, updateProfile } = useTravelProfile();
-  const { track, initialized: analyticsInitialized } = useAnalytics();
+  const { getBySlug } = useDestinations();
+  const { track, observePreference, initialized: analyticsInitialized } = useAnalytics();
   const params = useLocalSearchParams<{
     destinationSlug?: string;
     destinationName?: string;
+    quizAnswers?: string;
   }>();
   const selectedDestination = selectedDestinationFromParams(params);
   const destinationPrefilled = Boolean(selectedDestination);
+  const resumedAfterDestinationChoice = Boolean(selectedDestination && params.quizAnswers);
+  const catalogDestination = selectedDestination
+    ? getBySlug(selectedDestination.destinationSlug)
+    : undefined;
+  const destinationInterestOptions = useMemo(
+    () => getDestinationInterestOptions(catalogDestination),
+    [catalogDestination],
+  );
+  const destinationHallmarks = useMemo(
+    () => getDestinationHallmarks(catalogDestination),
+    [catalogDestination],
+  );
 
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<QuizAnswers>(DEFAULT_ANSWERS);
+  const [answers, setAnswers] = useState<QuizAnswers>(() => {
+    let prior: Partial<QuizAnswers> = {};
+    try {
+      prior = params.quizAnswers ? JSON.parse(params.quizAnswers) : {};
+    } catch {
+      prior = {};
+    }
+    return {
+      ...DEFAULT_ANSWERS,
+      ...prior,
+      interests: prior.interests ?? [],
+      socialPrefs: prior.socialPrefs ?? [],
+      tripGoals: prior.tripGoals ?? profile.defaultTripGoals ?? [],
+      vacationStyles: prior.vacationStyles ?? profile.defaultVacationStyles ?? [],
+      mealPreferences: prior.mealPreferences ?? profile.defaultMealPreferences ?? [],
+      avoidances: prior.avoidances ?? profile.defaultAvoidances ?? [],
+      hallmarkIds: prior.hallmarkIds ?? [],
+      hallmarkNames: prior.hallmarkNames ?? [],
+      dayRhythm: prior.dayRhythm ?? profile.defaultDayRhythm ?? 'flexible',
+    };
+  });
   const [nearbyAirports, setNearbyAirports] = useState<AirportRecord[]>([]);
   const analyticsStartedAtRef = useRef(Date.now());
   const analyticsCompletedRef = useRef(false);
   const analyticsStartedRef = useRef(false);
   const currentAnalyticsStepRef = useRef({ id: 'unknown', index: 0 });
+
+  useEffect(() => {
+    if (!selectedDestination) return;
+    const allowedInterests = new Set<string>(destinationInterestOptions.map((option) => option.key));
+    const allowedHallmarks = new Map(destinationHallmarks.map((option) => [option.id, option.label]));
+    setAnswers((current) => {
+      const interests = current.interests.filter((interest) => allowedInterests.has(interest));
+      const hallmarkIds = current.hallmarkIds.filter((id) => allowedHallmarks.has(id));
+      const hallmarkNames = hallmarkIds.flatMap((id) => {
+        const label = allowedHallmarks.get(id);
+        return label ? [label] : [];
+      });
+      if (
+        interests.length === current.interests.length
+        && hallmarkIds.length === current.hallmarkIds.length
+        && hallmarkNames.length === current.hallmarkNames.length
+      ) return current;
+      return { ...current, interests, hallmarkIds, hallmarkNames };
+    });
+  }, [destinationHallmarks, destinationInterestOptions, selectedDestination]);
 
   useEffect(() => {
     const primary = profile.homeAirports.find((airport) => airport.primary) ?? profile.homeAirports[0];
@@ -290,10 +391,48 @@ export default function QuizScreen() {
 
   const handleComplete = () => {
     analyticsCompletedRef.current = true;
+    const completionDurationMs = Date.now() - analyticsStartedAtRef.current;
     track(ANALYTICS_EVENTS.QUESTIONNAIRE_COMPLETED, {
       stepCount: totalSteps,
-      activeDurationMs: Date.now() - analyticsStartedAtRef.current,
+      activeDurationMs: completionDurationMs,
       destinationPrefilled,
+    });
+    posthog.capture('questionnaire_completed', {
+      step_count: totalSteps,
+      active_duration_ms: completionDurationMs,
+      destination_prefilled: destinationPrefilled,
+      glamour_level: answers.glamourLevel,
+      group_type: answers.groupType,
+      travel_scope: answers.travelScope,
+      interest_count: answers.interests.length,
+      goal_count: answers.tripGoals.length,
+      hallmark_count: answers.hallmarkIds.length,
+      vacation_style_count: answers.vacationStyles.length,
+    });
+    const observedAt = new Date().toISOString();
+    answers.interests.forEach((interest) => observePreference({
+      subjectType: 'activity_category',
+      subjectKey: interest,
+      value: 0.8,
+      weight: 1.5,
+      source: 'accept',
+      observedAt,
+    }));
+    answers.tripGoals.forEach((goal) => observePreference({
+      subjectType: 'activity_category',
+      subjectKey: `trip_goal:${goal}`,
+      value: 0.7,
+      weight: 1,
+      source: 'accept',
+      observedAt,
+    }));
+    observePreference({
+      subjectType: 'pace',
+      subjectKey: `${answers.activityPace}:${answers.dayRhythm}`,
+      value: 0.8,
+      weight: 1,
+      source: 'accept',
+      observedAt,
     });
     const airportCode = answers.originAirport.trim().toUpperCase();
     const airport = airports.find((item) => item.iata === airportCode);
@@ -311,13 +450,19 @@ export default function QuizScreen() {
       defaultInterests: answers.interests as never[],
       defaultGroupSize: answers.groupSize,
       defaultTripLengthDays: answers.duration,
+      ...(answers.tripGoals.length > 0 ? { defaultTripGoals: answers.tripGoals } : {}),
+      ...(answers.vacationStyles.length > 0 ? { defaultVacationStyles: answers.vacationStyles } : {}),
+      defaultDayRhythm: answers.dayRhythm,
+      ...(answers.mealPreferences.length > 0 ? { defaultMealPreferences: answers.mealPreferences } : {}),
+      ...(answers.avoidances.length > 0 ? { defaultAvoidances: answers.avoidances } : {}),
       coarseHomeRegion: airport?.city,
     });
     router.push(questionnaireCompletionHref(answers, selectedDestination));
   };
 
-  const steps = [
+  const allSteps = [
     {
+      phase: 'foundation' as const,
       title: 'Where are you starting from?',
       subtitle: 'Enter your city or choose a nearby airport.',
       content: (
@@ -339,6 +484,7 @@ export default function QuizScreen() {
       ),
     },
     {
+      phase: 'discovery' as const,
       title: 'How far—and how—do you want to go?',
       subtitle: 'Choose a one-way travel time, where you want to travel, and the ways you would get there.',
       content: (
@@ -350,6 +496,7 @@ export default function QuizScreen() {
       ),
     },
     {
+      phase: 'foundation' as const,
       title: 'When can you travel?',
       subtitle: 'Select all months that work.',
       content: (
@@ -388,6 +535,7 @@ export default function QuizScreen() {
       ),
     },
     {
+      phase: 'foundation' as const,
       title: 'How long is your trip?',
       subtitle: null,
       content: (
@@ -418,6 +566,7 @@ export default function QuizScreen() {
       ),
     },
     {
+      phase: 'foundation' as const,
       title: "Who's coming?",
       subtitle: null,
       content: (
@@ -427,6 +576,7 @@ export default function QuizScreen() {
       ),
     },
     {
+      phase: 'foundation' as const,
       title: "What's your vibe?",
       subtitle: 'Budget & glamour level.',
       content: (
@@ -459,21 +609,96 @@ export default function QuizScreen() {
       ),
     },
     {
-      title: 'What are you into?',
-      subtitle: 'Pick everything that excites you.',
+      phase: 'personalization' as const,
+      title: 'What should this trip give you?',
+      subtitle: 'Choose the outcomes that would make the vacation feel worthwhile.',
       content: (
         <ChipSelect
-          options={INTERESTS_OPTIONS}
+          options={TRIP_GOALS}
+          selected={answers.tripGoals}
+          onChange={(value) => set('tripGoals', value)}
+        />
+      ),
+    },
+    {
+      phase: 'interest' as const,
+      title: 'What are you into?',
+      subtitle: selectedDestination
+        ? `Only showing interests that fit ${selectedDestination.destinationName}, plus flexible city favorites.`
+        : 'Choose broad interests so we can find destinations that fit.',
+      content: (
+        <ChipSelect
+          options={destinationInterestOptions}
           selected={answers.interests as never[]}
           onChange={(v) => set('interests', v as string[])}
         />
       ),
     },
     {
+      phase: 'personalization' as const,
+      title: `What feels essential in ${selectedDestination?.destinationName ?? 'this destination'}?`,
+      subtitle: 'Choose real destination hallmarks you want the itinerary to prioritize.',
+      content: destinationHallmarks.length > 0 ? (
+        <View style={{ gap: spacing.sm }}>
+          {destinationHallmarks.map((hallmark) => {
+            const active = answers.hallmarkIds.includes(hallmark.id);
+            return (
+              <Pressable
+                key={hallmark.id}
+                onPress={() => setAnswers((current) => ({
+                  ...current,
+                  hallmarkIds: active
+                    ? current.hallmarkIds.filter((id) => id !== hallmark.id)
+                    : [...current.hallmarkIds, hallmark.id],
+                  hallmarkNames: active
+                    ? current.hallmarkNames.filter((name) => name !== hallmark.label)
+                    : [...current.hallmarkNames, hallmark.label],
+                }))}
+                style={{
+                  padding: spacing.base,
+                  borderRadius: radius.lg,
+                  borderWidth: 1.5,
+                  borderColor: active ? colors.accent : colors.border,
+                  backgroundColor: active ? colors.accentLight : colors.cardBackground,
+                  gap: spacing.xxs,
+                }}
+              >
+                <Text variant="labelLg" style={{ color: active ? colors.accent : colors.textPrimary }}>
+                  {hallmark.label}
+                </Text>
+                <Text variant="caption" style={{ color: colors.textTertiary, textTransform: 'capitalize' }}>
+                  {hallmark.kind}{hallmark.category ? ` · ${hallmark.category.replace(/_/g, ' ')}` : ''}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : (
+        <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+          We’ll use your interests to surface signature local choices.
+        </Text>
+      ),
+    },
+    {
+      phase: 'personalization' as const,
+      title: 'How do you like to vacation?',
+      subtitle: 'Mix and match—this tells us how familiar, local, structured, or spontaneous the plan should feel.',
+      content: (
+        <ChipSelect
+          options={VACATION_STYLES}
+          selected={answers.vacationStyles}
+          onChange={(value) => set('vacationStyles', value)}
+        />
+      ),
+    },
+    {
+      phase: 'personalization' as const,
       title: 'Pace of your days?',
       subtitle: 'How much downtime vs activities do you want day to day?',
       content: (
-        <View style={{ gap: spacing.sm }}>
+        <View style={{ gap: spacing.xl }}>
+          <View style={{ gap: spacing.sm }}>
+            <Text variant="h3">Activity density</Text>
           {(
             [
               { key: 'packed' as const, label: 'Packed — fill the days', hint: 'More stops, fewer free blocks' },
@@ -503,10 +728,25 @@ export default function QuizScreen() {
               </Pressable>
             );
           })}
+          </View>
+          <View style={{ gap: spacing.sm }}>
+            <Text variant="h3">Natural rhythm</Text>
+            <ChipSelect
+              options={[
+                { key: 'early' as const, label: 'Early starts' },
+                { key: 'flexible' as const, label: 'Flexible timing' },
+                { key: 'late' as const, label: 'Slow mornings, later nights' },
+              ]}
+              selected={[answers.dayRhythm]}
+              multi={false}
+              onChange={([value]) => value && set('dayRhythm', value)}
+            />
+          </View>
         </View>
       ),
     },
     {
+      phase: 'personalization' as const,
       title: 'Lodging sorted?',
       subtitle: 'If you already booked an Airbnb or hotel, we can prioritize nearby spots.',
       content: (
@@ -556,6 +796,7 @@ export default function QuizScreen() {
       ),
     },
     {
+      phase: 'personalization' as const,
       title: 'A few last things…',
       subtitle: null,
       content: (
@@ -574,10 +815,62 @@ export default function QuizScreen() {
             />
           </View>
 
+          <View style={{ gap: spacing.md }}>
+            <Text variant="h3">How should we handle food?</Text>
+            <ChipSelect
+              options={MEAL_PREFERENCES}
+              selected={answers.mealPreferences as never[]}
+              onChange={(value) => set('mealPreferences', value as string[])}
+            />
+          </View>
+
+        </View>
+      ),
+    },
+    {
+      phase: 'personalization' as const,
+      title: 'What should we protect you from?',
+      subtitle: 'These are soft constraints—we’ll use them to shape timing and recommendations.',
+      content: (
+        <View style={{ gap: spacing.xl }}>
+          <ChipSelect
+            options={AVOIDANCES}
+            selected={answers.avoidances as never[]}
+            onChange={(value) => set('avoidances', value as string[])}
+          />
+          <View style={{ gap: spacing.sm }}>
+            <Text variant="h3">Finish this thought</Text>
+            <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+              “This trip will be a success if…”
+            </Text>
+            <TextInput
+              value={answers.freeformWish}
+              onChangeText={(value) => set('freeformWish', value.slice(0, 500))}
+              placeholder="We find tiny jazz bars, never rush dinner, and leave room for one great surprise…"
+              placeholderTextColor={colors.textTertiary}
+              multiline
+              textAlignVertical="top"
+              style={{
+                minHeight: 120,
+                padding: spacing.md,
+                borderRadius: radius.lg,
+                borderWidth: 1.5,
+                borderColor: answers.freeformWish ? colors.accent : colors.border,
+                backgroundColor: colors.cardBackground,
+                color: colors.textPrimary,
+                fontSize: 16,
+                lineHeight: 23,
+              }}
+            />
+            <Text variant="caption" style={{ color: colors.textTertiary, textAlign: 'right' }}>
+              {answers.freeformWish.length}/500
+            </Text>
+          </View>
         </View>
       ),
     },
     ...(answers.groupType !== 'solo' ? [{
+      phase: 'personalization' as const,
       title: 'Bring your travel buddies in?',
       subtitle: 'Add them now to keep their contact selections ready for the trip, or invite them later from the trip hub.',
       content: (
@@ -588,6 +881,13 @@ export default function QuizScreen() {
       ),
     }] : []),
   ];
+
+  const steps = allSteps.filter((candidate) => {
+    if (!selectedDestination) return candidate.phase !== 'personalization';
+    if (candidate.phase === 'discovery') return false;
+    if (resumedAfterDestinationChoice && candidate.phase === 'foundation') return false;
+    return true;
+  });
 
   const totalSteps = steps.length;
   const progress = ((step + 1) / totalSteps) * 100;
@@ -602,16 +902,27 @@ export default function QuizScreen() {
     if (!analyticsInitialized || analyticsStartedRef.current) return;
     analyticsStartedRef.current = true;
     analyticsStartedAtRef.current = Date.now();
+    const entryPoint = selectedDestination ? 'destination_detail' : 'trip_planning';
     track(ANALYTICS_EVENTS.QUESTIONNAIRE_STARTED, {
-      entryPoint: selectedDestination ? 'destination_detail' : 'trip_planning',
+      entryPoint,
       destinationPrefilled,
+    });
+    posthog.capture('questionnaire_started', {
+      entry_point: entryPoint,
+      destination_prefilled: destinationPrefilled,
     });
     return () => {
       if (analyticsCompletedRef.current) return;
+      const abandonMs = Date.now() - analyticsStartedAtRef.current;
       track(ANALYTICS_EVENTS.QUESTIONNAIRE_ABANDONED, {
         stepId: currentAnalyticsStepRef.current.id,
         stepIndex: currentAnalyticsStepRef.current.index,
-        activeDurationMs: Date.now() - analyticsStartedAtRef.current,
+        activeDurationMs: abandonMs,
+      });
+      posthog.capture('questionnaire_abandoned', {
+        step_id: currentAnalyticsStepRef.current.id,
+        step_index: currentAnalyticsStepRef.current.index,
+        active_duration_ms: abandonMs,
       });
     };
   }, [analyticsInitialized, destinationPrefilled, track]);

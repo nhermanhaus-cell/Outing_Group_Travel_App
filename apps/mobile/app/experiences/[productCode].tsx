@@ -13,6 +13,7 @@ import { PhotoCarousel } from '../../components/ui/PhotoCarousel';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ANALYTICS_EVENTS } from '@gayi/shared';
 import { useAnalytics } from '../../src/analytics/analytics-provider';
+import { posthog } from '../../src/config/posthog';
 
 function priceBand(value?: number): string | undefined {
   if (value == null) return undefined;
@@ -113,6 +114,12 @@ export default function ExperienceDetailScreen() {
                 };
                 track(ANALYTICS_EVENTS.AFFILIATE_CLICKED, eventProperties);
                 track(ANALYTICS_EVENTS.BOOKING_HANDOFF, eventProperties);
+                posthog.capture('booking_handoff', {
+                  provider: experience.provider,
+                  product_category: 'experience',
+                  ...(priceBand(experience.priceFrom) ? { price_band: priceBand(experience.priceFrom) } : {}),
+                  title: experience.title,
+                });
                 observePreference({
                   subjectType: 'activity_category',
                   subjectKey: experience.tags?.[0] ?? 'experience',

@@ -1,19 +1,18 @@
-function encodeLocation(lat: number, lng: number, label?: string): string {
-  const base = `${lat},${lng}`;
-  return label ? `${base} (${label})` : base;
+function encodeLocation(lat: number, lng: number): string {
+  return `${lat},${lng}`;
 }
 
 export function googleMapsPlaceUrl(
   lat: number,
   lng: number,
-  label?: string,
+  _label?: string,
 ): string {
   const params = new URLSearchParams({
     api: '1',
-    destination: encodeLocation(lat, lng, label),
+    query: encodeLocation(lat, lng),
   });
 
-  return `https://www.google.com/maps/dir/?${params.toString()}`;
+  return `https://www.google.com/maps/search/?${params.toString()}`;
 }
 
 export function googleMapsMultiStopUrl(
@@ -26,14 +25,14 @@ export function googleMapsMultiStopUrl(
   const [destination, ...waypoints] = stops;
   const params = new URLSearchParams({
     api: '1',
-    destination: encodeLocation(destination.lat, destination.lng, destination.label),
+    destination: encodeLocation(destination.lat, destination.lng),
   });
 
   if (waypoints.length > 0) {
     params.set(
       'waypoints',
       waypoints
-        .map((stop) => encodeLocation(stop.lat, stop.lng, stop.label))
+        .map((stop) => encodeLocation(stop.lat, stop.lng))
         .join('|'),
     );
   }

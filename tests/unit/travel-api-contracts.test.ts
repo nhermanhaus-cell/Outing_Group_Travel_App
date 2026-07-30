@@ -29,6 +29,33 @@ describe('travel API contracts', () => {
     expect(() => validateTravelApiContract('commonsImageSearch', { images: [{ url: 'https://upload.wikimedia.org/example.jpg' }] })).toThrow(/malformed/i);
   });
 
+  it('keeps Pexels match quality and photographer links in location image results', () => {
+    const value = validateTravelApiContract<{ images: unknown[]; match: string }>('locationImageSearch', {
+      images: [{
+        url: 'https://images.pexels.com/photos/123/example.jpeg',
+        thumbnailUrl: 'https://images.pexels.com/photos/123/example-small.jpeg',
+        sourcePage: 'https://www.pexels.com/photo/example-123/',
+        author: 'Example Photographer',
+        authorUrl: 'https://www.pexels.com/@example/',
+        license: 'Pexels',
+        provider: 'pexels',
+        alt: 'Shibuya Crossing at night',
+        matchType: 'specific',
+      }],
+      match: 'specific',
+      query: 'Shibuya Crossing Tokyo',
+      source: 'pexels',
+    });
+    expect(value.images).toHaveLength(1);
+    expect(value.match).toBe('specific');
+    expect(() => validateTravelApiContract('locationImageSearch', {
+      images: [],
+      match: 'generic',
+      query: 'Tokyo',
+      source: 'pexels',
+    })).toThrow(/malformed/i);
+  });
+
   it('requires exact provider URLs for Booking.com stays', () => {
     expect(validateTravelApiContract<{ stays: unknown[] }>('bookingStays', {
       stays: [{ id: '42', name: 'Hotel', url: 'https://www.booking.com/hotel/example.html', imageUrls: [], source: 'booking_com' }],

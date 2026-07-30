@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { Text } from './Text';
@@ -7,6 +7,7 @@ import { Badge } from './Badge';
 import type { CatalogDestination } from '../../src/providers/AppProviders';
 import { getDestinationContextRating, getDestinationRating } from '../../src/lib/destinationRating';
 import { useDestinations } from '../../src/providers/AppProviders';
+import { DestinationHeroImage } from './DestinationHeroImage';
 
 interface DestinationCardProps {
   destination: CatalogDestination;
@@ -49,10 +50,10 @@ export function DestinationCard({ destination, compact = false, onPress }: Desti
           ...shadows.sm,
         })}
       >
-        <Image
-          source={{ uri: destination.heroImageUrl }}
+        <DestinationHeroImage
+          destination={destination}
           style={{ width: 80, height: 80 }}
-          resizeMode="cover"
+          showAttribution={false}
         />
         <View style={{ flex: 1, padding: spacing.md, justifyContent: 'center', gap: spacing.xxs }}>
           <Text variant="h4">{destination.name}</Text>
@@ -77,15 +78,10 @@ export function DestinationCard({ destination, compact = false, onPress }: Desti
         ...shadows.md,
       })}
     >
-      {destination.heroImageUrl ? (
-        <Image
-          source={{ uri: destination.heroImageUrl }}
-          style={{ width: '100%', height: 200 }}
-          resizeMode="cover"
-        />
-      ) : (
-        <View style={{ width: '100%', height: 200, backgroundColor: colors.backgroundTertiary }} />
-      )}
+      <DestinationHeroImage
+        destination={destination}
+        style={{ width: '100%', height: 200 }}
+      />
       <View style={{ padding: spacing.base, gap: spacing.sm }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.sm }}>
           <View style={{ flex: 1 }}>

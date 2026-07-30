@@ -32,6 +32,7 @@ All integrations are **fixture-first**. Live adapters run only when keyed / onli
 | **Open-Meteo** | `weather` via `travel-api` Edge proxy | Open-Meteo | Seven-day destination forecast; optional commercial customer key. |
 | **Ticketmaster Discovery API** | `events` via `travel-api` Edge proxy | Ticketmaster | Current official event listings and exact listing URLs. |
 | **National Park Service** | destination context via `travel-api` Edge proxy | U.S. National Park Service | Official park descriptions and links for U.S. destinations. |
+| **Pexels** | destination/activity imagery via `travel-api` Edge proxy | Photographer + linked Pexels photo page | Searches the named activity or place first. If the result is not relevant enough, rotates through destination-level fallback themes. Results are cached for 14 days. |
 | **Wikimedia Commons** | image fallback via `travel-api` Edge proxy | Per-file author/license | Place-specific search only after Google has no photo; attribution retained on every result. |
 
 ### Google APIs required for in-app maps
@@ -76,6 +77,7 @@ GAYI_PROVIDER_EXPERIENCES=mock
 VIATOR_API_KEY= # Supabase Edge secret
 GETYOURGUIDE_API_KEY=
 GOOGLE_PLACES_API_KEY= # Supabase Edge secret
+PEXELS_API_KEY= # Supabase Edge secret; never EXPO_PUBLIC_
 GOOGLE_MAPS_API_KEY= # native Maps SDK only
 WEATHER_API_KEY=
 FX_API_KEY=
@@ -96,6 +98,7 @@ Destination **Sources** sections should list:
 - Equaldex credit link when cited scores are shown
 - Official advisory links
 - Blog further-reading links (exact article URLs and metadata only — never copied article bodies or publisher images)
+- Pexels photographer credit linked to the exact Pexels photo page whenever a Pexels image is visible
 
 ### Queer travel editorial index
 

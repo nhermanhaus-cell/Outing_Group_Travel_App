@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { editorialCollections } from '../../src/content/collections';
@@ -18,6 +17,7 @@ import {
   bucketQueryLength,
 } from '@gayi/shared';
 import { useAnalytics } from '../../src/analytics/analytics-provider';
+import { DestinationHeroImage } from '../../components/ui/DestinationHeroImage';
 
 function nextMonth() {
   const date = new Date();
@@ -114,7 +114,10 @@ export default function DiscoverScreen() {
                 }}
                 style={{ width: 250, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.backgroundSecondary }}
               >
-                {destination.heroImageUrl ? <Image source={{ uri: destination.heroImageUrl }} style={{ width: '100%', height: 150 }} contentFit="cover" /> : null}
+                <DestinationHeroImage
+                  destination={destination}
+                  style={{ width: '100%', height: 150 }}
+                />
                 <View style={{ padding: spacing.md, gap: spacing.xs }}>
                   <Text variant="h4">{destination.name}</Text>
                   <Text variant="h3">from {new Intl.NumberFormat(undefined, { style: 'currency', currency: deal.currency, maximumFractionDigits: 0 }).format(deal.price)}</Text>
@@ -143,7 +146,11 @@ export default function DiscoverScreen() {
               }}
               style={{ width: Math.min(width * 0.84, 380), height: 470, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: colors.backgroundSecondary }}
             >
-              {destination?.heroImageUrl ? <Image source={{ uri: destination.heroImageUrl }} style={{ position: 'absolute', inset: 0 }} contentFit="cover" transition={200} /> : null}
+              <DestinationHeroImage
+                destination={destination}
+                style={{ position: 'absolute', inset: 0 }}
+                attributionTop={spacing.xs}
+              />
               <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(13,10,14,0.38)' }} />
               <View style={{ marginTop: 'auto', padding: spacing.xl, gap: spacing.sm }}>
                 <Text variant="captionBold" style={{ color: '#fff', textTransform: 'uppercase', letterSpacing: 1.3 }}>{collection.kicker}</Text>

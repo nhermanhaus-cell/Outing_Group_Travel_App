@@ -20,6 +20,7 @@ import { Card } from '../../components/ui/Card';
 import { PulseMeter } from '../../components/ui/PulseMeter';
 import { DataSourceBadge } from '../../components/ui/DataSourceBadge';
 import { PhotoCarousel } from '../../components/ui/PhotoCarousel';
+import { DestinationHeroImage } from '../../components/ui/DestinationHeroImage';
 import { getDestinationContextRating, getDestinationRating } from '../../src/lib/destinationRating';
 import travelAdvisories from '../../assets/public/travel-advisories.json';
 import travelBlogInsights from '../../assets/editorial/travel-blog-insights.json';
@@ -34,10 +35,12 @@ import {
   loadTicketmasterEvents,
   loadWeatherForecast,
   searchCommonsImages,
+  searchLocationImages,
 } from '../../src/lib/travel-api';
 import { destinationPlanHref } from '../../src/lib/tripPlanningFlow';
 import { ANALYTICS_EVENTS } from '@gayi/shared';
 import { useAnalytics } from '../../src/analytics/analytics-provider';
+import { useDestinationImages } from '../../src/lib/destinationImages';
 
 type TabKey = 'overview' | 'lgbtq' | 'places' | 'events';
 
@@ -84,12 +87,6 @@ function InfoRow({ label, value, accent }: { label: string; value: string; accen
   );
 }
 
-function rotateImages(urls: string[] | undefined, index: number): string[] {
-  if (!urls?.length) return [];
-  const offset = index % urls.length;
-  return [...urls.slice(offset), ...urls.slice(0, offset)];
-}
-
 function weatherLabel(code?: number) {
   if (code == null) return 'Current conditions';
   if (code === 0) return 'Clear';
@@ -129,10 +126,28 @@ function DestinationPlaceCard({ place, destinationName, center, index }: { place
     retry: 1,
   });
   const google = live.data;
+  const pexels = useQuery({
+    queryKey: ['pexels-place-image-v1', destinationName, place.name, place.category, index],
+    queryFn: () => searchLocationImages({
+      subject: place.name,
+      destination: destinationName,
+      category: place.category,
+      kind: 'place',
+      limit: 3,
+      variant: index,
+    }),
+    enabled: !live.isLoading && !google?.imageUrls.length,
+    staleTime: 14 * 24 * 60 * 60_000,
+    retry: 1,
+  });
+  const pexelsImages = pexels.data?.images ?? [];
   const commons = useQuery({
     queryKey: ['commons-place-image-v1', destinationName, place.name],
     queryFn: () => searchCommonsImages(`${place.name} ${destinationName}`, 3),
-    enabled: !live.isLoading && !google?.imageUrls.length,
+    enabled: !live.isLoading
+      && !google?.imageUrls.length
+      && !pexels.isLoading
+      && pexelsImages.length === 0,
     staleTime: 24 * 60 * 60_000,
     retry: 1,
   });
@@ -143,25 +158,43 @@ function DestinationPlaceCard({ place, destinationName, center, index }: { place
     : [];
   const imageUrls = google?.imageUrls.length
     ? google.imageUrls
-    : commonsImages.length
-      ? commonsImages.map((image) => image.url)
-      : rotatedFallback.slice(0, 1);
+    : pexelsImages.length
+      ? pexelsImages.map((image) => image.url)
+      : commonsImages.length
+        ? commonsImages.map((image) => image.url)
+        : rotatedFallback.slice(0, 1);
   const mapsUrl = google?.googleMapsUri ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.name}, ${destinationName}`)}`;
   const attribution = google?.imageAttributions?.length
     ? `Photos: ${google.imageAttributions.join(', ')} · Google`
-    : commonsImages.length
-      ? `${commonsImages[0]?.author ?? 'Contributor'} · ${commonsImages[0]?.license ?? 'Wikimedia Commons'} — visual may show the surrounding area`
-      : imageUrls.length
+    : imageUrls.length && !pexelsImages.length && !commonsImages.length
       ? 'Destination photo via Unsplash · venue photo not yet verified'
+      : undefined;
+  const imageAttributions = pexelsImages.length
+    ? pexelsImages.map((image) => ({
+        text: image.matchType === 'destination_fallback'
+          ? `${destinationName} fallback · Photo by ${image.author ?? 'a contributor'} on Pexels`
+          : `Photo by ${image.author ?? 'a contributor'} on Pexels`,
+        url: image.sourcePage,
+      }))
+    : commonsImages.length
+      ? commonsImages.map((image) => ({
+          text: `${image.author ?? 'Contributor'} · ${image.license ?? 'Wikimedia Commons'}`,
+          url: image.sourcePage,
+        }))
       : undefined;
 
   return (
     <Card elevated padded style={{ marginBottom: spacing.sm }}>
       <View style={{ gap: spacing.sm }}>
-        {live.isLoading ? (
+        {live.isLoading || (!google?.imageUrls.length && pexels.isLoading) ? (
           <View style={{ height: 160, borderRadius: 12, backgroundColor: colors.backgroundTertiary }} />
         ) : imageUrls.length > 0 ? (
-          <PhotoCarousel urls={imageUrls} height={160} attribution={attribution} />
+          <PhotoCarousel
+            urls={imageUrls}
+            height={160}
+            attribution={attribution}
+            attributions={imageAttributions}
+          />
         ) : (
           <View style={{ height: 88, borderRadius: 12, backgroundColor: colors.backgroundTertiary, alignItems: 'center', justifyContent: 'center', padding: spacing.md }}>
             <Text variant="caption" style={{ color: colors.textTertiary, textAlign: 'center' }}>
@@ -223,6 +256,7 @@ export default function DestinationDetailScreen() {
 
   const destination = useMemo(() => getBySlug(slug ?? ''), [slug, getBySlug]);
   const scoringDestination = useMemo(() => getScoringBySlug(slug ?? ''), [slug, getScoringBySlug]);
+  const destinationImages = useDestinationImages(destination);
   const weatherQuery = useQuery({
     queryKey: ['destination-weather-v1', destination?.slug],
     queryFn: () => loadWeatherForecast(destination!.lat, destination!.lng),
@@ -412,11 +446,11 @@ export default function DestinationDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
         {/* Hero */}
         <View style={{ position: 'relative' }}>
-          {destination.heroImageUrl ? (
-            <Image source={{ uri: destination.heroImageUrl }} style={{ width: '100%', height: 380 }} resizeMode="cover" />
-          ) : (
-            <View style={{ width: '100%', height: 380, backgroundColor: colors.backgroundTertiary }} />
-          )}
+          <DestinationHeroImage
+            destination={destination}
+            style={{ width: '100%', height: 380 }}
+            attributionTop={insets.top + 58}
+          />
           <View style={{ position: 'absolute', top: insets.top + spacing.sm, left: spacing.base, right: spacing.base, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Pressable onPress={() => router.back()} style={{ backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: radius.full, padding: spacing.sm }}>
               <Text style={{ color: colors.white, fontSize: 16 }}>←</Text>
@@ -467,17 +501,25 @@ export default function DestinationDetailScreen() {
                 </Text>
               ) : null}
 
-              {(destination.galleryImageUrls?.length > 0 || destination.heroImageUrl) && (
+              {(destinationImages.pexelsImages.length
+                || destination.galleryImageUrls?.length > 0
+                || destination.heroImageUrl) && (
                 <>
                   <SectionTitle>Look & feel</SectionTitle>
                   <PhotoCarousel
                     urls={
-                      (destination.galleryImageUrls?.length
-                        ? destination.galleryImageUrls
-                        : [destination.heroImageUrl].filter(Boolean)) as string[]
+                      destinationImages.pexelsImages.length
+                        ? destinationImages.pexelsImages.map((image) => image.url)
+                        : (destination.galleryImageUrls?.length
+                            ? destination.galleryImageUrls
+                            : [destination.heroImageUrl].filter(Boolean)) as string[]
                     }
                     height={220}
-                    attribution="Photos via Unsplash"
+                    attribution={destinationImages.pexelsImages.length ? undefined : 'Photos via Unsplash'}
+                    attributions={destinationImages.pexelsImages.map((image) => ({
+                      text: `Photo by ${image.author ?? 'a contributor'} on Pexels`,
+                      url: image.sourcePage,
+                    }))}
                   />
                 </>
               )}
@@ -565,8 +607,9 @@ export default function DestinationDetailScreen() {
                     <Card key={experience.id} elevated padded style={{ marginBottom: spacing.sm }}>
                       <View style={{ gap: spacing.sm }}>
                         <PhotoCarousel
-                          urls={rotateImages(experience.imageUrls, index)}
+                          urls={experience.imageUrls}
                           height={150}
+                          attributions={experience.imageAttributions}
                           attribution={
                             experience.provider === 'viator' ? undefined : 'Photo via Unsplash'
                           }

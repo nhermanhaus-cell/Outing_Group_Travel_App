@@ -35,10 +35,10 @@ describe('trip planning flow', () => {
     });
   });
 
-  it('does not repeat a questionnaire completed before viewing a destination', () => {
+  it('continues into destination-specific personalization after destination discovery', () => {
     const quizAnswers = '{"interests":["nightlife"]}';
     expect(destinationPlanHref(destination, quizAnswers)).toEqual({
-      pathname: '/trips/new',
+      pathname: '/quiz',
       params: { ...destination, quizAnswers },
     });
   });

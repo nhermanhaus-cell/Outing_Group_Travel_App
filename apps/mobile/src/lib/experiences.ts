@@ -1,5 +1,10 @@
 import experiencesSeed from '../../assets/seed/experiences.json';
-import { invokeTravelApi, type ApiExperience } from './travel-api';
+import {
+  invokeTravelApi,
+  searchLocationImages,
+  type ApiExperience,
+  type ApiAttributedImage,
+} from './travel-api';
 import { isExactViatorProductUrl } from '@gayi/shared';
 export { isExactViatorProductUrl } from '@gayi/shared';
 
@@ -13,6 +18,7 @@ export interface MobileExperience {
   title: string;
   summary: string;
   imageUrls: string[];
+  imageAttributions?: Array<{ text: string; url?: string } | undefined>;
   durationHours?: number;
   priceFrom?: number;
   currency?: string;
@@ -92,6 +98,7 @@ function editorial(destinationSlug: string, limit: number, asViator: boolean): M
       title: e.title,
       summary: e.summary,
       imageUrls: e.imageUrls ?? [],
+      imageAttributions: (e.imageUrls ?? []).map(() => ({ text: 'Photo via Unsplash' })),
       durationHours: e.durationHours,
       priceFrom: e.priceFrom,
       currency: e.currency,
@@ -103,6 +110,46 @@ function editorial(destinationSlug: string, limit: number, asViator: boolean): M
       bookingMode: 'none',
       affiliateUrl: e.affiliateUrl,
     }));
+}
+
+function pexelsAttribution(
+  image: ApiAttributedImage,
+  destinationName: string,
+): { text: string; url?: string } {
+  const credit = `Photo by ${image.author ?? 'a Pexels contributor'} on Pexels`;
+  return {
+    text: image.matchType === 'destination_fallback'
+      ? `${destinationName} fallback · ${credit}`
+      : credit,
+    url: image.sourcePage,
+  };
+}
+
+async function enrichExperienceImages(
+  experiences: MobileExperience[],
+  destinationName: string,
+): Promise<MobileExperience[]> {
+  return Promise.all(experiences.map(async (experience, index) => {
+    if (experience.provider === 'viator' && experience.imageUrls.length > 0) return experience;
+    try {
+      const result = await searchLocationImages({
+        subject: experience.title,
+        destination: destinationName,
+        category: experience.tags.join(' '),
+        kind: 'activity',
+        limit: 4,
+        variant: index,
+      });
+      if (result.images.length === 0) return experience;
+      return {
+        ...experience,
+        imageUrls: result.images.map((image) => image.url),
+        imageAttributions: result.images.map((image) => pexelsAttribution(image, destinationName)),
+      };
+    } catch {
+      return experience;
+    }
+  }));
 }
 
 function mapApiExperience(item: ApiExperience, destinationSlug: string): MobileExperience {
@@ -257,13 +304,22 @@ export async function loadDestinationExperiences(
         const schedule = await invokeTravelApi<{ schedule: unknown }>('viatorSchedule', { productCode: experience.productCode }).catch(() => null);
         return schedule ? { ...experience, availabilitySummary: summarizeAvailability(schedule.schedule), availabilityStartTimes: extractStartTimes(schedule.schedule) } : experience;
       }));
-      return { experiences: enriched, source: 'viator_live' };
+      return {
+        experiences: await enrichExperienceImages(enriched, destinationName),
+        source: 'viator_live',
+      };
     }
   } catch {
     // fall through
   }
 
-  return { experiences: editorial(destinationSlug, limit, false), source: 'editorial_fallback' };
+  return {
+    experiences: await enrichExperienceImages(
+      editorial(destinationSlug, limit, false),
+      destinationName,
+    ),
+    source: 'editorial_fallback',
+  };
 }
 
 export async function loadExperienceDetails(
@@ -277,11 +333,12 @@ export async function loadExperienceDetails(
     ]);
     if (!productResult.product) return null;
     const experience = mapApiExperience(productResult.product, destinationSlug);
-    return {
+    const withAvailability = {
       ...experience,
       availabilitySummary: summarizeAvailability(scheduleResult?.schedule),
       availabilityStartTimes: extractStartTimes(scheduleResult?.schedule),
     };
+    return (await enrichExperienceImages([withAvailability], slugToName(destinationSlug)))[0] ?? withAvailability;
   } catch {
     return null;
   }

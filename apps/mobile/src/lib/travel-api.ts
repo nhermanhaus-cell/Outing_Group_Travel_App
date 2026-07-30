@@ -57,7 +57,25 @@ export interface ApiExperience {
   bookingMode: 'external' | 'none';
 }
 
-export interface ApiAttributedImage { url: string; thumbnailUrl?: string; sourcePage: string; author?: string; license?: string; licenseUrl?: string }
+export interface ApiAttributedImage {
+  url: string;
+  thumbnailUrl?: string;
+  sourcePage: string;
+  author?: string;
+  authorUrl?: string;
+  license?: string;
+  licenseUrl?: string;
+  provider?: 'pexels' | 'wikimedia_commons';
+  alt?: string;
+  matchType?: 'specific' | 'destination_fallback';
+}
+export type ApiLocationImageKind = 'activity' | 'place' | 'destination';
+export interface ApiLocationImageResult {
+  images: ApiAttributedImage[];
+  match: 'specific' | 'destination_fallback' | 'none';
+  query: string;
+  source: 'pexels';
+}
 export interface ApiWeatherDay { date: string; weatherCode?: number; temperatureMaxC?: number; temperatureMinC?: number; precipitationProbabilityMax?: number }
 export interface ApiWeather { timezone: string; currentTemperatureC?: number; currentWeatherCode?: number; daily: ApiWeatherDay[]; source: 'open_meteo'; retrievedAt: string }
 export interface ApiLiveEvent { id: string; name: string; url: string; startDate?: string; startTime?: string; venueName?: string; city?: string; imageUrl?: string; genre?: string; source: 'ticketmaster' }
@@ -85,6 +103,15 @@ export async function invokeTravelApi<T>(
 export const searchCommonsImages = (query: string, limit = 5) =>
   invokeTravelApi<{ images: ApiAttributedImage[] }>('commonsImageSearch', { query, limit });
 
+export const searchLocationImages = (input: {
+  subject: string;
+  destination: string;
+  category?: string;
+  kind: ApiLocationImageKind;
+  limit?: number;
+  variant?: number;
+}) => invokeTravelApi<ApiLocationImageResult>('locationImageSearch', input);
+
 export const loadWeatherForecast = (lat: number, lng: number) =>
   invokeTravelApi<{ weather: ApiWeather }>('weatherForecast', { lat, lng });
 
@@ -97,7 +124,7 @@ export const loadNearbyParks = (query: string, limit = 5) =>
 export const loadBookingStays = (input: { airportIata: string; checkin: string; checkout: string; adults: number; rooms?: number; currency?: string; limit?: number }) =>
   invokeTravelApi<{ stays: ApiBookingStay[]; destinationId?: string }>('bookingStays', input);
 
-export const loadIndicativeFlightDeals = (input: { originIata: string; currency?: string; market?: string; locale?: string; departureMonth?: string; returnMonth?: string; limit?: number }) =>
+export const loadIndicativeFlightDeals = (input: { originIata: string; destinationIata?: string; currency?: string; market?: string; locale?: string; departureMonth?: string; returnMonth?: string; limit?: number }) =>
   invokeTravelApi<{ deals: ApiFlightDeal[]; observedAt: string; indicative: true }>('skyscannerIndicative', input);
 
 export function validateTravelApiResponse<T>(operation: string, data: unknown): T {

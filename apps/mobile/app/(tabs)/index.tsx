@@ -7,6 +7,7 @@ import { useDestinations } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { DestinationCard } from '../../components/ui/DestinationCard';
+import { DestinationHeroImage } from '../../components/ui/DestinationHeroImage';
 import homeEditorial from '../../assets/editorial/home.json';
 
 type HomeEditorial = {
@@ -54,15 +55,11 @@ export default function HomeScreen() {
     >
       {/* Hero */}
       <View style={{ position: 'relative' }}>
-        {heroDest?.heroImageUrl ? (
-          <Image
-            source={{ uri: heroDest.heroImageUrl }}
-            style={{ width: '100%', height: 520 }}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={{ width: '100%', height: 520, backgroundColor: colors.ink700 }} />
-        )}
+        <DestinationHeroImage
+          destination={heroDest}
+          style={{ width: '100%', height: 520, backgroundColor: colors.ink700 }}
+          attributionTop={insets.top + 56}
+        />
 
         <View
           style={{

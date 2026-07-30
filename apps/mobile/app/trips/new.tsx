@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -11,11 +12,17 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { useAuth, useTravelProfile, useTrips } from '../../src/providers/AppProviders';
+import { useAuth, useDestinations, useTravelProfile, useTrips } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { GlamourSelector } from '../../components/ui/GlamourSelector';
-import type { ActivityPace, GlamourLevel, PreferredTransportMode, TravelRange } from '@gayi/shared';
+import type {
+  ActivityPace,
+  GlamourLevel,
+  LookingFor,
+  PreferredTransportMode,
+  TravelRange,
+} from '@gayi/shared';
 import {
   ANALYTICS_EVENTS,
   bucketCount,
@@ -23,6 +30,7 @@ import {
 } from '@gayi/shared';
 import { featureFlags } from '../../src/lib/featureFlags';
 import { useAnalytics } from '../../src/analytics/analytics-provider';
+import { posthog } from '../../src/config/posthog';
 import { TravelerSelector, type GroupType } from '../../components/trip-wizard/TravelerSelector';
 import { TripPathChooser } from '../../components/trip-wizard/TripPathChooser';
 import type { QuizAnswers } from '../quiz';
@@ -30,6 +38,14 @@ import { AirportAutocomplete } from '../../components/trip-wizard/airport-autoco
 import { DateField } from '../../components/trip-wizard/date-field';
 import { QUIZ_BUDDY_DRAFT_KEY, TravelBuddyPicker } from '../../components/trip-wizard/travel-buddy-picker';
 import { airports } from '../../src/content/airports';
+import { destinationPlanHref } from '../../src/lib/tripPlanningFlow';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { loadIndicativeFlightDeals, loadTicketmasterEvents } from '../../src/lib/travel-api';
+import { nearestAirports } from '../../src/content/airports';
+import {
+  buildTripDateRecommendations,
+  upcomingCandidateMonths,
+} from '../../src/lib/dateRecommendations';
 
 const NEW_TRIP_BUDDY_DRAFT_KEY = 'gayi:new-trip-travel-buddies';
 
@@ -39,6 +55,7 @@ export default function NewTripScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { profile, updateProfile } = useTravelProfile();
+  const { catalog } = useDestinations();
   const { createTrip } = useTrips();
   const { track } = useAnalytics();
   const params = useLocalSearchParams<{
@@ -53,9 +70,10 @@ export default function NewTripScreen() {
   const fromQuiz = Boolean(params.quizAnswers);
 
   const [loading, setLoading] = useState(false);
-  const [creationPath, setCreationPath] = useState<'choose' | 'manual'>(
+  const [creationPath, setCreationPath] = useState<'choose' | 'destination' | 'manual'>(
     params.destinationName || !featureFlags.tripWizardV2 ? 'manual' : 'choose',
   );
+  const [destinationQuery, setDestinationQuery] = useState('');
   const primaryAirport = profile.homeAirports.find((airport) => airport.primary) ?? profile.homeAirports[0];
 
   const [form, setForm] = useState({
@@ -70,7 +88,7 @@ export default function NewTripScreen() {
     collaboratorChoice: quizAnswers.collaboratorChoice,
     glamourLevel: (quizAnswers.glamourLevel ?? 'comfortably_fabulous') as GlamourLevel,
     budget: '',
-    lodgingAddress: params.lodgingAddress ?? '',
+    lodgingAddress: params.lodgingAddress ?? quizAnswers.lodgingAddress ?? '',
     activityPace:
       params.activityPace === 'packed' ||
       params.activityPace === 'balanced' ||
@@ -87,6 +105,118 @@ export default function NewTripScreen() {
     setForm((prev) => ({ ...prev, [key]: val }));
   };
 
+  const selectedCatalogDestination = useMemo(
+    () => catalog.find((destination) => destination.slug === form.destinationSlug),
+    [catalog, form.destinationSlug],
+  );
+  const destinationAirport = useMemo(
+    () => selectedCatalogDestination
+      ? nearestAirports(selectedCatalogDestination.lat, selectedCatalogDestination.lng, 1)[0]?.airport
+      : undefined,
+    [selectedCatalogDestination],
+  );
+  const recommendationMonths = useMemo(
+    () => upcomingCandidateMonths(new Date(), quizAnswers.months ?? [], 6),
+    [quizAnswers.months],
+  );
+  const fareQueries = useQueries({
+    queries: recommendationMonths.map((month) => ({
+      queryKey: [
+        'trip-date-fare-window-v1',
+        form.origin,
+        destinationAirport?.iata,
+        month,
+        quizAnswers.duration,
+      ],
+      queryFn: () => loadIndicativeFlightDeals({
+        originIata: form.origin,
+        destinationIata: destinationAirport!.iata,
+        departureMonth: month,
+        returnMonth: month,
+        limit: 12,
+      }),
+      enabled: Boolean(fromQuiz && form.origin && destinationAirport?.iata),
+      staleTime: 6 * 60 * 60_000,
+      retry: 1,
+    })),
+  });
+  const liveEventsQuery = useQuery({
+    queryKey: [
+      'trip-date-live-events-v1',
+      selectedCatalogDestination?.slug,
+      quizAnswers.interests?.join(','),
+    ],
+    queryFn: () => loadTicketmasterEvents(
+      selectedCatalogDestination!.lat,
+      selectedCatalogDestination!.lng,
+      {
+        startDate: new Date().toISOString().slice(0, 10),
+        endDate: futureIsoDate(365),
+        limit: 20,
+      },
+    ),
+    enabled: Boolean(fromQuiz && selectedCatalogDestination),
+    staleTime: 6 * 60 * 60_000,
+    retry: 1,
+  });
+  const dateRecommendations = useMemo(() => {
+    if (!selectedCatalogDestination || !destinationAirport || !form.origin) return [];
+    const fareObservations = fareQueries.flatMap((query, index) => {
+      const deal = query.data?.deals.find((candidate) =>
+        !candidate.destinationIata
+        || candidate.destinationIata.toUpperCase() === destinationAirport.iata.toUpperCase());
+      return deal ? [{ requestedMonth: recommendationMonths[index]!, deal }] : [];
+    });
+    const catalogEvents = (selectedCatalogDestination.events ?? []).flatMap((event) =>
+      event.id && event.title && event.startDate
+        ? [{
+            id: event.id,
+            title: event.title,
+            startDate: event.startDate,
+            endDate: event.endDate,
+            category: event.category,
+          }]
+        : []);
+    const liveEvents = (liveEventsQuery.data?.events ?? []).flatMap((event) =>
+      event.startDate
+        ? [{
+            id: `ticketmaster-${event.id}`,
+            title: event.name,
+            startDate: event.startDate,
+            category: event.genre,
+          }]
+        : []);
+    return buildTripDateRecommendations({
+      originIata: form.origin,
+      destinationIata: destinationAirport.iata,
+      durationDays: quizAnswers.duration ?? 7,
+      fareObservations,
+      events: [...catalogEvents, ...liveEvents],
+      bestMonths: selectedCatalogDestination.bestMonths,
+      preferences: {
+        interests: quizAnswers.interests ?? [],
+        goals: quizAnswers.tripGoals ?? [],
+        hallmarkIds: quizAnswers.hallmarkIds ?? [],
+        nightlife: quizAnswers.nightlife ?? 0,
+        preferredMonths: quizAnswers.months ?? [],
+      },
+    });
+  }, [
+    destinationAirport,
+    fareQueries,
+    form.origin,
+    liveEventsQuery.data?.events,
+    quizAnswers.duration,
+    quizAnswers.hallmarkIds,
+    quizAnswers.interests,
+    quizAnswers.months,
+    quizAnswers.nightlife,
+    quizAnswers.tripGoals,
+    recommendationMonths,
+    selectedCatalogDestination,
+  ]);
+  const dateRecommendationsLoading = fareQueries.some((query) => query.isLoading);
+
   const handleCreate = async () => {
     setLoading(true);
     try {
@@ -102,7 +232,28 @@ export default function NewTripScreen() {
         budget: form.budget ? parseInt(form.budget, 10) : undefined,
         lodgingAddress: form.lodgingAddress || undefined,
         activityPace: form.activityPace,
-        interests: quizAnswers.interests as never[] | undefined,
+        lodgingStatus: quizAnswers.lodgingStatus,
+        interests: quizAnswers.mealPreferences?.includes('food_low_priority')
+          ? quizAnswers.interests?.filter((interest) => interest !== 'food') as never[] | undefined
+          : quizAnswers.mealPreferences?.some((preference) => preference !== 'food_low_priority')
+            ? Array.from(new Set([...(quizAnswers.interests ?? []), 'food'])) as never[]
+            : quizAnswers.interests as never[] | undefined,
+        nightlifeImportance: quizAnswers.nightlife !== undefined
+          ? Math.max(0, Math.min(1, quizAnswers.nightlife / 5))
+          : undefined,
+        lookingFor: deriveLookingForFromQuiz(quizAnswers),
+        planningPreferences: {
+          goals: quizAnswers.tripGoals ?? [],
+          vacationStyles: quizAnswers.vacationStyles ?? [],
+          dayRhythm: quizAnswers.dayRhythm ?? 'flexible',
+          mealPreferences: quizAnswers.mealPreferences ?? [],
+          avoidances: quizAnswers.avoidances ?? [],
+          hallmarkIds: quizAnswers.hallmarkIds ?? [],
+          hallmarkNames: quizAnswers.hallmarkNames ?? [],
+          ...(quizAnswers.freeformWish?.trim()
+            ? { freeformWish: quizAnswers.freeformWish.trim() }
+            : {}),
+        },
         travelRanges: form.travelRanges,
         preferredTransportMode: form.preferredTransportMode,
         members: [{ id: user?.id ?? 'local-owner', displayName: user?.displayName ?? user?.email ?? 'You', role: 'owner' }],
@@ -122,6 +273,14 @@ export default function NewTripScreen() {
         travelerCountBucket: bucketCount(form.travelers),
         ...(durationDays ? { durationBucket: bucketDurationDays(durationDays) } : {}),
         destinationPrefilled: Boolean(params.destinationSlug),
+      });
+      posthog.capture('trip_created', {
+        creation_path: fromQuiz ? 'recommendations' : 'manual',
+        group_type: form.groupType,
+        traveler_count_bucket: bucketCount(form.travelers),
+        ...(durationDays ? { duration_bucket: bucketDurationDays(durationDays) } : {}),
+        destination_prefilled: Boolean(params.destinationSlug),
+        glamour_level: form.glamourLevel,
       });
       const airportCode = form.origin.trim().toUpperCase();
       const selectedAirport = airports.find((airport) => airport.iata === airportCode);
@@ -168,6 +327,7 @@ export default function NewTripScreen() {
               path: 'recommendations',
               entryPoint: 'new_trip',
             });
+            posthog.capture('trip_creation_path_selected', { path: 'recommendations', entry_point: 'new_trip' });
             router.push('/quiz');
           }}
           onManual={() => {
@@ -175,9 +335,72 @@ export default function NewTripScreen() {
               path: 'manual',
               entryPoint: 'new_trip',
             });
-            setCreationPath('manual');
+            posthog.capture('trip_creation_path_selected', { path: 'manual', entry_point: 'new_trip' });
+            setCreationPath('destination');
           }}
         />
+      </View>
+    );
+  }
+
+  if (creationPath === 'destination') {
+    const needle = destinationQuery.trim().toLowerCase();
+    const destinationOptions = catalog
+      .filter((destination) =>
+        !needle
+        || destination.name.toLowerCase().includes(needle)
+        || destination.country.toLowerCase().includes(needle))
+      .slice(0, 12);
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top + spacing.lg }}>
+        <View style={{ paddingHorizontal: spacing.base, gap: spacing.md, flex: 1 }}>
+          <Pressable onPress={() => setCreationPath('choose')} style={{ paddingVertical: spacing.sm }}>
+            <Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text>
+          </Pressable>
+          <View style={{ gap: spacing.xs }}>
+            <Text variant="displayMd">Where are you going?</Text>
+            <Text variant="bodyLg" style={{ color: colors.textSecondary }}>
+              We’ll tailor the next questions to what is actually available there.
+            </Text>
+          </View>
+          <StyledInput
+            value={destinationQuery}
+            onChangeText={setDestinationQuery}
+            placeholder="Search city or country"
+            autoFocus
+          />
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: spacing.sm, paddingBottom: insets.bottom + spacing.xl }}>
+            {destinationOptions.map((destination) => (
+              <Pressable
+                key={destination.slug}
+                onPress={() => {
+                  track(ANALYTICS_EVENTS.TRIP_CREATION_PATH_SELECTED, {
+                    path: 'manual',
+                    entryPoint: 'new_trip',
+                  });
+                  router.push(destinationPlanHref({
+                    destinationSlug: destination.slug,
+                    destinationName: destination.name,
+                  }));
+                }}
+                style={{
+                  padding: spacing.base,
+                  borderRadius: radius.lg,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.cardBackground,
+                  gap: spacing.xxs,
+                }}
+              >
+                <Text variant="labelLg">{destination.name}</Text>
+                <Text variant="caption" style={{ color: colors.textSecondary }}>{destination.country}</Text>
+              </Pressable>
+            ))}
+            <Button variant="ghost" onPress={() => setCreationPath('manual')}>
+              My destination isn’t listed
+            </Button>
+          </ScrollView>
+        </View>
       </View>
     );
   }
@@ -229,6 +452,71 @@ export default function NewTripScreen() {
           </Field>
 
           <View style={{ gap: spacing.md }}>
+            {fromQuiz && selectedCatalogDestination ? (
+              <View style={{ gap: spacing.sm }}>
+                <View style={{ gap: spacing.xxs }}>
+                  <Text variant="h3">Recommended dates</Text>
+                  <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                    Based on indicative fare observations and events matching your preferences.
+                  </Text>
+                </View>
+                {dateRecommendationsLoading && dateRecommendations.length === 0 ? (
+                  <Text variant="caption" style={{ color: colors.textTertiary }}>
+                    Comparing upcoming fare windows…
+                  </Text>
+                ) : null}
+                {dateRecommendations.map((recommendation) => (
+                  <View
+                    key={recommendation.id}
+                    style={{
+                      padding: spacing.md,
+                      borderRadius: radius.lg,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      backgroundColor: colors.cardBackground,
+                      gap: spacing.xs,
+                    }}
+                  >
+                    <Text variant="labelLg">{recommendation.title}</Text>
+                    <Text variant="bodyMd">
+                      {formatRecommendedDate(recommendation.startDate)} – {formatRecommendedDate(recommendation.endDate)}
+                    </Text>
+                    <Text variant="caption" style={{ color: colors.textSecondary }}>
+                      {recommendation.reason}
+                    </Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+                      <Button
+                        size="sm"
+                        onPress={() => setForm((current) => ({
+                          ...current,
+                          startDate: recommendation.startDate,
+                          endDate: recommendation.endDate,
+                        }))}
+                      >
+                        Use these dates
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onPress={() => {
+                          track(ANALYTICS_EVENTS.EXTERNAL_LINK_OPENED, {
+                            linkType: 'flight_search',
+                            provider: 'google_flights',
+                            sourceScreen: '/trips/new',
+                          });
+                          void Linking.openURL(recommendation.googleFlightsUrl);
+                        }}
+                      >
+                        Check on Google Flights
+                      </Button>
+                    </View>
+                  </View>
+                ))}
+                <Text variant="caption" style={{ color: colors.textTertiary }}>
+                  Indicative fares can change. Google Flights opens for live date-grid, price-graph, and tracking confirmation.
+                </Text>
+              </View>
+            ) : null}
             <View style={{ flex: 1 }}>
               <Field label="Start date" optional>
                 <DateField value={form.startDate} onChange={(value) => setForm((current) => ({ ...current, startDate: value, endDate: current.endDate && current.endDate >= value ? current.endDate : quizAnswers.duration ? addDays(value, Math.max(0, quizAnswers.duration - 1)) : '' }))} placeholder="Choose start date" />
@@ -314,6 +602,17 @@ function Field({ label, optional, children }: { label: string; optional?: boolea
   );
 }
 
+function deriveLookingForFromQuiz(answers: Partial<QuizAnswers>): LookingFor[] | undefined {
+  const values = new Set<LookingFor>((answers.socialPrefs ?? []) as LookingFor[]);
+  const goals = new Set(answers.tripGoals ?? []);
+  if (goals.has('explore') || goals.has('learn')) values.add('exploration');
+  if (goals.has('recharge')) values.add('relaxation');
+  if (goals.has('celebrate')) values.add('dancing');
+  if (goals.has('connect')) values.add('community');
+  if (goals.has('romance')) values.add('romance');
+  return values.size > 0 ? Array.from(values) : undefined;
+}
+
 function StyledInput(props: React.ComponentProps<typeof TextInput>) {
   const { colors, spacing, radius } = useTheme();
   return (
@@ -337,6 +636,21 @@ function StyledInput(props: React.ComponentProps<typeof TextInput>) {
 function addDays(iso: string, days: number): string {
   const [year, month, day] = iso.split('-').map(Number);
   const date = new Date(Date.UTC(year!, (month ?? 1) - 1, day ?? 1));
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function formatRecommendedDate(iso: string): string {
+  return new Date(`${iso}T12:00:00Z`).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+function futureIsoDate(days: number): string {
+  const date = new Date();
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
 }

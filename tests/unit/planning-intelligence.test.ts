@@ -132,6 +132,22 @@ describe('generateItinerary pace', () => {
     expect(packedActivities).toBeGreaterThanOrEqual(downtimeActivities);
   });
 
+  it('moves the day later for travelers who prefer slow mornings', () => {
+    const early = generateItinerary({
+      destination,
+      places,
+      preferences: { ...basePrefs, dayRhythm: 'early' },
+      tripDurationDays: 1,
+    });
+    const late = generateItinerary({
+      destination,
+      places: places.map((place, index) => ({ ...place, placeId: `late-${index}` })),
+      preferences: { ...basePrefs, dayRhythm: 'late' },
+      tripDurationDays: 1,
+    });
+    expect(late[0]?.time.localeCompare(early[0]?.time ?? '')).toBeGreaterThan(0);
+  });
+
   it('respects known opening hours, travel time, buffers, and fixed starts', () => {
     const items = generateItinerary({
       destination,

@@ -42,6 +42,33 @@ export type LookingFor =
   | 'activism';
 
 export type ActivityPace = 'packed' | 'balanced' | 'downtime';
+export type DayRhythm = 'early' | 'flexible' | 'late';
+export type TripGoal =
+  | 'explore'
+  | 'recharge'
+  | 'celebrate'
+  | 'connect'
+  | 'romance'
+  | 'learn'
+  | 'indulge';
+export type VacationStyle =
+  | 'iconic_highlights'
+  | 'local_neighborhoods'
+  | 'hidden_gems'
+  | 'reservation_worthy'
+  | 'spontaneous'
+  | 'photogenic';
+
+export interface TripPlanningPreferences {
+  goals: TripGoal[];
+  vacationStyles: VacationStyle[];
+  dayRhythm: DayRhythm;
+  mealPreferences: string[];
+  avoidances: string[];
+  hallmarkIds: string[];
+  hallmarkNames: string[];
+  freeformWish?: string;
+}
 
 export type LodgingStatus = 'none' | 'booked';
 
@@ -77,6 +104,11 @@ export interface UserTravelProfile {
   maxTravelTimeHours?: number;
   travelScope?: TravelScope;
   longDistanceTransportModes?: LongDistanceTransportMode[];
+  defaultTripGoals?: TripGoal[];
+  defaultVacationStyles?: VacationStyle[];
+  defaultDayRhythm?: DayRhythm;
+  defaultMealPreferences?: string[];
+  defaultAvoidances?: string[];
   updatedAt: string;
 }
 
@@ -99,6 +131,7 @@ export interface TravelPreferences {
   lookingFor: LookingFor[];
   /** Day-to-day activities vs downtime preference */
   activityPace?: ActivityPace;
+  dayRhythm?: DayRhythm;
   /** Whether lodging is already booked */
   lodgingStatus?: LodgingStatus;
   /** Free-text lodging address or Airbnb/hotel URL */

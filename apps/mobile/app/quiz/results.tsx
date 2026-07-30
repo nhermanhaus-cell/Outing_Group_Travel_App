@@ -23,6 +23,7 @@ import {
 } from '@gayi/shared';
 import originHubsJson from '../../assets/editorial/origin-hubs.json';
 import { useAnalytics } from '../../src/analytics/analytics-provider';
+import { destinationPlanHref } from '../../src/lib/tripPlanningFlow';
 
 function mapAnswersToPrefs(answers: QuizAnswers): TravelPreferences {
   return {
@@ -46,6 +47,7 @@ function mapAnswersToPrefs(answers: QuizAnswers): TravelPreferences {
     soloTravel: answers.groupType === 'solo',
     lookingFor: answers.socialPrefs as TravelPreferences['lookingFor'],
     activityPace: answers.activityPace ?? 'balanced',
+    dayRhythm: answers.dayRhythm ?? 'flexible',
     lodgingStatus: answers.lodgingStatus ?? 'none',
     lodgingAddress: answers.lodgingAddress || undefined,
   };
@@ -334,9 +336,12 @@ function ResultCard({
             </Button>
             <Button
               style={{ flex: 1 }}
-              onPress={() => router.push({ pathname: '/trips/new', params: { destinationSlug: result.slug, destinationName: result.destinationName, quizAnswers: JSON.stringify(answers) } })}
+              onPress={() => router.push(destinationPlanHref({
+                destinationSlug: result.slug,
+                destinationName: result.destinationName,
+              }, JSON.stringify(answers)))}
             >
-              Create trip
+              Personalize trip
             </Button>
           </View>
         </View>

@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getCollection } from '../../src/content/collections';
@@ -8,6 +7,7 @@ import { useDestinations } from '../../src/providers/AppProviders';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { Text } from '../../components/ui/Text';
 import { DestinationCard } from '../../components/ui/DestinationCard';
+import { DestinationHeroImage } from '../../components/ui/DestinationHeroImage';
 
 export default function CollectionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -21,11 +21,15 @@ export default function CollectionDetailScreen() {
     [catalog, collection],
   );
   if (!collection) return null;
-  const hero = destinations[0]?.heroImageUrl;
+  const heroDestination = destinations[0];
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentInsetAdjustmentBehavior="automatic">
       <View style={{ height: 360 }}>
-        {hero ? <Image source={{ uri: hero }} style={{ flex: 1 }} contentFit="cover" transition={200} /> : null}
+        <DestinationHeroImage
+          destination={heroDestination}
+          style={{ flex: 1 }}
+          attributionTop={insets.top + 56}
+        />
         <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)' }} />
         <Pressable onPress={() => router.back()} style={{ position: 'absolute', top: insets.top + spacing.sm, left: spacing.base, padding: spacing.sm }}>
           <Text style={{ color: '#fff', fontSize: 24 }}>←</Text>

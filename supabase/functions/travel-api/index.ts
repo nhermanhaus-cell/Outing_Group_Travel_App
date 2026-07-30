@@ -1,4 +1,11 @@
 import { corsHeaders, errorResponse, json, providerJson, readJson } from '../_shared/http.ts';
+import {
+  buildDestinationFallbackQuery,
+  buildSpecificPexelsQuery,
+  scorePexelsCandidate,
+  type LocationImageKind,
+  type LocationImageSearchInput,
+} from '../_shared/pexels.ts';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -9,6 +16,7 @@ const VIATOR_BASE = 'https://api.viator.com/partner';
 const BOOKING_BASE = 'https://demandapi.booking.com/3.2';
 const SKYSCANNER_BASE = 'https://partners.api.skyscanner.net/apiservices/v3';
 const COMMONS_API = 'https://commons.wikimedia.org/w/api.php';
+const PEXELS_API = 'https://api.pexels.com/v1/search';
 const OPEN_METEO_API = 'https://api.open-meteo.com/v1/forecast';
 const TICKETMASTER_API = 'https://app.ticketmaster.com/discovery/v2/events.json';
 const NPS_API = 'https://developer.nps.gov/api/v1/parks';
@@ -74,6 +82,74 @@ function bookingHeaders(): Record<string, string> {
 
 function skyscannerHeaders(): Record<string, string> {
   return { 'x-api-key': env('SKYSCANNER_API_KEY'), 'Content-Type': 'application/json' };
+}
+
+function pexelsHeaders(): Record<string, string> {
+  return { Authorization: env('PEXELS_API_KEY') };
+}
+
+async function providerCacheKey(namespace: string, input: unknown): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(JSON.stringify(input)),
+  );
+  const hash = Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+  return `${namespace}:${hash}`;
+}
+
+async function readProviderCache(cacheKey: string): Promise<JsonRecord | null> {
+  const supabaseUrl = optionalEnv('SUPABASE_URL');
+  const serviceRoleKey = optionalEnv('SUPABASE_SERVICE_ROLE_KEY');
+  if (!supabaseUrl || !serviceRoleKey) return null;
+  try {
+    const url = new URL(`${supabaseUrl}/rest/v1/provider_cache`);
+    url.searchParams.set('cache_key', `eq.${cacheKey}`);
+    url.searchParams.set('expires_at', `gt.${new Date().toISOString()}`);
+    url.searchParams.set('select', 'payload');
+    url.searchParams.set('limit', '1');
+    const response = await fetch(url, {
+      headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` },
+    });
+    if (!response.ok) return null;
+    const rows = await response.json();
+    return Array.isArray(rows) ? record(record(rows[0])?.payload) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function writeProviderCache(
+  cacheKey: string,
+  provider: string,
+  payload: JsonRecord,
+  ttlMs: number,
+): Promise<void> {
+  const supabaseUrl = optionalEnv('SUPABASE_URL');
+  const serviceRoleKey = optionalEnv('SUPABASE_SERVICE_ROLE_KEY');
+  if (!supabaseUrl || !serviceRoleKey) return;
+  try {
+    const url = new URL(`${supabaseUrl}/rest/v1/provider_cache`);
+    url.searchParams.set('on_conflict', 'cache_key');
+    await fetch(url, {
+      method: 'POST',
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify({
+        cache_key: cacheKey,
+        provider,
+        payload,
+        expires_at: new Date(Date.now() + ttlMs).toISOString(),
+      }),
+    });
+  } catch {
+    // Image cache writes are best-effort and must not block the user.
+  }
 }
 
 function normalizeGooglePhoto(photo: unknown): JsonRecord | null {
@@ -412,6 +488,117 @@ async function viatorSchedule(body: JsonRecord): Promise<Response> {
   return json({ schedule: data, source: 'viator_live' });
 }
 
+function normalizePexelsPhoto(
+  value: unknown,
+  matchType: 'specific' | 'destination_fallback',
+): JsonRecord | null {
+  const photo = record(value);
+  const src = photo ? record(photo.src) : null;
+  const imageUrl = src
+    ? string(src.large2x) ?? string(src.large) ?? string(src.landscape) ?? string(src.original)
+    : undefined;
+  const sourcePage = photo ? string(photo.url) : undefined;
+  if (!photo || !imageUrl || !sourcePage) return null;
+  return {
+    url: imageUrl,
+    thumbnailUrl: src ? string(src.medium) ?? string(src.small) : undefined,
+    sourcePage,
+    author: string(photo.photographer),
+    authorUrl: string(photo.photographer_url),
+    license: 'Pexels',
+    provider: 'pexels',
+    alt: string(photo.alt),
+    matchType,
+  };
+}
+
+async function fetchPexelsPhotos(
+  query: string,
+  perPage: number,
+  page = 1,
+): Promise<unknown[]> {
+  const url = new URL(PEXELS_API);
+  url.searchParams.set('query', query);
+  url.searchParams.set('orientation', 'landscape');
+  url.searchParams.set('size', 'medium');
+  url.searchParams.set('per_page', String(Math.min(30, Math.max(1, perPage))));
+  url.searchParams.set('page', String(Math.max(1, page)));
+  const data = record(await providerJson(url.toString(), { headers: pexelsHeaders() }, 8_000));
+  return Array.isArray(data?.photos) ? data.photos : [];
+}
+
+async function locationImageSearch(body: JsonRecord): Promise<Response> {
+  const subject = string(body.subject);
+  const destination = string(body.destination);
+  const kindValue = string(body.kind) ?? 'place';
+  if (!subject || !destination) return json({ error: 'subject and destination are required' }, 400);
+  if (!['activity', 'place', 'destination'].includes(kindValue)) {
+    return json({ error: 'kind must be activity, place, or destination' }, 400);
+  }
+
+  const input: LocationImageSearchInput = {
+    subject,
+    destination,
+    category: string(body.category),
+    kind: kindValue as LocationImageKind,
+    variant: Math.max(0, Math.floor(number(body.variant) ?? 0)),
+  };
+  const limit = Math.min(5, Math.max(1, Math.floor(number(body.limit) ?? 3)));
+  const cacheKey = await providerCacheKey('pexels:location:v1', { ...input, limit });
+  const cached = await readProviderCache(cacheKey);
+  if (cached) return json(cached);
+
+  if (!optionalEnv('PEXELS_API_KEY')) {
+    return json({ images: [], match: 'none', query: '', source: 'pexels' });
+  }
+
+  const specificQuery = buildSpecificPexelsQuery(input);
+  const specificCandidates = await fetchPexelsPhotos(specificQuery, Math.max(12, limit * 4));
+  const specificImages = specificCandidates
+    .map((candidate) => ({
+      candidate,
+      relevance: scorePexelsCandidate(
+        { alt: string(record(candidate)?.alt) },
+        input,
+      ),
+    }))
+    .filter(({ relevance }) => relevance.accepted)
+    .sort((left, right) => right.relevance.score - left.relevance.score)
+    .map(({ candidate }) => normalizePexelsPhoto(candidate, 'specific'))
+    .filter((image): image is JsonRecord => image !== null)
+    .slice(0, limit);
+
+  let payload: JsonRecord;
+  if (specificImages.length > 0) {
+    payload = {
+      images: specificImages,
+      match: 'specific',
+      query: specificQuery,
+      source: 'pexels',
+    };
+  } else {
+    const fallback = buildDestinationFallbackQuery(destination, input.variant);
+    const fallbackImages = (await fetchPexelsPhotos(fallback.query, Math.max(8, limit * 3), fallback.page))
+      .map((candidate) => normalizePexelsPhoto(candidate, 'destination_fallback'))
+      .filter((image): image is JsonRecord => image !== null)
+      .slice(0, limit);
+    payload = {
+      images: fallbackImages,
+      match: fallbackImages.length > 0 ? 'destination_fallback' : 'none',
+      query: fallback.query,
+      source: 'pexels',
+    };
+  }
+
+  await writeProviderCache(
+    cacheKey,
+    'pexels',
+    payload,
+    payload.match === 'none' ? 6 * 60 * 60_000 : 14 * 24 * 60 * 60_000,
+  );
+  return json(payload);
+}
+
 async function commonsImageSearch(body: JsonRecord): Promise<Response> {
   const query = string(body.query);
   if (!query) return json({ error: 'query is required' }, 400);
@@ -443,6 +630,7 @@ async function commonsImageSearch(body: JsonRecord): Promise<Response> {
       author: metadataValue('Artist') ?? metadataValue('Credit'),
       license: metadataValue('LicenseShortName') ?? metadataValue('UsageTerms'),
       licenseUrl: metadataValue('LicenseUrl'),
+      provider: 'wikimedia_commons',
     }];
   }).slice(0, limit) : [];
   return json({ images, source: 'wikimedia_commons' });
@@ -682,10 +870,23 @@ async function addFlightPriceContext(
 async function skyscannerIndicative(body: JsonRecord): Promise<Response> {
   const originIata = string(body.originIata)?.toUpperCase();
   if (!originIata) return json({ error: 'originIata is required' }, 400);
+  const destinationIata = string(body.destinationIata)?.toUpperCase();
   const currency = string(body.currency)?.toUpperCase() ?? 'USD';
-  const queryLegs: JsonRecord[] = [{ originPlace: { queryPlace: { iata: originIata } }, destinationPlace: { anywhere: true }, ...skyscannerDate(string(body.departureMonth)) }];
+  const queryLegs: JsonRecord[] = [{
+    originPlace: { queryPlace: { iata: originIata } },
+    destinationPlace: destinationIata
+      ? { queryPlace: { iata: destinationIata } }
+      : { anywhere: true },
+    ...skyscannerDate(string(body.departureMonth)),
+  }];
   const returnMonth = string(body.returnMonth);
-  if (returnMonth) queryLegs.push({ originPlace: { anywhere: true }, destinationPlace: { queryPlace: { iata: originIata } }, ...skyscannerDate(returnMonth) });
+  if (returnMonth) queryLegs.push({
+    originPlace: destinationIata
+      ? { queryPlace: { iata: destinationIata } }
+      : { anywhere: true },
+    destinationPlace: { queryPlace: { iata: originIata } },
+    ...skyscannerDate(returnMonth),
+  });
   const data = record(await providerJson(`${SKYSCANNER_BASE}/flights/indicative/search`, {
     method: 'POST', headers: skyscannerHeaders(), body: JSON.stringify({ query: { market: string(body.market) ?? 'US', locale: string(body.locale) ?? 'en-US', currency, queryLegs } }),
   }, 15_000));
@@ -731,10 +932,11 @@ async function enforceRateLimit(request: Request, operation: string) {
     : operation.startsWith('skyscanner') ? 'skyscanner'
     : operation.startsWith('ticketmaster') ? 'ticketmaster'
     : operation.startsWith('nps') ? 'nps'
+    : operation.startsWith('locationImage') ? 'pexels'
     : operation.startsWith('commons') ? 'commons'
     : operation.startsWith('weather') ? 'weather'
     : 'google';
-  const limits: Record<string, number> = { google: 90, viator: 45, booking: 30, skyscanner: 20, ticketmaster: 45, nps: 45, commons: 60, weather: 60 };
+  const limits: Record<string, number> = { google: 90, viator: 45, booking: 30, skyscanner: 20, ticketmaster: 45, nps: 45, pexels: 30, commons: 60, weather: 60 };
   const response = await fetch(`${supabaseUrl}/rest/v1/rpc/check_provider_rate_limit`, {
     method: 'POST',
     headers: { apikey: anonKey, Authorization: authorization, 'Content-Type': 'application/json' },
@@ -763,6 +965,7 @@ Deno.serve(async (request) => {
       case 'viatorSearch': response = await viatorSearch(body); break;
       case 'viatorProduct': response = await viatorProduct(body); break;
       case 'viatorSchedule': response = await viatorSchedule(body); break;
+      case 'locationImageSearch': response = await locationImageSearch(body); break;
       case 'commonsImageSearch': response = await commonsImageSearch(body); break;
       case 'weatherForecast': response = await weatherForecast(body); break;
       case 'ticketmasterEvents': response = await ticketmasterEvents(body); break;
