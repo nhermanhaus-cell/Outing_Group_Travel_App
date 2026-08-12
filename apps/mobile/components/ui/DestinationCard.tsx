@@ -24,7 +24,6 @@ export function DestinationCard({ destination, compact = false, onPress }: Desti
 
   const scoring = getScoringBySlug(destination.slug);
   const rating = getDestinationRating({
-    reviewScore: scoring?.reviewScore,
     communityScore: scoring?.communityScore,
     nightlifeScore: scoring?.nightlifeScore,
     legalEqualityScore: destination.lgbtqContext?.legalEqualityScore,
@@ -34,6 +33,14 @@ export function DestinationCard({ destination, compact = false, onPress }: Desti
     legalEqualityScore: destination.lgbtqContext?.legalEqualityScore,
     publicOpinionScore: destination.lgbtqContext?.publicOpinionScore,
   });
+  const advisoryLevel = destination.travelerAdvisoryLevel ?? 'standard';
+  const advisoryLabel = advisoryLevel === 'severe'
+    ? 'Restrictive LGBTQ+ laws'
+    : advisoryLevel === 'elevated'
+      ? 'Review LGBTQ+ guidance'
+      : advisoryLevel === 'caution'
+        ? 'Local context varies'
+        : undefined;
 
   if (compact) {
     return (
@@ -53,13 +60,13 @@ export function DestinationCard({ destination, compact = false, onPress }: Desti
         <DestinationHeroImage
           destination={destination}
           style={{ width: 80, height: 80 }}
-          showAttribution={false}
         />
         <View style={{ flex: 1, padding: spacing.md, justifyContent: 'center', gap: spacing.xxs }}>
           <Text variant="h4">{destination.name}</Text>
           <Text variant="caption" style={{ color: colors.textSecondary }}>
             {destination.country}
           </Text>
+          {advisoryLabel ? <Text variant="caption" style={{ color: colors.warning }}>{advisoryLabel}</Text> : null}
         </View>
       </Pressable>
     );
@@ -95,6 +102,7 @@ export function DestinationCard({ destination, compact = false, onPress }: Desti
             {contextRating && ['mixed', 'limited', 'caution'].includes(contextRating.level) ? (
               <Badge label={contextRating.label} variant={contextRating.variant} />
             ) : null}
+            {advisoryLabel ? <Badge label={advisoryLabel} variant="warning" /> : null}
           </View>
         </View>
         {destination.editorialSummary ? (

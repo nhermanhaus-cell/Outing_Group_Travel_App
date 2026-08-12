@@ -3,6 +3,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { useQuery } from '@tanstack/react-query';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { DestinationHeroImage } from '../../components/ui/DestinationHeroImage';
@@ -16,7 +17,9 @@ import {
 } from '../../src/providers/AppProviders';
 import { useSavedDestinations } from '../../src/providers/SavedDestinationsProvider';
 import { featureFlags } from '../../src/lib/featureFlags';
+import { loadAssistantInsights } from '../../src/lib/assistant-api';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { DecisionBriefCard } from '../../components/assistant/DecisionBriefCard';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -37,8 +40,25 @@ export default function HomeScreen() {
     poll.options.every((option) => !option.votes.includes(user?.id ?? '__guest__')),
   ).length ?? 0;
   const saved = savedSlugs.map((slug) => getBySlug(slug)).filter(Boolean).slice(0, 4);
+  const assistantInsights = useQuery({
+    queryKey: ['assistant-insights', 'home', user?.id],
+    queryFn: ({ signal }) => loadAssistantInsights({ surface: 'home', trigger: 'screen', force: false }, signal),
+    enabled: Boolean(user && featureFlags.proactiveInsightsV1),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+  const destinationInsight = assistantInsights.data?.insights.find((insight) => insight.kind === 'destination_matches');
+  const decisionInsight = assistantInsights.data?.insights.find((insight) => insight.kind === 'decision_brief');
+  const serverRecommendations = destinationInsight?.recommendations.filter((item) => item.kind === 'destination') ?? [];
+  const serverRecommendationBySlug = new Map(serverRecommendations.map((item) => [item.destinationSlug, item]));
 
   const recommendations = useMemo(() => {
+    if (serverRecommendations.length) {
+      return serverRecommendations
+        .map((recommendation) => recommendation.destinationSlug ? getBySlug(recommendation.destinationSlug) : undefined)
+        .filter(Boolean)
+        .slice(0, 3);
+    }
     const interests = new Set(profile.defaultInterests);
     return scoring
       .map((destination) => ({
@@ -53,7 +73,7 @@ export default function HomeScreen() {
       .map(({ destination }) => getBySlug(destination.slug))
       .filter(Boolean)
       .slice(0, 3);
-  }, [getBySlug, profile.defaultInterests, scoring]);
+  }, [getBySlug, profile.defaultInterests, scoring, serverRecommendations]);
 
   const dateIdea = useMemo(() => {
     const match = scoring
@@ -157,6 +177,12 @@ export default function HomeScreen() {
         ) : null}
       </View>
 
+      {featureFlags.decisionBriefsV1 && decisionInsight?.decisionCard ? (
+        <View style={{ paddingHorizontal: spacing.base, paddingTop: spacing.xl }}>
+          <DecisionBriefCard card={decisionInsight.decisionCard} surface="home" />
+        </View>
+      ) : null}
+
       {activeTrip ? (
         <Section title="Up next" action="All trips" onAction={() => router.push('/trips')}>
           <Pressable
@@ -230,10 +256,17 @@ export default function HomeScreen() {
                 <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15,13,10,0.25)' }} />
                 <View style={{ position: 'absolute', left: spacing.base, right: spacing.base, bottom: spacing.base, gap: spacing.xs }}>
                   <Text variant="labelSm" style={{ color: colors.coral300 }}>
-                    {index === 0 ? 'BEST MATCH' : 'ALSO YOUR SPEED'}
+                    {serverRecommendationBySlug.get(destination!.slug)?.fitScore !== undefined
+                      ? `${Math.round(serverRecommendationBySlug.get(destination!.slug)!.fitScore!)}% MATCH`
+                      : index === 0 ? 'BEST MATCH' : 'ALSO YOUR SPEED'}
                   </Text>
                   <Text variant="displaySm" style={{ color: colors.white }}>{destination!.name}</Text>
                   <Text variant="caption" style={{ color: 'rgba(255,255,255,0.82)' }}>{destination!.country}</Text>
+                  {serverRecommendationBySlug.get(destination!.slug)?.fitReasons[0] ? (
+                    <Text variant="caption" style={{ color: 'rgba(255,255,255,0.92)' }}>
+                      {serverRecommendationBySlug.get(destination!.slug)!.fitReasons[0]}
+                    </Text>
+                  ) : null}
                 </View>
               </Pressable>
             ))}

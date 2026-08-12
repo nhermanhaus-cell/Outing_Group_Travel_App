@@ -37,6 +37,12 @@ export function PhotoCarousel({ urls, height = 180, attribution, attributions }:
 
   if (valid.length === 0) return null;
   const activeAttribution = valid[Math.min(index, valid.length - 1)]?.attribution;
+  const visibleAttribution = activeAttribution?.text && !/\bpexels\b/i.test(activeAttribution.text)
+    ? activeAttribution
+    : undefined;
+  const visibleFallbackAttribution = !activeAttribution?.text && attribution && !/\bpexels\b/i.test(attribution)
+    ? attribution
+    : undefined;
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
@@ -87,19 +93,19 @@ export function PhotoCarousel({ urls, height = 180, attribution, attributions }:
           ))}
         </View>
       ) : null}
-      {activeAttribution?.url ? (
+      {visibleAttribution?.url ? (
         <Pressable
           accessibilityRole="link"
-          accessibilityLabel={`${activeAttribution.text}; open photo source`}
-          onPress={() => Linking.openURL(activeAttribution.url!).catch(() => undefined)}
+          accessibilityLabel={`${visibleAttribution.text}; open photo source`}
+          onPress={() => Linking.openURL(visibleAttribution.url!).catch(() => undefined)}
         >
           <Text variant="caption" style={{ color: colors.textTertiary, textDecorationLine: 'underline' }}>
-            {activeAttribution.text}
+            {visibleAttribution.text}
           </Text>
         </Pressable>
-      ) : activeAttribution?.text || attribution ? (
+      ) : visibleAttribution?.text || visibleFallbackAttribution ? (
         <Text variant="caption" style={{ color: colors.textTertiary }}>
-          {activeAttribution?.text ?? attribution}
+          {visibleAttribution?.text ?? visibleFallbackAttribution}
         </Text>
       ) : null}
     </View>

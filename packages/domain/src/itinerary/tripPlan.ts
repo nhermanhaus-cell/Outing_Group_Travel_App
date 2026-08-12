@@ -1,4 +1,5 @@
 import type {
+  ActivityPreferenceVote,
   Interest,
   MemberPreferenceSnapshot,
   Place,
@@ -49,6 +50,47 @@ export interface TripPlanInput extends ItineraryInput {
   /** Only these days are regenerated; all other prior-plan days remain unchanged. */
   regenerateDays?: number[];
   flightPriceContext?: TripPlanFlightPriceContext;
+}
+
+export interface ActivityPreferenceSignals {
+  excludedPlaceIds: string[];
+  scoreAdjustments: Record<string, number>;
+  tallies: Record<string, { interested: number; notInterested: number }>;
+}
+
+/**
+ * Turn solo or group activity choices into deterministic planner inputs.
+ * Positive interest strongly affects ordering. A rejection becomes a hard
+ * exclusion only when it represents a solo traveler or a known group majority.
+ */
+export function buildActivityPreferenceSignals(
+  votes: ActivityPreferenceVote[],
+  eligibleMemberCount = 1,
+): ActivityPreferenceSignals {
+  const tallies: ActivityPreferenceSignals['tallies'] = {};
+  const latestByMemberAndPlace = new Map<string, ActivityPreferenceVote>();
+  for (const vote of votes) {
+    const key = `${vote.placeId}:${vote.memberId}`;
+    const existing = latestByMemberAndPlace.get(key);
+    if (!existing || existing.createdAt <= vote.createdAt) latestByMemberAndPlace.set(key, vote);
+  }
+  for (const vote of latestByMemberAndPlace.values()) {
+    const tally = tallies[vote.placeId] ?? { interested: 0, notInterested: 0 };
+    if (vote.choice === 'interested') tally.interested += 1;
+    else tally.notInterested += 1;
+    tallies[vote.placeId] = tally;
+  }
+
+  const excludedPlaceIds: string[] = [];
+  const scoreAdjustments: Record<string, number> = {};
+  const majority = Math.floor(Math.max(1, eligibleMemberCount) / 2) + 1;
+  for (const [placeId, tally] of Object.entries(tallies)) {
+    scoreAdjustments[placeId] = Math.max(-45, Math.min(80, tally.interested * 32 - tally.notInterested * 20));
+    const soloRejected = eligibleMemberCount <= 1 && tally.notInterested > 0 && tally.interested === 0;
+    const groupRejected = tally.notInterested >= majority && tally.notInterested > tally.interested;
+    if (soloRejected || groupRejected) excludedPlaceIds.push(placeId);
+  }
+  return { excludedPlaceIds, scoreAdjustments, tallies };
 }
 
 function minutesFromClock(value: string): number {

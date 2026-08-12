@@ -3,6 +3,7 @@ type SearchParam = string | string[] | undefined;
 export type SelectedDestination = {
   destinationSlug: string;
   destinationName: string;
+  destinationCandidateId?: string;
 };
 
 type QuestionnaireHref = {
@@ -29,11 +30,13 @@ function firstValue(value: SearchParam): string | undefined {
 export function selectedDestinationFromParams(params: {
   destinationSlug?: SearchParam;
   destinationName?: SearchParam;
+  destinationCandidateId?: SearchParam;
 }): SelectedDestination | undefined {
   const destinationSlug = firstValue(params.destinationSlug);
   const destinationName = firstValue(params.destinationName);
   if (!destinationSlug || !destinationName) return undefined;
-  return { destinationSlug, destinationName };
+  const destinationCandidateId = firstValue(params.destinationCandidateId);
+  return { destinationSlug, destinationName, ...(destinationCandidateId ? { destinationCandidateId } : {}) };
 }
 
 export function destinationPlanHref(

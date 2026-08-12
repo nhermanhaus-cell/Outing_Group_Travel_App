@@ -13,6 +13,9 @@ export type LgbtqLegalStatus =
   | 'criminalized'
   | 'heavily_criminalized';
 
+export type DestinationType = 'city' | 'island' | 'resort_area';
+export type TravelerAdvisoryLevel = 'standard' | 'caution' | 'elevated' | 'severe';
+
 export type WeatherPreference = 'hot' | 'warm' | 'mild' | 'cool' | 'any';
 
 export type Interest =
@@ -97,6 +100,7 @@ export interface UserTravelProfile {
   homeAirports: HomeAirport[];
   coarseHomeRegion?: string;
   defaultInterests: Interest[];
+  preferredTravelMonths?: number[];
   defaultGroupSize?: number;
   defaultTripLengthDays?: number;
   preferredTravelRanges: TravelRange[];
@@ -188,6 +192,8 @@ export interface Destination {
   slug: string;
   name: string;
   country: string;
+  destinationType?: DestinationType;
+  travelerAdvisoryLevel?: TravelerAdvisoryLevel;
   /** ISO 3166-1 alpha-2 continent shorthand e.g. "EU" */
   continentCode: string;
   /** IATA codes for nearest airports */
@@ -268,6 +274,8 @@ export interface BookableOffer {
 export interface Place {
   placeId: string;
   name: string;
+  /** Short factual explanation used when travelers review activity options. */
+  summary?: string;
   category: PlaceCategory;
   coords: { lat: number; lng: number };
   /** Typical visit duration in minutes */
@@ -290,6 +298,16 @@ export interface Place {
   fixedStartTimes?: string[];
   timezone?: string;
   bookingOffer?: BookableOffer;
+}
+
+export type ActivityPreferenceChoice = 'interested' | 'not_interested';
+
+export interface ActivityPreferenceVote {
+  placeId: string;
+  memberId: string;
+  choice: ActivityPreferenceChoice;
+  category: string;
+  createdAt: string;
 }
 
 

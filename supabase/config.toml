@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.analytics-forward]
 verify_jwt = false
+
+[functions.destination-discovery]
+verify_jwt = false

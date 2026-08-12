@@ -7,8 +7,10 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
+import * as QueryParams from 'expo-auth-session/build/QueryParams';
+import * as WebBrowser from 'expo-web-browser';
 import { posthog } from '../config/posthog';
 import {
   createLegacyTripPlan,
@@ -19,11 +21,13 @@ import {
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { supabase } from '../lib/supabase';
 import { featureFlags } from '../lib/featureFlags';
+import { loadAssistantInsights } from '../lib/assistant-api';
 import {
   AnalyticsProvider,
   useAnalytics,
 } from '../analytics/analytics-provider';
 import type {
+  ActivityPreferenceVote,
   AssistantProposal,
   Interest,
   LookingFor,
@@ -46,17 +50,26 @@ export interface User {
   avatarUrl?: string;
 }
 
+export interface AuthActionResult {
+  error?: string;
+  cancelled?: boolean;
+}
+
 export interface AuthContext {
   user: User | null;
   loading: boolean;
-  signInWithMagicLink: (email: string, returnTo?: string) => Promise<{ error?: string }>;
-  signInWithApple: () => Promise<{ error?: string }>;
+  signInWithMagicLink: (email: string, returnTo?: string) => Promise<AuthActionResult>;
+  signInWithApple: () => Promise<AuthActionResult>;
+  signInWithGoogle: () => Promise<AuthActionResult>;
   signOut: () => Promise<void>;
 }
+
+void WebBrowser.maybeCompleteAuthSession();
 
 export interface LocalTrip {
   tripId: string;
   destinationSlug?: string;
+  destinationCandidateId?: string;
   destinationName?: string;
   name: string;
   startDate?: string;
@@ -93,6 +106,7 @@ export interface LocalTrip {
   itineraryItems?: Array<Record<string, unknown>>;
   tripPlan?: TripPlan;
   itineraryFeedback?: TripPlanFeedback[];
+  activityPreferences?: ActivityPreferenceVote[];
   /** Local-first draft that will be synced after authentication. */
   localOnly?: boolean;
 }
@@ -308,7 +322,9 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
           token: cred.identityToken,
         });
         if (error) {
-          const providerDisabled = error.message.includes('issuer https://appleid.apple.com') || error.message.toLowerCase().includes('provider is not enabled');
+          const providerDisabled = error.message.includes('issuer https://appleid.apple.com')
+            || error.message.toLowerCase().includes('provider is not enabled')
+            || error.message.toLowerCase().includes('missing oauth secret');
           return { error: providerDisabled ? 'Apple sign-in is not enabled for this project yet. Your trip is still saved on this phone; use email sign-in to sync it.' : error.message };
         }
         if (data.user) {
@@ -333,13 +349,72 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(newUser);
       return {};
     } catch (err: unknown) {
-      if ((err as { code?: string }).code === 'ERR_REQUEST_CANCELED') return {};
+      if ((err as { code?: string }).code === 'ERR_REQUEST_CANCELED') return { cancelled: true };
       if (supabase) return { error: err instanceof Error ? err.message : 'Apple sign-in could not be completed. Your local trips are unaffected.' };
       // Offline fixture fallback for simulator-only development.
       const newUser: User = { id: 'apple-mock', email: 'apple@example.com', displayName: 'Apple User' };
       await storeSet('gayi:user', JSON.stringify(newUser));
       setUser(newUser);
       return {};
+    }
+  }, []);
+
+  const signInWithGoogle = useCallback(async (): Promise<AuthActionResult> => {
+    if (!supabase) {
+      const newUser: User = { id: 'google-mock', email: 'google@example.com', displayName: 'Google User' };
+      await storeSet('gayi:user', JSON.stringify(newUser));
+      setUser(newUser);
+      return {};
+    }
+
+    try {
+      const redirectTo = Linking.createURL('/auth/callback');
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+          queryParams: { prompt: 'select_account' },
+        },
+      });
+      if (error) {
+        const providerDisabled = error.message.toLowerCase().includes('provider is not enabled')
+          || error.message.toLowerCase().includes('unsupported provider')
+          || error.message.toLowerCase().includes('missing oauth secret');
+        return {
+          error: providerDisabled
+            ? 'Google sign-in is not enabled for this project yet. You can browse as a guest in the meantime.'
+            : error.message,
+        };
+      }
+      if (!data.url) return { error: 'Google sign-in could not be started.' };
+
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      if (result.type !== 'success') return { cancelled: true };
+
+      const { params, errorCode } = QueryParams.getQueryParams(result.url);
+      if (errorCode) {
+        return { error: params.error_description ?? params.error ?? errorCode };
+      }
+
+      const sessionResult = params.code
+        ? await supabase.auth.exchangeCodeForSession(params.code)
+        : params.access_token && params.refresh_token
+          ? await supabase.auth.setSession({
+              access_token: params.access_token,
+              refresh_token: params.refresh_token,
+            })
+          : { data: { user: null }, error: new Error('Google did not return a valid sign-in token.') };
+
+      if (sessionResult.error) return { error: sessionResult.error.message };
+      if (sessionResult.data.user) setUser(userFromSupabase(sessionResult.data.user));
+      return {};
+    } catch (err: unknown) {
+      return {
+        error: err instanceof Error
+          ? err.message
+          : 'Google sign-in could not be completed. Your local trips are unaffected.',
+      };
     }
   }, []);
 
@@ -351,8 +426,8 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [resetAnalyticsIdentity]);
 
   const value = useMemo(
-    () => ({ user, loading, signInWithMagicLink, signInWithApple, signOut }),
-    [user, loading, signInWithMagicLink, signInWithApple, signOut],
+    () => ({ user, loading, signInWithMagicLink, signInWithApple, signInWithGoogle, signOut }),
+    [user, loading, signInWithMagicLink, signInWithApple, signInWithGoogle, signOut],
   );
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
@@ -382,8 +457,52 @@ function userFromSupabase(value: {
 // ─── Destinations Provider ────────────────────────────────────────────────────
 
 function DestinationsProvider({ children }: { children: React.ReactNode }) {
-  const catalog = destinationsCatalog as CatalogDestination[];
-  const scoring = destinationsScoring as ScoringDestination[];
+  const remoteCatalog = useQuery({
+    queryKey: ['destination-catalog', 'published'],
+    queryFn: async () => {
+      if (!supabase) return [];
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('payload')
+        .eq('published', true)
+        .is('deleted_at', null)
+        .order('name');
+      if (error) throw error;
+      return (data ?? []).flatMap((row) => {
+        const payload = row.payload && typeof row.payload === 'object'
+          ? row.payload as Record<string, unknown>
+          : null;
+        if (!payload || typeof payload.slug !== 'string') return [];
+        return [payload];
+      });
+    },
+    enabled: Boolean(supabase),
+    staleTime: 30 * 60_000,
+    retry: 1,
+  });
+  const catalog = useMemo(() => {
+    const bundled = (destinationsCatalog as CatalogDestination[]).filter((destination) =>
+      featureFlags.catalogExpansionV1 || destination.publicationStatus === 'published');
+    const remote = (remoteCatalog.data ?? []) as CatalogDestination[];
+    const selected = featureFlags.catalogExpansionV1
+      ? [...new Map([...bundled, ...remote].map((destination) => [destination.slug, destination])).values()]
+      : remote.length ? remote : bundled;
+    return selected.map((destination) => ({
+      ...destination,
+      interests: [...new Set(destination.interests ?? [])],
+    }));
+  }, [remoteCatalog.data]);
+  const scoring = useMemo(() => {
+    const remote = (remoteCatalog.data ?? []).flatMap((destination) => {
+      const value = destination.scoring;
+      return value && typeof value === 'object' ? [value as ScoringDestination] : [];
+    });
+    const bundled = (destinationsScoring as ScoringDestination[]).filter((destination) =>
+      catalog.some((entry) => entry.slug === destination.slug));
+    return featureFlags.catalogExpansionV1
+      ? [...new Map([...bundled, ...remote].map((destination) => [destination.slug, destination])).values()]
+      : remote.length ? remote : bundled;
+  }, [catalog, remoteCatalog.data]);
 
   const getBySlug = useCallback(
     (slug: string) => catalog.find((d) => d.slug === slug),
@@ -483,6 +602,7 @@ type TripRow = {
   id: string;
   name: string;
   destination_slug?: string | null;
+  destination_candidate_id?: string | null;
   start_date?: string | null;
   end_date?: string | null;
   origin?: string | null;
@@ -499,6 +619,7 @@ function rowToLocalTrip(row: TripRow): LocalTrip {
     tripId: row.id,
     name: row.name,
     destinationSlug: row.destination_slug ?? (payload.destinationSlug as string | undefined),
+    destinationCandidateId: row.destination_candidate_id ?? (payload.destinationCandidateId as string | undefined),
     startDate: row.start_date?.slice(0, 10) ?? (payload.startDate as string | undefined),
     endDate: row.end_date?.slice(0, 10) ?? (payload.endDate as string | undefined),
     origin: row.origin ?? (payload.origin as string | undefined),
@@ -522,7 +643,7 @@ function migrateLegacyTrip(trip: LocalTrip): LocalTrip {
 }
 
 function tripPayload(trip: Omit<LocalTrip, 'tripId' | 'createdAt'> | LocalTrip): Record<string, unknown> {
-  const { name: _name, destinationSlug: _destinationSlug, startDate: _startDate,
+  const { name: _name, destinationSlug: _destinationSlug, destinationCandidateId: _destinationCandidateId, startDate: _startDate,
     endDate: _endDate, origin: _origin, travelers: _travelers,
     glamourLevel: _glamourLevel, localOnly: _localOnly, ...payload } = trip;
   return payload;
@@ -548,6 +669,7 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           owner_id: auth.user.id,
           name: local.name,
           destination_slug: local.destinationSlug ?? null,
+          destination_candidate_id: local.destinationCandidateId ?? null,
           start_date: local.startDate ?? null,
           end_date: local.endDate ?? null,
           origin: local.origin ?? null,
@@ -634,6 +756,7 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           owner_id: auth.user.id,
           name: data.name,
           destination_slug: data.destinationSlug ?? null,
+          destination_candidate_id: data.destinationCandidateId ?? null,
           start_date: data.startDate ?? null,
           end_date: data.endDate ?? null,
           origin: data.origin ?? null,
@@ -656,6 +779,9 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           }],
         };
         await persist([trip, ...trips]);
+        if (featureFlags.proactiveInsightsV1) {
+          void loadAssistantInsights({ surface: 'trip', tripId: trip.tripId, trigger: 'trip_changed', force: true }).catch(() => undefined);
+        }
         return trip;
       }
       const trip: LocalTrip = { ...data, tripId: generateId(), createdAt: new Date().toISOString(), localOnly: true };
@@ -683,6 +809,16 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
         const patch = Object.fromEntries(Object.entries(updates).filter(([key]) => collaborativeKeys.has(key)));
         if (Object.keys(patch).length > 0) {
           const { error } = await tripClient.rpc('update_trip_collaboration_payload', { p_trip_id: tripId, p_patch: patch });
+          if (error) throw error;
+        }
+        if (updates.activityPreferences !== undefined) {
+          const ownVotes = updates.activityPreferences.filter(
+            (vote) => vote.memberId === authenticatedUserId,
+          );
+          const { error } = await tripClient.rpc('update_trip_activity_preferences', {
+            p_trip_id: tripId,
+            p_votes: ownVotes,
+          });
           if (error) throw error;
         }
         if (updates.tripPlan) {
@@ -731,6 +867,7 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           const { error } = await tripClient.from('trips').update({
             name: next.name,
             destination_slug: next.destinationSlug ?? null,
+            destination_candidate_id: next.destinationCandidateId ?? null,
             start_date: next.startDate ?? null,
             end_date: next.endDate ?? null,
             origin: next.origin ?? null,
@@ -743,17 +880,28 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
         }
       }
       await persist(trips.map((t) => (t.tripId === tripId ? { ...t, ...updates } : t)));
+      if (auth?.user && featureFlags.proactiveInsightsV1) {
+        void loadAssistantInsights({
+          surface: 'trip',
+          tripId,
+          trigger: updates.itineraryFeedback !== undefined ? 'feedback_submitted' : 'trip_changed',
+          force: true,
+        }).catch(() => undefined);
+      }
     },
     [auth?.user, trips, persist],
   );
 
   const deleteTrip = useCallback(
     async (tripId: string) => {
-      if (tripClient && auth?.user) {
-        const { error } = await tripClient.from('trips')
-          .update({ deleted_at: new Date().toISOString() })
-          .eq('id', tripId);
+      const target = trips.find((trip) => trip.tripId === tripId);
+      if (!target) return;
+      const isRemoteTrip = tripClient && auth?.user && !target.localOnly
+        && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(tripId);
+      if (isRemoteTrip) {
+        const { data, error } = await tripClient.rpc('soft_delete_trip', { p_trip_id: tripId });
         if (error) throw error;
+        if (data !== true) throw new Error('This trip could not be deleted. It may already have been removed.');
       }
       await persist(trips.filter((t) => t.tripId !== tripId));
     },

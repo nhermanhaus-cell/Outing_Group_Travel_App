@@ -30,6 +30,12 @@ export interface AnalyticsEventPropertyMap {
   [ANALYTICS_EVENTS.DESTINATION_VIEWED]: {
     destinationSlug?: string;
     source?: string;
+    catalogCohort?: string;
+    advisoryLevel?: string;
+  };
+  [ANALYTICS_EVENTS.DESTINATION_ADVISORY_OPENED]: {
+    destinationSlug: string;
+    advisoryLevel: string;
   };
   [ANALYTICS_EVENTS.DESTINATION_SAVED]: {
     destinationSlug?: string;
@@ -46,6 +52,55 @@ export interface AnalyticsEventPropertyMap {
     recommendationType: string;
     category?: string;
     reasonCode?: string;
+  };
+  [ANALYTICS_EVENTS.ASSISTANT_INSIGHT_VIEWED]: {
+    surface: string;
+    insightKind: string;
+    resultCountBucket: string;
+  };
+  [ANALYTICS_EVENTS.ASSISTANT_RECOMMENDATION_SELECTED]: {
+    recommendationKind: string;
+    sourceProvider: string;
+    fitScoreBucket?: string;
+    provisional: boolean;
+    bookable: boolean;
+  };
+  [ANALYTICS_EVENTS.ASSISTANT_DECISION_VIEWED]: {
+    surface: string;
+    decisionKind: string;
+    freshness: string;
+    confidenceBucket: string;
+  };
+  [ANALYTICS_EVENTS.ASSISTANT_DECISION_ACTIONED]: {
+    surface: string;
+    decisionKind: string;
+    actionType: string;
+  };
+  [ANALYTICS_EVENTS.ASSISTANT_COMPARISON_COMPLETED]: {
+    entityKind: string;
+    optionCount: number;
+  };
+  [ANALYTICS_EVENTS.ASSISTANT_AUDIT_VIEWED]: {
+    scoreBucket: string;
+    issueCountBucket: string;
+    blockingIssue: boolean;
+  };
+  [ANALYTICS_EVENTS.ASSISTANT_RELAXATION_SELECTED]: {
+    dimension: string;
+    resultCountBucket: string;
+  };
+  [ANALYTICS_EVENTS.DESTINATION_CANDIDATE_VIEWED]: {
+    candidateStatus: string;
+    sourceCountBucket: string;
+  };
+  [ANALYTICS_EVENTS.DESTINATION_GENERATION_LIFECYCLE]: {
+    status: string;
+    stage?: string;
+    entryPoint?: string;
+    reused?: boolean;
+    resultCountBucket?: string;
+    latencyBucket?: string;
+    errorCategory?: string;
   };
   [ANALYTICS_EVENTS.QUESTIONNAIRE_STARTED]: {
     entryPoint?: string;
@@ -110,6 +165,16 @@ export interface AnalyticsEventPropertyMap {
     category?: string;
     reaction: string;
     reasonCode?: string;
+  };
+  [ANALYTICS_EVENTS.ACTIVITY_CANDIDATE_RATED]: {
+    category: string;
+    choice: string;
+    source: string;
+  };
+  [ANALYTICS_EVENTS.ACTIVITY_DECK_COMPLETED]: {
+    ratedCount: number;
+    candidateCount: number;
+    groupSize: number;
   };
   [ANALYTICS_EVENTS.FREE_WINDOW_SUGGESTION_VIEWED]: {
     category?: string;
@@ -227,7 +292,8 @@ export type PreferenceSignalSource =
   | 'dislike'
   | 'veto'
   | 'dismiss'
-  | 'remove';
+  | 'remove'
+  | 'activity_deck';
 
 export interface PreferenceObservation {
   subjectType: PreferenceSubjectType;
@@ -291,11 +357,27 @@ const PROPERTY_KEYS: Record<AnalyticsEventName, ReadonlySet<string>> = {
   ]),
   deep_link_opened: new Set(['route']),
   destination_impression: new Set(['destinationSlug', 'source', 'rank']),
-  destination_viewed: new Set(['destinationSlug', 'source']),
+  destination_viewed: new Set(['destinationSlug', 'source', 'catalogCohort', 'advisoryLevel']),
+  destination_advisory_opened: new Set(['destinationSlug', 'advisoryLevel']),
   destination_saved: new Set(['destinationSlug', 'saved', 'source']),
   collection_viewed: new Set(['collectionId', 'source']),
   recommendation_generated: new Set(['recommendationType', 'resultCount', 'algorithmVersion']),
   recommendation_dismissed: new Set(['recommendationType', 'category', 'reasonCode']),
+  assistant_insight_viewed: new Set(['surface', 'insightKind', 'resultCountBucket']),
+  assistant_recommendation_selected: new Set([
+    'recommendationKind',
+    'sourceProvider',
+    'fitScoreBucket',
+    'provisional',
+    'bookable',
+  ]),
+  assistant_decision_viewed: new Set(['surface', 'decisionKind', 'freshness', 'confidenceBucket']),
+  assistant_decision_actioned: new Set(['surface', 'decisionKind', 'actionType']),
+  assistant_comparison_completed: new Set(['entityKind', 'optionCount']),
+  assistant_audit_viewed: new Set(['scoreBucket', 'issueCountBucket', 'blockingIssue']),
+  assistant_relaxation_selected: new Set(['dimension', 'resultCountBucket']),
+  destination_candidate_viewed: new Set(['candidateStatus', 'sourceCountBucket']),
+  destination_generation_lifecycle: new Set(['status', 'stage', 'entryPoint', 'reused', 'resultCountBucket', 'latencyBucket', 'errorCategory']),
   questionnaire_started: new Set(['entryPoint', 'destinationPrefilled']),
   questionnaire_step_viewed: new Set(['stepId', 'stepIndex']),
   questionnaire_step_completed: new Set(['stepId', 'stepIndex', 'selectionCount', 'skipped']),
@@ -318,6 +400,8 @@ const PROPERTY_KEYS: Record<AnalyticsEventName, ReadonlySet<string>> = {
   itinerary_item_moved: new Set(['category', 'dayDelta']),
   itinerary_item_locked: new Set(['category', 'locked']),
   itinerary_feedback_submitted: new Set(['category', 'reaction', 'reasonCode']),
+  activity_candidate_rated: new Set(['category', 'choice', 'source']),
+  activity_deck_completed: new Set(['ratedCount', 'candidateCount', 'groupSize']),
   free_window_suggestion_viewed: new Set(['category', 'attendance']),
   free_window_suggestion_accepted: new Set(['category', 'attendance']),
   trip_section_viewed: new Set(['section']),

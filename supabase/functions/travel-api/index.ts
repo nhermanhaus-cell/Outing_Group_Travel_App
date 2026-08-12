@@ -6,6 +6,12 @@ import {
   type LocationImageKind,
   type LocationImageSearchInput,
 } from '../_shared/pexels.ts';
+import {
+  normalizeViatorTaxonomy,
+  resolveViatorDestination,
+  type ResolvedViatorDestination,
+  type ViatorDestinationTaxonomyItem,
+} from '../_shared/viator-destinations.ts';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -22,6 +28,18 @@ const TICKETMASTER_API = 'https://app.ticketmaster.com/discovery/v2/events.json'
 const NPS_API = 'https://developer.nps.gov/api/v1/parks';
 
 class RateLimitError extends Error {}
+
+function jwtRole(token: string): string | undefined {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return undefined;
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')));
+    return record(decoded) ? string(record(decoded)?.role) : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 function env(name: string): string {
   const value = Deno.env.get(name)?.trim();
@@ -259,7 +277,13 @@ function normalizeViatorProduct(value: unknown): JsonRecord | null {
   const pricing = record(product.pricing);
   const summary = pricing ? record(pricing.summary) : null;
   const reviews = record(product.reviews);
-  const duration = record(product.duration);
+  const itinerary = record(product.itinerary);
+  const duration = record(product.duration) ?? (itinerary ? record(itinerary.duration) : null);
+  const confirmationSettings = record(product.bookingConfirmationSettings);
+  const flags = Array.isArray(product.flags)
+    ? product.flags.filter((flag): flag is string => typeof flag === 'string').slice(0, 20)
+    : [];
+  const classification = classifyViatorProduct(title, string(product.description) ?? string(product.summary));
   const images = Array.isArray(product.images)
     ? product.images.flatMap((image) => {
         const item = record(image);
@@ -294,9 +318,307 @@ function normalizeViatorProduct(value: unknown): JsonRecord | null {
     logistics: product.logistics,
     cancellationPolicy: product.cancellationPolicy,
     tags: product.tags,
+    category: string(product.category) ?? classification.category,
+    interestTags: Array.isArray(product.interestTags)
+      ? product.interestTags.filter((interest): interest is string => typeof interest === 'string').slice(0, 8)
+      : classification.interests,
+    lat: number(product.lat),
+    lng: number(product.lng),
+    address: string(product.address),
+    locationName: string(product.locationName),
+    confirmationType: string(product.confirmationType) ?? (confirmationSettings ? string(confirmationSettings.confirmationType) : undefined),
+    freeCancellation: product.freeCancellation === true || flags.includes('FREE_CANCELLATION'),
+    flags,
     provider: 'viator',
     bookingMode: string(product.productUrl) ? 'external' : 'none',
   };
+}
+
+function classifyViatorProduct(
+  title: string,
+  description?: string,
+): { category: string; interests: string[] } {
+  const textValue = `${title} ${description ?? ''}`.toLowerCase();
+  const interests = new Set<string>();
+  const matches = (pattern: RegExp) => pattern.test(textValue);
+  if (matches(/\b(food|culinary|cooking|wine|beer|tasting|market|restaurant|dining|chocolate)\b/)) interests.add('food');
+  if (matches(/\b(museum|gallery|art|artist|architecture|design)\b/)) interests.add('art');
+  if (matches(/\b(history|historic|heritage|castle|palace|monument|archaeolog|temple|church)\b/)) interests.add('history');
+  if (matches(/\b(beach|coast|ocean|snorkel|sail|boat|cruise|island)\b/)) interests.add('beach');
+  if (matches(/\b(hike|hiking|trail|mountain|nature|waterfall|national park)\b/)) interests.add('hiking');
+  if (matches(/\b(spa|wellness|massage|yoga|thermal|hot spring)\b/)) interests.add('wellness');
+  if (matches(/\b(adventure|rafting|kayak|zipline|atv|surf|dive|cycling|bike)\b/)) interests.add('adventure');
+  if (matches(/\b(nightlife|night club|bar crawl|pub crawl|cabaret|drag)\b/)) interests.add('nightlife');
+  if (matches(/\b(concert|music|show|performance|theater|theatre)\b/)) interests.add('music');
+  if (matches(/\b(shop|shopping|boutique|fashion)\b/)) interests.add('shopping');
+  if (matches(/\b(lgbtq|queer|gay|pride)\b/)) interests.add('lgbtq_venues');
+  if (interests.size === 0) interests.add('culture');
+
+  const category = matches(/\b(spa|wellness|massage|yoga|thermal|hot spring)\b/) ? 'spa'
+    : matches(/\b(beach|snorkel|surf|ocean swim)\b/) ? 'beach'
+      : matches(/\b(museum|gallery)\b/) ? 'museum'
+        : matches(/\b(concert|show|performance|theater|theatre|festival)\b/) ? 'event'
+          : matches(/\b(bar crawl|pub crawl|nightlife|cabaret|drag)\b/) ? 'bar'
+            : matches(/\b(park|garden|nature reserve)\b/) ? 'park'
+              : matches(/\b(cooking class|food tour|culinary|tasting|dining)\b/) ? 'restaurant'
+                : matches(/\b(castle|palace|monument|landmark|temple|church|architecture)\b/) ? 'landmark'
+                  : 'tour';
+  return { category, interests: [...interests] };
+}
+
+function viatorLocationRefs(product: JsonRecord): string[] {
+  const refs: string[] = [];
+  const add = (value: unknown) => {
+    const ref = string(value);
+    if (ref?.startsWith('LOC-') && !refs.includes(ref)) refs.push(ref);
+  };
+  const logistics = record(product.logistics);
+  const starts = logistics && Array.isArray(logistics.start) ? logistics.start : [];
+  for (const rawStart of starts) {
+    const start = record(rawStart);
+    const location = start ? record(start.location) : null;
+    if (location) add(location.ref);
+  }
+  const itinerary = record(product.itinerary);
+  const items = itinerary && Array.isArray(itinerary.itineraryItems) ? itinerary.itineraryItems : [];
+  for (const rawItem of items) {
+    const item = record(rawItem);
+    if (!item || item.passByWithoutStopping === true) continue;
+    const point = record(item.pointOfInterestLocation);
+    const location = point ? record(point.location) : null;
+    if (location) add(location.ref);
+  }
+  const activityInfo = itinerary ? record(itinerary.activityInfo) : null;
+  const location = activityInfo ? record(activityInfo.location) : null;
+  if (location) add(location.ref);
+  return refs;
+}
+
+async function cachedViatorProductDetail(productCode: string): Promise<JsonRecord | null> {
+  const cacheKey = await providerCacheKey('viator-product-detail-v1', { productCode });
+  const cached = await readProviderCache(cacheKey);
+  const cachedProduct = cached ? record(cached.product) : null;
+  if (cachedProduct) return cachedProduct;
+  const product = record(await providerJson(`${VIATOR_BASE}/products/${encodeURIComponent(productCode)}`, {
+    headers: viatorHeaders(),
+  }, 8_000));
+  if (product) await writeProviderCache(cacheKey, 'viator', { product }, 24 * 60 * 60_000);
+  return product;
+}
+
+type ViatorPlanningLocation = {
+  reference: string;
+  name?: string;
+  address?: string;
+  lat?: number;
+  lng?: number;
+};
+
+function formatViatorAddress(location: JsonRecord): string | undefined {
+  const address = record(location.address);
+  if (!address) return undefined;
+  const parts = ['street', 'administrativeArea', 'country', 'postcode']
+    .map((key) => string(address[key]))
+    .filter((part): part is string => Boolean(part));
+  return [...new Set(parts)].join(', ') || undefined;
+}
+
+async function googlePlanningLocation(providerReference: string): Promise<Omit<ViatorPlanningLocation, 'reference'> | null> {
+  const cacheKey = await providerCacheKey('viator-google-location-v1', { providerReference });
+  const cached = await readProviderCache(cacheKey);
+  if (cached && number(cached.lat) !== undefined && number(cached.lng) !== undefined) {
+    return {
+      name: string(cached.name),
+      address: string(cached.address),
+      lat: number(cached.lat),
+      lng: number(cached.lng),
+    };
+  }
+  try {
+    const place = record(await providerJson(
+      `${GOOGLE_PLACES_BASE}/places/${encodeURIComponent(providerReference)}`,
+      { headers: googleHeaders('id,displayName,formattedAddress,location,businessStatus') },
+      6_000,
+    ));
+    const displayName = place ? record(place.displayName) : null;
+    const location = place ? record(place.location) : null;
+    const lat = location ? number(location.latitude) : undefined;
+    const lng = location ? number(location.longitude) : undefined;
+    if (lat === undefined || lng === undefined) return null;
+    const result = {
+      name: displayName ? string(displayName.text) : undefined,
+      address: place ? string(place.formattedAddress) : undefined,
+      lat,
+      lng,
+    };
+    await writeProviderCache(cacheKey, 'google', result, 30 * 24 * 60 * 60_000);
+    return result;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveViatorPlanningLocations(refs: string[]): Promise<Map<string, ViatorPlanningLocation>> {
+  const uniqueRefs = [...new Set(refs.filter((ref) => ref.startsWith('LOC-')))];
+  if (uniqueRefs.length === 0) return new Map();
+  const cacheKey = await providerCacheKey('viator-locations-v1', { refs: [...uniqueRefs].sort() });
+  const cached = await readProviderCache(cacheKey);
+  let rawLocations = cached && Array.isArray(cached.locations) ? cached.locations : null;
+  if (!rawLocations) {
+    const response = record(await providerJson(`${VIATOR_BASE}/locations/bulk`, {
+      method: 'POST',
+      headers: viatorHeaders(),
+      body: JSON.stringify({ locations: uniqueRefs }),
+    }, 8_000));
+    rawLocations = response && Array.isArray(response.locations) ? response.locations : [];
+    await writeProviderCache(cacheKey, 'viator', { locations: rawLocations }, 30 * 24 * 60 * 60_000);
+  }
+
+  const results = new Map<string, ViatorPlanningLocation>();
+  await Promise.all(rawLocations.map(async (rawLocation) => {
+    const location = record(rawLocation);
+    const reference = location ? string(location.reference) : undefined;
+    if (!location || !reference) return;
+    const center = record(location.center);
+    let lat = center ? number(center.latitude) : undefined;
+    let lng = center ? number(center.longitude) : undefined;
+    let name = string(location.name);
+    let address = formatViatorAddress(location);
+    const providerReference = string(location.providerReference);
+    if ((lat === undefined || lng === undefined) && providerReference) {
+      const google = await googlePlanningLocation(providerReference);
+      lat = google?.lat;
+      lng = google?.lng;
+      name = google?.name ?? name;
+      address = google?.address ?? address;
+    }
+    results.set(reference, { reference, name, address, lat, lng });
+  }));
+  return results;
+}
+
+function mergeDefined(base: JsonRecord, extra: JsonRecord | null): JsonRecord {
+  if (!extra) return base;
+  const merged = { ...base };
+  for (const [key, value] of Object.entries(extra)) {
+    if (value !== undefined && (!Array.isArray(value) || value.length > 0)) merged[key] = value;
+  }
+  return merged;
+}
+
+async function enrichViatorProductsForPlanning(products: JsonRecord[], detailLimit = 6): Promise<JsonRecord[]> {
+  const detailRows: Array<{ summary: JsonRecord; detail: JsonRecord | null; locationRefs: string[] }> = products
+    .map((summary) => ({ summary, detail: null, locationRefs: [] }));
+  let cursor = 0;
+  const detailCount = Math.min(detailLimit, products.length);
+  await Promise.all(Array.from({ length: Math.min(3, detailCount) }, async () => {
+    while (cursor < detailCount) {
+      const index = cursor;
+      cursor += 1;
+      const summary = products[index]!;
+      const productCode = string(summary.productCode);
+      if (!productCode) continue;
+      try {
+        const detail = await cachedViatorProductDetail(productCode);
+        detailRows[index] = {
+          summary,
+          detail,
+          locationRefs: detail ? viatorLocationRefs(detail) : [],
+        };
+      } catch {
+        // Keep the product summary when detail enrichment is unavailable.
+      }
+    }
+  }));
+  const locations = await resolveViatorPlanningLocations(
+    detailRows.flatMap((row) => row.locationRefs),
+  ).catch(() => new Map<string, ViatorPlanningLocation>());
+
+  return detailRows.map(({ summary, detail, locationRefs }) => {
+    const detailNormalized = detail ? normalizeViatorProduct(detail) : null;
+    const merged = mergeDefined(summary, detailNormalized);
+    // Search summaries contain current display pricing; detail payloads do not.
+    if (summary.priceFrom !== undefined) merged.priceFrom = summary.priceFrom;
+    if (summary.currency !== undefined) merged.currency = summary.currency;
+    if (summary.freeCancellation === true) merged.freeCancellation = true;
+    if (summary.confirmationType !== undefined) merged.confirmationType = summary.confirmationType;
+    const location = locationRefs
+      .map((reference) => locations.get(reference))
+      .find((candidate) => candidate?.lat !== undefined && candidate.lng !== undefined);
+    if (location?.lat !== undefined && location.lng !== undefined) {
+      merged.lat = location.lat;
+      merged.lng = location.lng;
+      merged.address = location.address;
+      merged.locationName = location.name;
+    }
+    return merged;
+  });
+}
+
+function publicViatorDestination(destination: ResolvedViatorDestination): JsonRecord {
+  return {
+    destinationId: destination.destinationId,
+    name: destination.name,
+    type: destination.type,
+    distanceKm: destination.distanceKm,
+    matchScore: destination.matchScore,
+  };
+}
+
+async function getViatorDestinationTaxonomy(): Promise<ViatorDestinationTaxonomyItem[]> {
+  const cacheKey = await providerCacheKey('viator-destination-taxonomy-v1', { locale: 'en-US' });
+  const cached = await readProviderCache(cacheKey);
+  const cachedTaxonomy = normalizeViatorTaxonomy(cached?.destinations);
+  if (cachedTaxonomy.length > 0) return cachedTaxonomy;
+
+  const raw = await providerJson(`${VIATOR_BASE}/destinations`, {
+    headers: viatorHeaders(),
+  }, 12_000);
+  const taxonomy = normalizeViatorTaxonomy(raw);
+  if (taxonomy.length === 0) throw new Error('Viator destination taxonomy was empty');
+  await writeProviderCache(
+    cacheKey,
+    'viator',
+    { destinations: taxonomy },
+    7 * 24 * 60 * 60_000,
+  );
+  return taxonomy;
+}
+
+function viatorInterestScore(product: JsonRecord, interests: string[], searchTerm?: string): number {
+  if (interests.length === 0 && !searchTerm) return 0;
+  const haystack = `${string(product.title) ?? ''} ${string(product.description) ?? ''}`.toLowerCase();
+  const preferenceScore = interests.reduce((score, interest) => {
+    const words = interest.toLowerCase().replace(/[^a-z0-9]+/g, ' ').split(' ').filter((word) => word.length > 2);
+    return score + (words.some((word) => haystack.includes(word)) ? 1 : 0);
+  }, 0);
+  const queryWords = (searchTerm ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').split(' ')
+    .filter((word) => word.length > 2 && !['trip', 'tour', 'travel', 'with', 'from', 'that', 'this'].includes(word));
+  return preferenceScore * 3 + queryWords.filter((word) => haystack.includes(word)).length;
+}
+
+function isoDate(value: unknown): string | undefined {
+  const candidate = string(value);
+  if (!candidate || !/^\d{4}-\d{2}-\d{2}$/.test(candidate)) return undefined;
+  const parsed = new Date(`${candidate}T12:00:00Z`);
+  return Number.isNaN(parsed.getTime()) ? undefined : candidate;
+}
+
+function viatorProductRank(
+  product: JsonRecord,
+  interests: string[],
+  searchTerm: string | undefined,
+  preferFreeCancellation: boolean,
+  maxPrice: number | undefined,
+): number {
+  const rating = number(product.rating) ?? 0;
+  const reviews = number(product.reviewCount) ?? 0;
+  const price = number(product.priceFrom);
+  const interestFit = viatorInterestScore(product, interests, searchTerm);
+  const cancellationBoost = preferFreeCancellation && product.freeCancellation === true ? 5 : 0;
+  const instantBoost = string(product.confirmationType) === 'INSTANT' ? 3 : 0;
+  const priceFit = maxPrice !== undefined && price !== undefined && price <= maxPrice ? 4 : 0;
+  return interestFit * 14 + rating * 4 + Math.min(8, Math.log10(Math.max(1, reviews)) * 2) + cancellationBoost + instantBoost + priceFit;
 }
 
 async function placeSearch(body: JsonRecord): Promise<Response> {
@@ -447,17 +769,93 @@ async function route(body: JsonRecord): Promise<Response> {
 async function viatorSearch(body: JsonRecord): Promise<Response> {
   const destination = string(body.destination);
   if (!destination) return json({ error: 'destination is required' }, 400);
+  const country = string(body.country);
+  const lat = number(body.lat);
+  const lng = number(body.lng);
+  const destinationTypeValue = string(body.destinationType);
+  const destinationType = destinationTypeValue === 'city'
+    || destinationTypeValue === 'island'
+    || destinationTypeValue === 'resort_area'
+    ? destinationTypeValue
+    : undefined;
   const interests = Array.isArray(body.interests)
     ? body.interests.filter((item) => typeof item === 'string').slice(0, 4)
     : [];
-  const data = record(await providerJson(`${VIATOR_BASE}/search/freetext`, {
+  const searchTerm = string(body.searchTerm)?.slice(0, 160);
+  const currency = string(body.currency) ?? 'USD';
+  const limit = Math.min(20, Math.max(1, number(body.limit) ?? 12));
+  const candidateCount = Math.min(20, Math.max(limit, limit * 2));
+  const requestedStartDate = isoDate(body.startDate);
+  const requestedEndDate = isoDate(body.endDate);
+  const today = new Date().toISOString().slice(0, 10);
+  const latestSearchDate = new Date(Date.now() + 365 * 24 * 60 * 60_000).toISOString().slice(0, 10);
+  const startDate = requestedStartDate && requestedStartDate >= today && requestedStartDate <= latestSearchDate
+    ? requestedStartDate
+    : undefined;
+  const endDate = startDate && requestedEndDate && requestedEndDate >= startDate && requestedEndDate <= latestSearchDate
+    ? requestedEndDate
+    : undefined;
+  const maxPrice = number(body.maxPrice);
+  const minPrice = number(body.minPrice);
+  const maxDurationMinutes = number(body.maxDurationMinutes);
+  const minRating = Math.min(5, Math.max(0, number(body.minRating) ?? 3.5));
+  const preferFreeCancellation = body.preferFreeCancellation !== false;
+  const taxonomy = await getViatorDestinationTaxonomy();
+  const resolved = resolveViatorDestination({
+    name: destination,
+    country,
+    lat,
+    lng,
+    destinationType,
+  }, taxonomy);
+  if (!resolved) {
+    return json({ products: [], resolvedDestination: null, source: 'viator_live' });
+  }
+
+  const cacheKey = await providerCacheKey('viator-city-experiences-v4', {
+    destinationId: resolved.destinationId,
+    interests: interests.map((interest) => interest.toLowerCase()).sort(),
+    searchTerm: searchTerm?.toLowerCase(),
+    currency,
+    limit,
+    startDate,
+    endDate,
+    minPrice,
+    maxPrice,
+    maxDurationMinutes,
+    minRating,
+    preferFreeCancellation,
+  });
+  const cached = await readProviderCache(cacheKey);
+  if (cached && Array.isArray(cached.products)) {
+    return json({
+      products: cached.products,
+      resolvedDestination: publicViatorDestination(resolved),
+      source: 'viator_live',
+    });
+  }
+
+  const filtering: JsonRecord = {
+    destination: resolved.destinationId,
+    confirmationType: 'INSTANT',
+    rating: { from: minRating, to: 5 },
+  };
+  if (startDate) filtering.startDate = startDate;
+  if (startDate && endDate && endDate >= startDate) filtering.endDate = endDate;
+  if (minPrice !== undefined && minPrice >= 0) filtering.lowestPrice = minPrice;
+  if (maxPrice !== undefined && maxPrice > 0) filtering.highestPrice = maxPrice;
+  if (maxDurationMinutes !== undefined && maxDurationMinutes >= 30) {
+    filtering.durationInMinutes = { from: 30, to: Math.min(1_440, maxDurationMinutes) };
+  }
+
+  const data = record(await providerJson(`${VIATOR_BASE}/products/search`, {
     method: 'POST',
     headers: viatorHeaders(),
     body: JSON.stringify({
-      searchTerm: [destination, ...interests].join(' '),
-      searchTypes: ['PRODUCTS'],
-      currency: string(body.currency) ?? 'USD',
-      pagination: { start: 1, count: Math.min(20, Math.max(1, number(body.limit) ?? 12)) },
+      filtering,
+      sorting: { sort: 'TRAVELER_RATING', order: 'DESCENDING' },
+      currency,
+      pagination: { start: 1, count: candidateCount },
     }),
   }));
   const rawProducts = Array.isArray(data?.products)
@@ -465,17 +863,37 @@ async function viatorSearch(body: JsonRecord): Promise<Response> {
     : record(data?.products) && Array.isArray(record(data?.products)?.results)
       ? record(data?.products)!.results as unknown[]
       : [];
-  const products = rawProducts.map(normalizeViatorProduct).filter(Boolean);
-  return json({ products, source: 'viator_live' });
+  const rankedProducts = rawProducts
+    .map(normalizeViatorProduct)
+    .filter((product): product is JsonRecord => Boolean(product))
+    .sort((left, right) => {
+      const rankDelta = viatorProductRank(right, interests, searchTerm, preferFreeCancellation, maxPrice)
+        - viatorProductRank(left, interests, searchTerm, preferFreeCancellation, maxPrice);
+      if (rankDelta !== 0) return rankDelta;
+      return (number(right.rating) ?? 0) - (number(left.rating) ?? 0);
+    })
+    .slice(0, limit);
+  const products = await enrichViatorProductsForPlanning(rankedProducts, Math.min(6, limit));
+  await writeProviderCache(
+    cacheKey,
+    'viator',
+    { products },
+    6 * 60 * 60_000,
+  );
+  return json({
+    products,
+    resolvedDestination: publicViatorDestination(resolved),
+    source: 'viator_live',
+  });
 }
 
 async function viatorProduct(body: JsonRecord): Promise<Response> {
   const productCode = string(body.productCode);
   if (!productCode) return json({ error: 'productCode is required' }, 400);
-  const data = await providerJson(`${VIATOR_BASE}/products/${encodeURIComponent(productCode)}`, {
-    headers: viatorHeaders(),
-  });
-  return json({ product: normalizeViatorProduct(data), source: 'viator_live' });
+  const detail = await cachedViatorProductDetail(productCode);
+  const normalized = detail ? normalizeViatorProduct(detail) : null;
+  const enriched = normalized ? await enrichViatorProductsForPlanning([normalized], 1) : [];
+  return json({ product: enriched[0] ?? normalized, source: 'viator_live' });
 }
 
 async function viatorSchedule(body: JsonRecord): Promise<Response> {
@@ -925,6 +1343,8 @@ async function skyscannerIndicative(body: JsonRecord): Promise<Response> {
 async function enforceRateLimit(request: Request, operation: string) {
   const authorization = request.headers.get('Authorization');
   if (!authorization) throw new Error('Authentication required');
+  const bearerToken = authorization.replace(/^Bearer\s+/i, '').trim();
+  if (bearerToken === optionalEnv('SUPABASE_SERVICE_ROLE_KEY') || jwtRole(bearerToken) === 'service_role') return;
   const supabaseUrl = env('SUPABASE_URL');
   const anonKey = env('SUPABASE_ANON_KEY');
   const provider = operation.startsWith('viator') ? 'viator'

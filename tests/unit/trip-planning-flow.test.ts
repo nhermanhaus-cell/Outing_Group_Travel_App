@@ -50,4 +50,17 @@ describe('trip planning flow', () => {
       destinationName: ['Barcelona'],
     })).toEqual(destination);
   });
+
+  it('preserves a provisional destination reference through the questionnaire', () => {
+    const provisional = {
+      destinationSlug: 'porto-portugal-generated',
+      destinationName: 'Porto',
+      destinationCandidateId: '10000000-0000-4000-8000-000000000050',
+    };
+    expect(destinationPlanHref(provisional)).toEqual({ pathname: '/quiz', params: provisional });
+    expect(questionnaireCompletionHref({ interests: ['food'] }, provisional)).toEqual({
+      pathname: '/trips/new',
+      params: { ...provisional, quizAnswers: '{"interests":["food"]}' },
+    });
+  });
 });

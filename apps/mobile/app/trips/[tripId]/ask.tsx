@@ -9,7 +9,7 @@ import { useAuth, useTrips } from '../../../src/providers/AppProviders';
 import { useTheme } from '../../../src/theme/ThemeProvider';
 
 export default function TripAskScreen() {
-  const { tripId } = useLocalSearchParams<{ tripId: string }>();
+  const { tripId, prompt } = useLocalSearchParams<{ tripId: string; prompt?: string }>();
   const { getTrip } = useTrips();
   const { user } = useAuth();
   const trip = getTrip(tripId);
@@ -34,6 +34,7 @@ export default function TripAskScreen() {
           scope={{ kind: 'trip', tripId }}
           visibility={visibility}
           onVisibilityChange={setVisibility}
+          initialDraft={prompt}
         />
       ) : (
         <View style={{ padding: spacing.xl }}>

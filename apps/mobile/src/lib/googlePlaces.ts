@@ -45,7 +45,10 @@ function mapType(types: string[] | undefined): string {
   if (t.has('cafe')) return 'cafe';
   if (t.has('restaurant')) return 'restaurant';
   if (t.has('museum')) return 'museum';
+  if (t.has('art_gallery')) return 'museum';
+  if (t.has('spa')) return 'spa';
   if (t.has('park')) return 'park';
+  if (t.has('shopping_mall')) return 'shop';
   if (t.has('tourist_attraction')) return 'landmark';
   return 'other';
 }
@@ -214,14 +217,11 @@ export async function searchPlacesForInterests(
   );
   if (types.length === 0) return [];
 
-  let batches: NearbyPlaceResult[][] = [];
-  try {
-    batches = await Promise.all(
-      types.map((type) => fetchLivePlaces(lat, lng, [type], limit, 5_000)),
-    );
-  } catch {
-    return [];
-  }
+  const results = await Promise.allSettled(
+    types.map((type) => fetchLivePlaces(lat, lng, [type], Math.min(20, limit), 12_000)),
+  );
+  const batches = results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
+  if (batches.length === 0) return [];
 
   return uniqueByPlaceId(batches.flat())
     .sort(

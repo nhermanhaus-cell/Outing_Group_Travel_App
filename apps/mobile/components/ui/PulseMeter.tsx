@@ -15,6 +15,11 @@ const LABEL_COLORS: Record<string, string> = {
   Connected: '#6B5C2A',
   Emerging: '#8C6B2A',
   Quiet: '#5C5047',
+  'Deep community footprint': '#3A7D5C',
+  'Strong community footprint': '#2A6B8C',
+  'Visible community footprint': '#6B5C2A',
+  'Some community signals': '#8C6B2A',
+  'Limited verified data': '#5C5047',
 };
 
 export function PulseMeter({ pulse, compact = false }: PulseMeterProps) {
@@ -44,12 +49,19 @@ export function PulseMeter({ pulse, compact = false }: PulseMeterProps) {
       <Text variant="caption" style={{ color: colors.textSecondary }}>{pulse.explanation}</Text>
       {!compact && (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs }}>
-          {Object.entries(pulse.componentBreakdown).map(([key, val]) => (
-            <View key={key} style={{ alignItems: 'center', gap: 2, minWidth: 60 }}>
-              <Text variant="captionBold" style={{ color: colors.textPrimary }}>{Math.round(val as number)}</Text>
-              <Text variant="caption" style={{ color: colors.textTertiary }}>{key}</Text>
-            </View>
-          ))}
+          {pulse.evidence?.length
+            ? pulse.evidence.map((item) => (
+                <View key={item.key} style={{ alignItems: 'center', gap: 2, minWidth: 80 }}>
+                  <Text variant="captionBold" style={{ color: colors.textPrimary }}>{item.count}</Text>
+                  <Text variant="caption" style={{ color: colors.textTertiary }}>{item.label}</Text>
+                </View>
+              ))
+            : Object.entries(pulse.componentBreakdown).map(([key, val]) => (
+                <View key={key} style={{ alignItems: 'center', gap: 2, minWidth: 60 }}>
+                  <Text variant="captionBold" style={{ color: colors.textPrimary }}>{Math.round(val as number)}</Text>
+                  <Text variant="caption" style={{ color: colors.textTertiary }}>{key}</Text>
+                </View>
+              ))}
         </View>
       )}
     </View>

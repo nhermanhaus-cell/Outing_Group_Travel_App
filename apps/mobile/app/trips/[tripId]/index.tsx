@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   blendGroupPreferences,
+  buildActivityPreferenceSignals,
   estimateBudget,
   generateTripPlan,
   rankPlacesNearLodging,
@@ -30,6 +31,7 @@ import type {
 import { useTheme } from '../../../src/theme/ThemeProvider';
 import { useAuth, useTravelProfile, useTrips } from '../../../src/providers/AppProviders';
 import { useDestinations } from '../../../src/providers/AppProviders';
+import { canDeleteTrip } from '../../../src/lib/tripPermissions';
 import { Text } from '../../../components/ui/Text';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
@@ -43,6 +45,7 @@ import {
   type GlamourLevel,
 } from '@gayi/shared';
 import type {
+  ActivityPreferenceVote,
   ActivityPace,
   Destination,
   Interest,
@@ -87,8 +90,11 @@ import { openItineraryItemInCalendar } from '../../../src/lib/calendarExport';
 import { useAnalytics } from '../../../src/analytics/analytics-provider';
 import { OutingIcon } from '../../../components/ui/OutingIcon';
 import { featureFlags } from '../../../src/lib/featureFlags';
+import { loadAssistantInsights } from '../../../src/lib/assistant-api';
 import { applyAssistantProposalToTrip } from '../../../src/lib/assistantProposals';
 import { reviewAssistantProposal } from '../../../src/lib/assistant-api';
+import { DecisionBriefCard } from '../../../components/assistant/DecisionBriefCard';
+import { ActivityPreferenceDeck } from '../../../components/trips/activity-preference-deck';
 
 type SectionKey =
   | 'overview'
@@ -234,20 +240,16 @@ export default function TripHubScreen() {
   const [lodgingGeocodeStatus, setLodgingGeocodeStatus] = useState<GeocodeStatus>('idle');
   const [liveNearbyPlaces, setLiveNearbyPlaces] = useState<NearbyPlaceResult[]>([]);
   const [liveInterestPlaces, setLiveInterestPlaces] = useState<NearbyPlaceResult[]>([]);
-  const [destinationExperiences, setDestinationExperiences] = useState<MobileExperience[]>(
-    [],
-  );
-  const [destinationExperienceSource, setDestinationExperienceSource] = useState<
-    'viator_live' | 'editorial_fallback'
-  >('editorial_fallback');
   const [travelMode, setTravelMode] = useState<TravelMode | 'auto'>(profile.preferredTransportMode ?? 'auto');
   const [legModeOverrides, setLegModeOverrides] = useState<Record<string, TravelMode>>({});
   const [travelLegsByDay, setTravelLegsByDay] = useState<Record<number, TravelLeg[]>>({});
   const [selectedItineraryDay, setSelectedItineraryDay] = useState(1);
   const [selectedMapMarkerId, setSelectedMapMarkerId] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
+  const [deletingTrip, setDeletingTrip] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const [calendarExportVisible, setCalendarExportVisible] = useState(false);
+  const [activityDeckVisible, setActivityDeckVisible] = useState(false);
   const lastGeocodeAttemptKeyRef = useRef<string | null>(null);
   const lastNearbyFetchKeyRef = useRef<string | null>(null);
   const activeHub = (Object.entries(HUB_SECTIONS).find(([, items]) =>
@@ -265,6 +267,47 @@ export default function TripHubScreen() {
   }, [section, track]);
 
   const trip = getTrip(tripId ?? '');
+  const assistantTripInsights = useQuery({
+    queryKey: ['assistant-insights', 'trip', trip?.tripId, user?.id],
+    queryFn: ({ signal }) => loadAssistantInsights({
+      surface: 'trip',
+      tripId: trip!.tripId,
+      trigger: 'screen',
+      force: false,
+    }, signal),
+    enabled: Boolean(user && trip && featureFlags.proactiveInsightsV1),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+  const assistantTripAudit = useQuery({
+    queryKey: ['assistant-insights', 'trip-audit-v1', trip?.tripId, user?.id, trip?.tripPlan?.revision],
+    queryFn: ({ signal }) => loadAssistantInsights({
+      surface: 'trip',
+      tripId: trip!.tripId,
+      trigger: 'screen',
+      intent: { kind: 'audit' },
+      force: false,
+    }, signal),
+    enabled: Boolean(user && trip && featureFlags.tripAuditV1),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+  const assistantGroupBrief = useQuery({
+    queryKey: ['assistant-insights', 'group-brief-v1', trip?.tripId, user?.id, trip?.polls?.length, trip?.members?.length],
+    queryFn: ({ signal }) => loadAssistantInsights({
+      surface: 'trip',
+      tripId: trip!.tripId,
+      trigger: 'screen',
+      intent: { kind: 'group' },
+      force: false,
+    }, signal),
+    enabled: Boolean(user && trip && (trip.members?.length ?? trip.travelers) > 1 && featureFlags.decisionBriefsV1),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+  const activityInsight = assistantTripInsights.data?.insights.find((insight) => insight.kind === 'activity_options');
+  const auditInsight = assistantTripAudit.data?.insights.find((insight) => insight.kind === 'trip_audit');
+  const groupInsight = assistantGroupBrief.data?.insights.find((insight) => insight.kind === 'group_brief');
   const hasLodgingCoords = hasNumericCoords(trip?.lodgingLat, trip?.lodgingLng);
   const apiKeys = getApiKeyStatus();
 
@@ -480,8 +523,8 @@ export default function TripHubScreen() {
       const places = await searchPlacesForInterests(
         Number(catalogDestination.lat),
         Number(catalogDestination.lng),
-        blendedPreferences.interests,
-        10,
+        [...new Set([...blendedPreferences.interests, 'food', 'culture'])],
+        Math.min(48, Math.max(24, getDuration(trip?.startDate, trip?.endDate) * 7)),
       );
       if (!cancelled) setLiveInterestPlaces(places);
     })();
@@ -495,33 +538,6 @@ export default function TripHubScreen() {
     catalogDestination?.lng,
     trip?.destinationSlug,
   ]);
-
-  useEffect(() => {
-    const destinationSlug = trip?.destinationSlug;
-    if (!destinationSlug || !blendedPreferences) return;
-
-    let cancelled = false;
-    void (async () => {
-      try {
-        const { experiences, source } = await loadDestinationExperiences(
-          destinationSlug,
-          10,
-          blendedPreferences.interests,
-        );
-        if (cancelled) return;
-        setDestinationExperiences(experiences);
-        setDestinationExperienceSource(source);
-      } catch {
-        if (cancelled) return;
-        setDestinationExperiences([]);
-        setDestinationExperienceSource('editorial_fallback');
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [blendedPreferences?.interests, trip?.destinationSlug]);
 
   const budget = useMemo(() => {
     if (!destination) return null;
@@ -537,6 +553,49 @@ export default function TripHubScreen() {
       return null;
     }
   }, [destination, glamour, trip]);
+  const experienceBudgetCap = budget
+    ? Math.max(50, Math.round(budget.perPerson.categories.activities.high * 0.65))
+    : undefined;
+  const experienceDurationCap = blendedPreferences?.activityPace === 'downtime'
+    ? 180
+    : blendedPreferences?.activityPace === 'packed'
+      ? 480
+      : 300;
+
+  const destinationExperiencesQuery = useQuery({
+    queryKey: [
+      'destination-experiences-v4',
+      catalogDestination?.slug,
+      blendedPreferences?.interests ?? [],
+      trip?.startDate,
+      trip?.endDate,
+      experienceBudgetCap,
+      experienceDurationCap,
+    ],
+    queryFn: ({ signal }) => loadDestinationExperiences({
+      destinationSlug: catalogDestination!.slug,
+      destinationName: catalogDestination!.name,
+      country: catalogDestination!.country,
+      lat: catalogDestination!.lat,
+      lng: catalogDestination!.lng,
+      destinationType: catalogDestination!.destinationType,
+      currency: 'USD',
+      interests: blendedPreferences!.interests,
+      startDate: trip?.startDate,
+      endDate: trip?.endDate,
+      maxPrice: experienceBudgetCap,
+      maxDurationMinutes: experienceDurationCap,
+      minRating: 3.5,
+      preferFreeCancellation: true,
+      limit: 12,
+      signal,
+    }),
+    enabled: Boolean(catalogDestination && blendedPreferences),
+    staleTime: 6 * 60 * 60_000,
+    retry: 1,
+  });
+  const destinationExperiences = destinationExperiencesQuery.data?.experiences ?? [];
+  const destinationExperienceSource = destinationExperiencesQuery.data?.source ?? 'editorial_fallback';
 
   const itineraryPlaces = useMemo<Place[]>(() => {
     const livePlaces = liveInterestPlaces.map((place) =>
@@ -566,6 +625,37 @@ export default function TripHubScreen() {
     domainPlaces,
     liveInterestPlaces,
   ]);
+
+  const activityCandidates = useMemo(() => {
+    const byCategory = new Map<string, Place[]>();
+    for (const place of itineraryPlaces
+      .filter((candidate) => candidate.businessStatus !== 'closed_permanently')
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))) {
+      byCategory.set(place.category, [...(byCategory.get(place.category) ?? []), place]);
+    }
+    const interleaved: Place[] = [];
+    while (interleaved.length < 36 && [...byCategory.values()].some((values) => values.length > 0)) {
+      for (const values of byCategory.values()) {
+        const next = values.shift();
+        if (next) interleaved.push(next);
+        if (interleaved.length >= 36) break;
+      }
+    }
+    return interleaved;
+  }, [itineraryPlaces]);
+
+  const activityPreferenceSignals = useMemo(
+    () => buildActivityPreferenceSignals(
+      trip?.activityPreferences ?? [],
+      Math.max(1, trip?.members?.length ?? 0, trip?.travelers ?? 1),
+    ),
+    [trip?.activityPreferences, trip?.members?.length, trip?.travelers],
+  );
+  const activityPreferenceMemberId = user?.id ?? (trip ? `owner-${trip.tripId}` : 'owner');
+  const currentMemberActivityVotes = useMemo(
+    () => (trip?.activityPreferences ?? []).filter((vote) => vote.memberId === activityPreferenceMemberId),
+    [activityPreferenceMemberId, trip?.activityPreferences],
+  );
 
   const routeCandidatePoints = useMemo(() => {
     const lodging = trip && hasNumericCoords(trip.lodgingLat, trip.lodgingLng)
@@ -655,7 +745,13 @@ export default function TripHubScreen() {
       members: memberPreferenceSnapshots,
       ...(budget !== null && { budget }),
       feedback: trip.itineraryFeedback ?? trip.tripPlan?.feedback ?? [],
-      scoreAdjustments: inferredScoreAdjustments,
+      excludedPlaceIds: activityPreferenceSignals.excludedPlaceIds,
+      scoreAdjustments: {
+        ...inferredScoreAdjustments,
+        ...Object.fromEntries(Object.entries(activityPreferenceSignals.scoreAdjustments).map(
+          ([placeId, adjustment]) => [placeId, (inferredScoreAdjustments[placeId] ?? 0) + adjustment],
+        )),
+      },
       ...(destinationFlightDeal !== undefined && {
         flightPriceContext: {
           currentPrice: destinationFlightDeal.price,
@@ -677,6 +773,7 @@ export default function TripHubScreen() {
     catalogDestination?.timezone,
     destination,
     destinationFlightDeal,
+    activityPreferenceSignals,
     itineraryPlaces,
     inferredScoreAdjustments,
     memberPreferenceSnapshots,
@@ -753,6 +850,66 @@ export default function TripHubScreen() {
       itineraryItems: plan.items as unknown as Array<Record<string, unknown>>,
     });
   }, [trip, updateTrip]);
+
+  const saveActivityPreferences = useCallback(async (
+    sessionVotes: ActivityPreferenceVote[],
+    completed: boolean,
+  ) => {
+    if (!trip) return;
+    const memberId = user?.id ?? `owner-${trip.tripId}`;
+    const replacements = new Set(sessionVotes.map((vote) => `${vote.placeId}:${memberId}`));
+    const merged = [
+      ...(trip.activityPreferences ?? []).filter((vote) => !replacements.has(`${vote.placeId}:${vote.memberId}`)),
+      ...sessionVotes,
+    ];
+    for (const vote of sessionVotes) {
+      const place = itineraryPlaces.find((candidate) => candidate.placeId === vote.placeId);
+      track(ANALYTICS_EVENTS.ACTIVITY_CANDIDATE_RATED, {
+        category: vote.category,
+        choice: vote.choice,
+        source: place?.source ?? 'unknown',
+      });
+      observePreference({
+        subjectType: 'activity_category',
+        subjectKey: vote.category,
+        value: vote.choice === 'interested' ? 0.7 : -0.6,
+        weight: 1,
+        source: 'activity_deck',
+        observedAt: vote.createdAt,
+      });
+    }
+
+    if (completed && tripPlanInput) {
+      const signals = buildActivityPreferenceSignals(
+        merged,
+        Math.max(1, trip.members?.length ?? 0, trip.travelers),
+      );
+      const plan = generateTripPlan({
+        ...tripPlanInput,
+        excludedPlaceIds: signals.excludedPlaceIds,
+        scoreAdjustments: {
+          ...(tripPlanInput.scoreAdjustments ?? {}),
+          ...Object.fromEntries(Object.entries(signals.scoreAdjustments).map(
+            ([placeId, adjustment]) => [placeId, (inferredScoreAdjustments[placeId] ?? 0) + adjustment],
+          )),
+        },
+      });
+      await updateTrip(trip.tripId, {
+        activityPreferences: merged,
+        tripPlan: plan,
+        itineraryFeedback: plan.feedback,
+        itineraryItems: plan.items as unknown as Array<Record<string, unknown>>,
+      });
+      track(ANALYTICS_EVENTS.ACTIVITY_DECK_COMPLETED, {
+        ratedCount: merged.filter((vote) => vote.memberId === memberId).length,
+        candidateCount: activityCandidates.length,
+        groupSize: Math.max(1, trip.members?.length ?? 0, trip.travelers),
+      });
+    } else {
+      await updateTrip(trip.tripId, { activityPreferences: merged });
+    }
+    setActivityDeckVisible(false);
+  }, [activityCandidates.length, inferredScoreAdjustments, itineraryPlaces, observePreference, track, trip, tripPlanInput, updateTrip, user?.id]);
 
   const saveItinerary = useCallback(async (items: ItineraryItem[]) => {
     if (!trip) return;
@@ -1481,6 +1638,39 @@ export default function TripHubScreen() {
     );
   }
 
+  const mayDeleteTrip = canDeleteTrip(trip, user?.id);
+  const confirmDeleteTrip = () => {
+    Alert.alert(
+      `Delete “${trip.name}”?`,
+      user
+        ? 'This removes the trip for everyone in the group. This cannot be undone.'
+        : 'This removes the trip from this phone. This cannot be undone.',
+      [
+        { text: 'Keep trip', style: 'cancel' },
+        {
+          text: 'Delete trip',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              setDeletingTrip(true);
+              try {
+                await deleteTrip(trip.tripId);
+                router.replace('/trips');
+              } catch (caught) {
+                Alert.alert(
+                  'Trip wasn’t deleted',
+                  caught instanceof Error ? caught.message : 'Please check your connection and try again.',
+                );
+              } finally {
+                setDeletingTrip(false);
+              }
+            })();
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
@@ -1593,6 +1783,23 @@ export default function TripHubScreen() {
               </View>
             </Card>
 
+            {currentMemberActivityVotes.length === 0 ? (
+              <Card elevated>
+                <View style={{ gap: spacing.md }}>
+                  <Badge label="NEXT STEP" variant="accent" />
+                  <View style={{ gap: spacing.xs }}>
+                    <Text variant="h3">Pick what sounds good</Text>
+                    <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                      Make quick interested/not-interested choices, then Outing will spread the strongest group matches across every day.
+                    </Text>
+                  </View>
+                  <Button disabled={activityCandidates.length === 0} onPress={() => setActivityDeckVisible(true)}>
+                    Start choosing activities
+                  </Button>
+                </View>
+              </Card>
+            ) : null}
+
             {(bookingStaysQuery.data?.stays.length ?? 0) > 0 ? (
               <View style={{ gap: spacing.sm }}>
                 <View style={{ gap: spacing.xxs }}>
@@ -1688,14 +1895,11 @@ export default function TripHubScreen() {
               <Button variant="secondary" style={{ flex: 1 }} onPress={() => router.push(`/share/${trip.tripId}`)}>
                 Share
               </Button>
-              <Button variant="danger" style={{ flex: 1 }} onPress={() => {
-                Alert.alert('Delete trip?', 'This cannot be undone.', [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Delete', style: 'destructive', onPress: async () => { await deleteTrip(trip.tripId); router.back(); } },
-                ]);
-              }}>
-                Delete
-              </Button>
+              {mayDeleteTrip ? (
+                <Button variant="danger" loading={deletingTrip} style={{ flex: 1 }} onPress={confirmDeleteTrip}>
+                  Delete trip
+                </Button>
+              ) : null}
             </View>
 
           </View>
@@ -1708,6 +1912,56 @@ export default function TripHubScreen() {
               <Text variant="h3" style={{ flex: 1 }}>Suggested itinerary</Text>
               <Button size="sm" variant="secondary" disabled={!trip.startDate || !itinerary?.length} onPress={() => setCalendarExportVisible(true)}>Add to calendar</Button>
             </View>
+            <Card elevated>
+              <View style={{ gap: spacing.md }}>
+                <View style={{ gap: spacing.xs }}>
+                  <Text variant="labelSm" style={{ color: colors.accent }}>ACTIVITY PICKS</Text>
+                  <Text variant="h3">Tell Outing what belongs in this trip</Text>
+                  <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                    Review museums, food, architecture, nightlife, outdoor stops, and experiences. Each traveler can make their own picks; group interest shapes shared anchors and the full day-by-day plan.
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+                  <Badge label={`${activityCandidates.length} ideas`} variant="default" />
+                  <Badge label={`${currentMemberActivityVotes.length} rated by you`} variant={currentMemberActivityVotes.length ? 'success' : 'default'} />
+                  {(trip.members?.length ?? trip.travelers) > 1 ? <Badge label="Group-aware" variant="info" /> : null}
+                </View>
+                <Button disabled={activityCandidates.length === 0} onPress={() => setActivityDeckVisible(true)}>
+                  {currentMemberActivityVotes.length ? 'Continue choosing activities' : 'Choose activities'}
+                </Button>
+              </View>
+            </Card>
+            {auditInsight?.decisionCard ? (
+              <DecisionBriefCard
+                card={auditInsight.decisionCard}
+                surface="trip"
+                onAction={(card) => router.push({ pathname: '/trips/[tripId]/ask', params: { tripId: trip.tripId, prompt: card.action?.value } })}
+              />
+            ) : null}
+            {activityInsight?.recommendations.length ? (
+              <Card elevated>
+                <View style={{ gap: spacing.md }}>
+                  <View style={{ gap: spacing.xs }}>
+                    <Text variant="labelSm" style={{ color: colors.plum }}>ASK OUTING PICKS</Text>
+                    <Text variant="h3">{activityInsight.title}</Text>
+                    <Text variant="bodySm" style={{ color: colors.textSecondary }}>{activityInsight.summary}</Text>
+                  </View>
+                  {activityInsight.recommendations.slice(0, 3).map((recommendation, index) => (
+                    <Pressable
+                      key={recommendation.id}
+                      onPress={() => router.push(`/trips/${trip.tripId}/ask`)}
+                      style={{ padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.backgroundSecondary, gap: spacing.xs }}
+                    >
+                      <Text variant="labelSm" style={{ color: colors.pool }}>OPTION {index + 1}</Text>
+                      <Text variant="labelLg">{recommendation.title}</Text>
+                      <Text variant="bodySm" style={{ color: colors.textSecondary }}>{recommendation.summary}</Text>
+                      <Text variant="caption" style={{ color: colors.pool }}>{recommendation.fitReasons.join(' · ')}</Text>
+                    </Pressable>
+                  ))}
+                  <Button size="sm" variant="secondary" onPress={() => router.push(`/trips/${trip.tripId}/ask`)}>Compare these with Ask Outing</Button>
+                </View>
+              </Card>
+            ) : null}
             {itinerary?.length && !trip.startDate ? <Text variant="caption" style={{ color: colors.textTertiary }}>Add trip dates before exporting calendar events.</Text> : null}
             {!destination ? (
               <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
@@ -1926,6 +2180,9 @@ export default function TripHubScreen() {
                               <Card elevated={selectedMapMarkerId === markerId} style={selectedMapMarkerId === markerId ? { borderColor: colors.accent, borderWidth: 1.5 } : undefined}>
                                 <View style={{ gap: spacing.xs }}>
                                   <Text variant="labelLg">{item.title}</Text>
+                                  {item.summary ? (
+                                    <Text variant="bodySm" style={{ color: colors.textSecondary }}>{item.summary}</Text>
+                                  ) : null}
                                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
                                     {item.anchor ? <Badge label="Shared anchor" variant="accent" /> : null}
                                     {item.kind === 'downtime' ? <Badge label="Group free window" variant="info" /> : null}
@@ -2135,6 +2392,13 @@ export default function TripHubScreen() {
               <Text variant="h3">Group polls</Text>
               <Button size="sm" variant="secondary" onPress={addPoll}>+ Add poll</Button>
             </View>
+            {groupInsight?.decisionCard ? (
+              <DecisionBriefCard
+                card={groupInsight.decisionCard}
+                surface="trip"
+                onAction={(card) => router.push({ pathname: '/trips/[tripId]/ask', params: { tripId: trip.tripId, prompt: card.action?.value } })}
+              />
+            ) : null}
             {(trip.polls ?? []).length === 0 ? (
               <Text variant="bodyMd" style={{ color: colors.textSecondary }}>No polls yet. Create one!</Text>
             ) : (
@@ -2296,7 +2560,13 @@ export default function TripHubScreen() {
             <Text variant="caption" style={{ color: colors.textTertiary }}>
               Restaurants, places, neighborhoods, and bookable experiences that fit the trip. Context is not a universal safety claim.
             </Text>
-            {destinationExperiences.length > 0 ? (
+            {destinationExperiencesQuery.isPending ? (
+              <Card>
+                <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                  Finding bookable experiences that fit this group…
+                </Text>
+              </Card>
+            ) : destinationExperiences.length > 0 ? (
               <View style={{ gap: spacing.sm }}>
                 <Text variant="labelLg">Experiences</Text>
                 {destinationExperiences.map((experience) => (
@@ -2314,6 +2584,9 @@ export default function TripHubScreen() {
                         {destinationExperienceSource === 'viator_live' || experience.provider === 'viator'
                           ? <Badge label="Viator" variant="warning" />
                           : null}
+                        {experience.rating ? <Badge label={`${experience.rating.toFixed(1)} ★`} variant="success" /> : null}
+                        {experience.priceFrom !== undefined ? <Badge label={`From ${experience.currency ?? ''} ${Math.round(experience.priceFrom)}`} variant="accent" /> : null}
+                        {experience.freeCancellation ? <Badge label="Free cancellation" variant="success" /> : null}
                         {experience.tags?.slice(0, 4).map((tag) => <Badge key={tag} label={tag} variant="default" />)}
                       </View>
                       <Button size="sm" variant="secondary" onPress={() => router.push({ pathname: '/experiences/[productCode]', params: { productCode: experience.productCode ?? experience.id, destinationSlug: trip.destinationSlug ?? '', seed: JSON.stringify(experience) } })}>
@@ -2326,7 +2599,21 @@ export default function TripHubScreen() {
                   <Text variant="caption" style={{ color: colors.textTertiary }}>Partner bookings open on Viator. Outing may earn a commission.</Text>
                 ) : null}
               </View>
-            ) : null}
+            ) : (
+              <Card>
+                <View style={{ gap: spacing.sm }}>
+                  <Text variant="labelLg">No destination-matched Viator options yet</Text>
+                  <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                    Outing will keep building the itinerary from verified places and events for this destination.
+                  </Text>
+                  {destinationExperiencesQuery.isError ? (
+                    <Button size="sm" variant="secondary" onPress={() => void destinationExperiencesQuery.refetch()}>
+                      Try again
+                    </Button>
+                  ) : null}
+                </View>
+              </Card>
+            )}
             {(catalogDestination?.events ?? []).length > 0 ? (
               <View style={{ gap: spacing.sm }}>
                 <Text variant="labelLg">Events</Text>
@@ -2640,6 +2927,15 @@ export default function TripHubScreen() {
           </View>
         )}
       </ScrollView>
+      <ActivityPreferenceDeck
+        visible={activityDeckVisible}
+        destinationName={trip.destinationName ?? catalogDestination?.name ?? 'this destination'}
+        candidates={activityCandidates}
+        memberId={activityPreferenceMemberId}
+        existingVotes={trip.activityPreferences ?? []}
+        groupVotes={trip.activityPreferences ?? []}
+        onSave={saveActivityPreferences}
+      />
       <CalendarExportSheet
         visible={calendarExportVisible}
         itinerary={itinerary ?? []}
@@ -2955,6 +3251,7 @@ function mapCatalogPlaceToDomainPlace(place: Record<string, unknown>): Place {
   return {
     placeId: typeof place.id === 'string' ? place.id : name,
     name,
+    ...(typeof place.summary === 'string' ? { summary: place.summary } : {}),
     category,
     coords: { lat, lng },
     durationMinutes:
@@ -2962,6 +3259,11 @@ function mapCatalogPlaceToDomainPlace(place: Record<string, unknown>): Place {
     estimatedCostPerPerson:
       typeof place.estimatedCostUsd === 'number' ? place.estimatedCostUsd : 0,
     bookingRequired: category === 'tour' || category === 'event',
+    ...(typeof place.address === 'string' ? { address: place.address } : {}),
+    ...(typeof place.providerPlaceId === 'string' ? { providerPlaceId: place.providerPlaceId } : {}),
+    photos: (Array.isArray(place.imageUrls) ? place.imageUrls : typeof place.imageUrl === 'string' ? [place.imageUrl] : [])
+      .filter((url): url is string => typeof url === 'string')
+      .map((url) => ({ url, provider: 'editorial' })),
     interests: inferPlaceInterests(
       category,
       typeof place.summary === 'string' ? place.summary : '',
@@ -3000,6 +3302,11 @@ function inferPlaceInterests(
   return fallbackInterests.length > 0 ? fallbackInterests.slice(0, 3) : ['culture'];
 }
 
+function categoryLabelForSummary(category: Place['category']): string {
+  const article = ['event', 'other'].includes(category) ? 'An' : 'A';
+  return `${article} ${category.replaceAll('_', ' ')}`;
+}
+
 function normalizeCategory(value: unknown): Place['category'] {
   const token = typeof value === 'string' ? value : 'other';
   const categories: Place['category'][] = [
@@ -3033,6 +3340,9 @@ function mapGooglePlaceToDomainPlace(
     placeId: `google-${place.placeId}`,
     providerPlaceId: place.placeId,
     name: place.name,
+    summary: place.vicinity
+      ? `${categoryLabelForSummary(category)} listed near ${place.vicinity}. Check current hours and details before adding it to the day.`
+      : `${categoryLabelForSummary(category)} currently listed by Google Places near the destination center. Check current hours before visiting.`,
     category,
     coords: { lat: place.lat, lng: place.lng },
     durationMinutes:
@@ -3060,7 +3370,7 @@ function mapGooglePlaceToDomainPlace(
 function mapExperienceToDomainPlace(
   experience: MobileExperience,
   _catalogDestination: { lat?: unknown; lng?: unknown } | null | undefined,
-  interests: Interest[],
+  _interests: Interest[],
 ): Place | null {
   const hasExperienceCoords = hasNumericCoords(experience.lat, experience.lng);
   if (!hasExperienceCoords) return null;
@@ -3068,12 +3378,13 @@ function mapExperienceToDomainPlace(
   return {
     placeId: `experience-${experience.id}`,
     name: experience.title,
-    category: 'tour',
+    summary: experience.summary,
+    category: normalizeCategory(experience.category ?? 'tour'),
     coords: {
       lat: Number(experience.lat),
       lng: Number(experience.lng),
     },
-    durationMinutes: Math.round((experience.durationHours ?? 2.5) * 60),
+    durationMinutes: experience.durationMinutes ?? Math.round((experience.durationHours ?? 2.5) * 60),
     estimatedCostPerPerson: experience.priceFrom ?? 60,
     bookingRequired: experience.bookingMode === 'external',
     rating: experience.rating,
@@ -3085,7 +3396,8 @@ function mapExperienceToDomainPlace(
       provider: experience.provider,
     })),
     fixedStartTimes: experience.availabilityStartTimes,
-    interests: normalizeInterests([...experience.tags, ...interests]),
+    interests: normalizeInterests(experience.tags),
+    address: experience.address,
     lgbtqRelevance: experience.lgbtqRelevance,
     source: experience.provider === 'viator' ? 'viator' : 'editorial_experience',
     ...(experience.affiliateUrl
@@ -3099,6 +3411,7 @@ function mapExperienceToDomainPlace(
               : {}),
             ...(experience.priceFrom !== undefined ? { price: experience.priceFrom } : {}),
             ...(experience.currency !== undefined ? { currency: experience.currency } : {}),
+            ...(experience.freeCancellation ? { cancellationSummary: 'Free cancellation available' } : {}),
           },
         }
       : {}),

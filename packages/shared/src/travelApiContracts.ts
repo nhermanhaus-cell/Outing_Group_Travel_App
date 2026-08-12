@@ -12,7 +12,19 @@ const experience = z.object({
   images: z.array(z.object({ url: z.string().url(), width: z.number().optional(), height: z.number().optional() })),
   rating: z.number().optional(), reviewCount: z.number().optional(), priceFrom: z.number().optional(), currency: z.string().optional(), durationMinutes: z.number().optional(),
   itinerary: z.unknown().optional(), inclusions: z.unknown().optional(), exclusions: z.unknown().optional(), logistics: z.unknown().optional(),
-  cancellationPolicy: z.unknown().optional(), tags: z.unknown().optional(), provider: z.literal('viator'), bookingMode: z.enum(['external', 'none']),
+  cancellationPolicy: z.unknown().optional(), tags: z.unknown().optional(),
+  category: z.enum(['bar', 'club', 'restaurant', 'cafe', 'museum', 'park', 'beach', 'spa', 'hotel', 'tour', 'event', 'shop', 'landmark', 'other']).optional(),
+  interestTags: z.array(z.string()).optional(),
+  lat: z.number().optional(), lng: z.number().optional(), address: z.string().optional(), locationName: z.string().optional(),
+  confirmationType: z.string().optional(), freeCancellation: z.boolean().optional(), flags: z.array(z.string()).optional(),
+  provider: z.literal('viator'), bookingMode: z.enum(['external', 'none']),
+});
+const viatorDestination = z.object({
+  destinationId: z.string(),
+  name: z.string(),
+  type: z.string().optional(),
+  distanceKm: z.number().optional(),
+  matchScore: z.number(),
 });
 
 const attributedImage = z.object({
@@ -106,7 +118,12 @@ const schemas: Record<string, z.ZodTypeAny> = {
   placeSearch: z.object({ places: z.array(place) }), placeTextSearch: z.object({ places: z.array(place) }), placeDetails: z.object({ place: place.nullable() }),
   geocode: z.object({ result: z.object({ formattedAddress: z.string().optional(), lat: z.number(), lng: z.number() }).nullable() }),
   routeMatrix: z.object({ elements: z.array(z.unknown()) }), route: z.object({ routes: z.array(z.unknown()) }),
-  viatorSearch: z.object({ products: z.array(experience) }), viatorProduct: z.object({ product: experience.nullable() }), viatorSchedule: z.object({ schedule: z.unknown() }),
+  viatorSearch: z.object({
+    products: z.array(experience),
+    resolvedDestination: viatorDestination.nullable().optional(),
+    source: z.literal('viator_live').optional(),
+  }),
+  viatorProduct: z.object({ product: experience.nullable() }), viatorSchedule: z.object({ schedule: z.unknown() }),
   commonsImageSearch: z.object({ images: z.array(attributedImage) }),
   locationImageSearch: z.object({
     images: z.array(attributedImage),

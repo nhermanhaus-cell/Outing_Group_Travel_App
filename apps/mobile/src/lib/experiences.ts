@@ -8,10 +8,6 @@ import {
 import { isExactViatorProductUrl } from '@gayi/shared';
 export { isExactViatorProductUrl } from '@gayi/shared';
 
-const PRODUCTS_SEARCH_URL = 'https://api.viator.com/partner/products/search';
-const DESTINATIONS_URL = 'https://api.viator.com/partner/destinations';
-const FREETEXT_URL = 'https://api.viator.com/partner/search/freetext';
-
 export interface MobileExperience {
   id: string;
   destinationSlug: string;
@@ -33,6 +29,11 @@ export interface MobileExperience {
   rating?: number;
   reviewCount?: number;
   durationMinutes?: number;
+  category?: ApiExperience['category'];
+  address?: string;
+  locationName?: string;
+  confirmationType?: string;
+  freeCancellation?: boolean;
   itinerary?: unknown;
   inclusions?: unknown;
   exclusions?: unknown;
@@ -41,6 +42,27 @@ export interface MobileExperience {
   availabilitySummary?: string[];
   availabilityStartTimes?: string[];
   bookingMode: 'none' | 'external';
+}
+
+export interface DestinationExperienceQuery {
+  destinationSlug: string;
+  destinationName: string;
+  country: string;
+  lat?: number;
+  lng?: number;
+  destinationType?: string;
+  currency?: string;
+  interests?: string[];
+  searchTerm?: string;
+  startDate?: string;
+  endDate?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  maxDurationMinutes?: number;
+  minRating?: number;
+  preferFreeCancellation?: boolean;
+  limit?: number;
+  signal?: AbortSignal;
 }
 
 type SeedExperience = (typeof experiencesSeed)[number] & {
@@ -71,24 +93,7 @@ function pickString(record: JsonRecord, keys: string[]): string | undefined {
   return undefined;
 }
 
-function pickNumber(record: JsonRecord, keys: string[]): number | undefined {
-  for (const key of keys) {
-    const value = record[key];
-    if (typeof value === 'number' && Number.isFinite(value)) return value;
-  }
-  return undefined;
-}
-
-function authHeaders(apiKey: string): Record<string, string> {
-  return {
-    Accept: 'application/json;version=2.0',
-    'Accept-Language': 'en-US',
-    'Content-Type': 'application/json',
-    'exp-api-key': apiKey,
-  };
-}
-
-function editorial(destinationSlug: string, limit: number, asViator: boolean): MobileExperience[] {
+function editorial(destinationSlug: string, limit: number): MobileExperience[] {
   return (experiencesSeed as SeedExperience[])
     .filter((e) => e.destinationSlug === destinationSlug)
     .slice(0, limit)
@@ -168,7 +173,14 @@ function mapApiExperience(item: ApiExperience, destinationSlug: string): MobileE
     currency: item.currency,
     rating: item.rating,
     reviewCount: item.reviewCount,
-    tags: ['bookable', 'viator'],
+    tags: [...new Set(['bookable', 'viator', ...(item.interestTags ?? [])])],
+    category: item.category,
+    lat: item.lat,
+    lng: item.lng,
+    address: item.address,
+    locationName: item.locationName,
+    confirmationType: item.confirmationType,
+    freeCancellation: item.freeCancellation,
     provider: 'viator',
     productUrl,
     affiliateUrl: productUrl,
@@ -181,141 +193,77 @@ function mapApiExperience(item: ApiExperience, destinationSlug: string): MobileE
   };
 }
 
-
-function extractImageUrls(item: JsonRecord): string[] {
-  const urls: string[] = [];
-  const push = (value: unknown) => {
-    if (typeof value === 'string' && value.startsWith('http') && !urls.includes(value)) {
-      urls.push(value);
-    }
-  };
-
-  const images = item['images'];
-  if (Array.isArray(images)) {
-    for (const image of images) {
-      if (!isRecord(image)) {
-        push(image);
-        continue;
-      }
-      push(image['url']);
-      push(image['src']);
-      push(image['photoURL']);
-      const variants = image['variants'];
-      if (Array.isArray(variants)) {
-        // Prefer larger variants when present.
-        const sorted = [...variants].sort((a, b) => {
-          const aw = isRecord(a) && typeof a['width'] === 'number' ? a['width'] : 0;
-          const bw = isRecord(b) && typeof b['width'] === 'number' ? b['width'] : 0;
-          return bw - aw;
-        });
-        for (const variant of sorted) {
-          if (isRecord(variant)) push(variant['url']);
-        }
-      }
-    }
-  }
-
-  push(item['image']);
-  push(item['imageUrl']);
-  push(item['thumbnailURL']);
-  return urls.slice(0, 4);
-}
-
-function mapProducts(raw: unknown[], destinationSlug: string, limit: number): MobileExperience[] {
-  const destinationName = slugToName(destinationSlug);
-  return raw
-    .map((item, index): MobileExperience | null => {
-      if (!isRecord(item)) return null;
-      const title = pickString(item, ['title', 'productName', 'name']);
-      if (!title) return null;
-      const id =
-        pickString(item, ['productCode', 'code', 'id']) ?? `viator-${destinationSlug}-${index}`;
-      const summary =
-        pickString(item, ['summary', 'description', 'shortDescription']) ??
-        `Bookable experience in ${destinationName} via Viator.`;
-      const affiliateUrl = pickString(item, ['productUrl', 'webURL', 'url']);
-      const pricing = isRecord(item['pricing']) ? item['pricing'] : null;
-      const product = isRecord(item['product']) ? item['product'] : item;
-      return {
-        id: String(id),
-        destinationSlug,
-        title,
-        summary,
-        imageUrls: extractImageUrls(product),
-        durationHours: pickNumber(item, ['durationHours', 'duration']),
-        priceFrom:
-          pickNumber(item, ['fromPrice', 'priceFrom', 'price']) ??
-          (pricing ? pickNumber(pricing, ['fromPrice', 'price']) : undefined),
-        currency:
-          pickString(item, ['currency', 'currencyCode']) ??
-          (pricing ? pickString(pricing, ['currency', 'currencyCode']) : undefined),
-        tags: ['bookable', 'viator'],
-        provider: 'viator',
-        affiliateUrl,
-        bookingMode: affiliateUrl ? 'external' : 'none',
-      };
-    })
-    .filter((e): e is MobileExperience => e != null)
-    .slice(0, limit);
-}
-
-async function fetchJson(url: string, init: RequestInit, timeoutMs = 5000): Promise<unknown> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const resp = await fetch(url, { ...init, signal: controller.signal });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    return await resp.json();
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 /**
- * Load experiences — live Viator Partner API when keyed, else editorial seed.
+ * Load destination-bound experiences through the server-only Viator proxy.
+ * The server resolves the city against Viator's taxonomy before searching, so
+ * similarly named destinations do not leak into one another's results.
  */
 export async function loadDestinationExperiences(
-  destinationSlug: string,
-  limit = 6,
-  interests: string[] = [],
+  query: DestinationExperienceQuery,
 ): Promise<{ experiences: MobileExperience[]; source: 'viator_live' | 'editorial_fallback' }> {
-  const destinationName = slugToName(destinationSlug);
+  const {
+    destinationSlug,
+    destinationName,
+    country,
+    lat,
+    lng,
+    destinationType,
+    currency = 'USD',
+    interests = [],
+    searchTerm,
+    startDate,
+    endDate,
+    minPrice,
+    maxPrice,
+    maxDurationMinutes,
+    minRating,
+    preferFreeCancellation = true,
+    limit = 8,
+    signal,
+  } = query;
 
   try {
-    const buckets = [[], ...interests.slice(0, 4).map((interest) => [interest])];
-    const results = await Promise.all(buckets.map((bucket) => invokeTravelApi<{ products: ApiExperience[] }>('viatorSearch', {
+    const result = await invokeTravelApi<{ products: ApiExperience[] }>('viatorSearch', {
       destination: destinationName,
-      interests: bucket,
-      limit: 6,
-      currency: 'USD',
-    }).catch(() => ({ products: [] }))));
+      country,
+      lat,
+      lng,
+      destinationType,
+      interests: interests.slice(0, 4),
+      searchTerm,
+      startDate,
+      endDate,
+      minPrice,
+      maxPrice,
+      maxDurationMinutes,
+      minRating,
+      preferFreeCancellation,
+      limit: Math.min(12, Math.max(1, limit)),
+      currency,
+    }, signal);
     const seen = new Set<string>();
-    const live = results.flatMap((result) => result.products)
+    const live = result.products
       .map((product) => mapApiExperience(product, destinationSlug))
       .filter((product) => {
         if (seen.has(product.id)) return false;
         seen.add(product.id);
         return true;
       })
-      .slice(0, Math.min(12, Math.max(8, limit)));
+      .slice(0, limit);
     if (live.length > 0) {
-      const enriched = await Promise.all(live.map(async (experience, index) => {
-        if (index >= 8 || !experience.productCode) return experience;
-        const schedule = await invokeTravelApi<{ schedule: unknown }>('viatorSchedule', { productCode: experience.productCode }).catch(() => null);
-        return schedule ? { ...experience, availabilitySummary: summarizeAvailability(schedule.schedule), availabilityStartTimes: extractStartTimes(schedule.schedule) } : experience;
-      }));
       return {
-        experiences: await enrichExperienceImages(enriched, destinationName),
+        experiences: await enrichExperienceImages(live, destinationName),
         source: 'viator_live',
       };
     }
-  } catch {
+  } catch (error) {
+    if (signal?.aborted) throw error;
     // fall through
   }
 
   return {
     experiences: await enrichExperienceImages(
-      editorial(destinationSlug, limit, false),
+      editorial(destinationSlug, limit),
       destinationName,
     ),
     source: 'editorial_fallback',

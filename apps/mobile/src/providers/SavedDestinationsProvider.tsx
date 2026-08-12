@@ -10,6 +10,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { posthog } from '../config/posthog';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AppProviders';
+import { useAnalytics } from '../analytics/analytics-provider';
+import { featureFlags } from '../lib/featureFlags';
+import { loadAssistantInsights, recordCommunityRecommendationSignal } from '../lib/assistant-api';
 import {
   mergeSavedDestinationSlugs,
   normalizeSavedDestinationSlugs,
@@ -28,6 +31,7 @@ const SavedDestinationsContext = createContext<SavedDestinationsContextValue | n
 
 export function SavedDestinationsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const { observePreference } = useAnalytics();
   const [slugs, setSlugs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -88,6 +92,14 @@ export function SavedDestinationsProvider({ children }: { children: React.ReactN
       destination_slug: slug,
       source,
     });
+    observePreference({
+      subjectType: 'destination',
+      subjectKey: slug,
+      value: willSave ? 1 : -0.8,
+      weight: willSave ? 1.5 : 1,
+      source: willSave ? 'save' : 'remove',
+      observedAt: new Date().toISOString(),
+    });
     if (user && supabase) {
       if (willSave) {
         await supabase.from('saved_destinations').upsert({
@@ -102,8 +114,23 @@ export function SavedDestinationsProvider({ children }: { children: React.ReactN
           .eq('user_id', user.id)
           .eq('destination_slug', slug);
       }
+      if (featureFlags.communitySignalsV1) {
+        void recordCommunityRecommendationSignal({
+          subjectType: 'destination',
+          subjectKey: slug,
+          signalType: 'saved',
+          value: willSave ? 1 : -1,
+        }).catch(() => undefined);
+      }
     }
-  }, [slugs, user]);
+    if (user && featureFlags.proactiveInsightsV1) {
+      void loadAssistantInsights({
+        surface: 'home',
+        trigger: 'destination_saved',
+        force: true,
+      }).catch(() => undefined);
+    }
+  }, [observePreference, slugs, user]);
 
   const value = useMemo<SavedDestinationsContextValue>(() => ({
     slugs,

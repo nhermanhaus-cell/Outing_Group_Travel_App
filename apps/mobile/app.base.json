@@ -29,6 +29,7 @@
     "expo-router",
     ["expo-splash-screen", { "image": "./assets/images/outing-splash-icon.png", "resizeMode": "contain", "backgroundColor": "#1A1611" }],
     "expo-secure-store",
+    ["expo-web-browser", { "experimentalLauncherActivity": false }],
     "expo-font",
     "expo-apple-authentication",
     ["expo-calendar", { "calendarPermission": "Outing uses calendar access only when you choose to add or update itinerary events." }],

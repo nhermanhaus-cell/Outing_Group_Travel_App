@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { FlatList, Pressable, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useAuth, useTrips } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
@@ -12,17 +13,51 @@ import { OutingIcon } from '../../components/ui/OutingIcon';
 import { RouteLine } from '../../components/ui/RouteLine';
 import { DestinationHeroImage } from '../../components/ui/DestinationHeroImage';
 import { useDestinations } from '../../src/providers/AppProviders';
+import { canDeleteTrip } from '../../src/lib/tripPermissions';
 
 export default function TripsScreen() {
   const { colors, spacing, radius, shadows } = useTheme();
   const { user } = useAuth();
-  const { trips, updateTrip } = useTrips();
+  const { trips, updateTrip, deleteTrip } = useTrips();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [renamingTrip, setRenamingTrip] = useState<LocalTrip | null>(null);
+  const [deletingTripId, setDeletingTripId] = useState<string | null>(null);
 
   const handleNewTrip = () => {
     router.push('/trips/new');
+  };
+
+  const confirmDelete = (trip: LocalTrip) => {
+    Alert.alert(
+      `Delete “${trip.name}”?`,
+      user
+        ? 'This removes the trip for everyone in the group. This cannot be undone.'
+        : 'This removes the trip from this phone. This cannot be undone.',
+      [
+        { text: 'Keep trip', style: 'cancel' },
+        {
+          text: 'Delete trip',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              setDeletingTripId(trip.tripId);
+              try {
+                await deleteTrip(trip.tripId);
+                void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              } catch (caught) {
+                Alert.alert(
+                  'Trip wasn’t deleted',
+                  caught instanceof Error ? caught.message : 'Please check your connection and try again.',
+                );
+              } finally {
+                setDeletingTripId(null);
+              }
+            })();
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -91,7 +126,15 @@ export default function TripsScreen() {
             <Button variant="ghost" onPress={() => router.push('/quiz')}>Help me choose where</Button>
           </View>
         }
-        renderItem={({ item }) => <TripCard trip={item} onRename={() => setRenamingTrip(item)} />}
+        ListFooterComponent={trips.length > 0 ? <NextTripIdeas /> : null}
+        renderItem={({ item }) => (
+          <TripCard
+            trip={item}
+            deleting={deletingTripId === item.tripId}
+            onRename={() => setRenamingTrip(item)}
+            onDelete={canDeleteTrip(item, user?.id) ? () => confirmDelete(item) : undefined}
+          />
+        )}
       />
 
       <RenameTripSheet visible={Boolean(renamingTrip)} currentName={renamingTrip?.name ?? ''} onDismiss={() => setRenamingTrip(null)} onSave={(name) => updateTrip(renamingTrip!.tripId, { name })} />
@@ -100,7 +143,12 @@ export default function TripsScreen() {
   );
 }
 
-function TripCard({ trip, onRename }: { trip: LocalTrip; onRename: () => void }) {
+function TripCard({ trip, deleting, onRename, onDelete }: {
+  trip: LocalTrip;
+  deleting: boolean;
+  onRename: () => void;
+  onDelete?: () => void;
+}) {
   const { colors, spacing, radius, shadows } = useTheme();
   const router = useRouter();
   const { getBySlug } = useDestinations();
@@ -114,6 +162,7 @@ function TripCard({ trip, onRename }: { trip: LocalTrip; onRename: () => void })
 
   return (
     <Pressable
+      disabled={deleting}
       onPress={() => router.push(`/trips/${trip.tripId}`)}
       style={({ pressed }) => ({
         backgroundColor: colors.cardBackground,
@@ -136,7 +185,7 @@ function TripCard({ trip, onRename }: { trip: LocalTrip; onRename: () => void })
       <View style={{ padding: spacing.base, gap: spacing.sm }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <Text variant="h3" style={{ flex: 1 }}>{trip.name}</Text>
-        <Pressable hitSlop={12} onPress={(event) => { event.stopPropagation(); onRename(); }} accessibilityLabel="Rename trip"><Text style={{ fontSize: 20, color: colors.accent }}>✎</Text></Pressable>
+        {deleting ? <ActivityIndicator size="small" color={colors.accent} /> : null}
       </View>
       {trip.destinationName ? (
         <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
@@ -151,8 +200,105 @@ function TripCard({ trip, onRename }: { trip: LocalTrip; onRename: () => void })
           </Text>
         ) : null}
       </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.xs, borderTopWidth: 1, borderTopColor: colors.borderSubtle }}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Rename ${trip.name}`}
+          hitSlop={8}
+          onPress={(event) => { event.stopPropagation(); onRename(); }}
+          style={{ paddingVertical: spacing.xs, paddingRight: spacing.sm }}
+        >
+          <Text variant="labelMd" style={{ color: colors.accent }}>Rename</Text>
+        </Pressable>
+        {onDelete ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Delete ${trip.name}`}
+            disabled={deleting}
+            hitSlop={8}
+            onPress={(event) => { event.stopPropagation(); onDelete(); }}
+            style={{ paddingVertical: spacing.xs, paddingHorizontal: spacing.sm }}
+          >
+            <Text variant="labelMd" style={{ color: colors.error }}>{deleting ? 'Deleting…' : 'Delete'}</Text>
+          </Pressable>
+        ) : (
+          <Text variant="caption" style={{ color: colors.textTertiary }}>Only an organizer can delete this group trip</Text>
+        )}
+        <Text variant="labelMd" style={{ color: colors.accent, marginLeft: 'auto' }}>Open trip →</Text>
+      </View>
       </View>
     </Pressable>
+  );
+}
+
+function NextTripIdeas() {
+  const { colors, spacing, radius } = useTheme();
+  const router = useRouter();
+  const ideas = [
+    {
+      key: 'match',
+      eyebrow: 'PERSONALIZED MATCH',
+      title: 'Find somewhere that fits you',
+      summary: 'Turn your pace, interests, budget, and travel mood into destination matches.',
+      icon: 'spark' as const,
+      onPress: () => router.push('/quiz'),
+    },
+    {
+      key: 'ask',
+      eyebrow: 'ASK OUTING',
+      title: 'Start with a feeling or a season',
+      summary: 'Try “a warm long weekend in March” or “food, nightlife, and easy transit.”',
+      icon: 'ask' as const,
+      onPress: () => router.push({ pathname: '/ask', params: { prompt: 'Help me ideate on my next trip using my preferences, the time of year, and a few different budget levels.' } }),
+    },
+    {
+      key: 'browse',
+      eyebrow: 'EXPLORE',
+      title: 'Browse places worth saving',
+      summary: 'Collect a few possibilities, then compare their timing, cost, and tradeoffs.',
+      icon: 'discover' as const,
+      onPress: () => router.push('/discover'),
+    },
+  ];
+
+  return (
+    <View style={{ marginTop: spacing['2xl'], paddingTop: spacing.xl, borderTopWidth: 1, borderTopColor: colors.border, gap: spacing.md }}>
+      <View style={{ gap: spacing.xs }}>
+        <Text variant="displaySm">Where to next?</Text>
+        <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+          You don’t need a destination yet. Start with what you want the trip to feel like.
+        </Text>
+      </View>
+      {ideas.map((idea) => (
+        <Pressable
+          key={idea.key}
+          accessibilityRole="button"
+          onPress={idea.onPress}
+          style={({ pressed }) => ({
+            padding: spacing.base,
+            borderRadius: radius.xl,
+            backgroundColor: colors.backgroundSecondary,
+            borderWidth: 1,
+            borderColor: colors.border,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.md,
+            opacity: pressed ? 0.78 : 1,
+          })}
+        >
+          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+            <OutingIcon name={idea.icon} size={21} color={colors.accent} />
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text variant="labelSm" style={{ color: colors.accent }}>{idea.eyebrow}</Text>
+            <Text variant="h4">{idea.title}</Text>
+            <Text variant="bodySm" style={{ color: colors.textSecondary }}>{idea.summary}</Text>
+          </View>
+          <Text style={{ color: colors.accent, fontSize: 20 }}>→</Text>
+        </Pressable>
+      ))}
+      <Button variant="secondary" onPress={() => router.push('/trips/new')}>Plan from scratch</Button>
+    </View>
   );
 }
 

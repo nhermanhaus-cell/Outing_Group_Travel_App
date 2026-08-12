@@ -8,11 +8,9 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { computePulse } from '@gayi/domain';
-import type { PulseInputs } from '@gayi/domain';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { useDestinations } from '../../src/providers/AppProviders';
+import { useAuth, useDestinations } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -25,7 +23,6 @@ import travelAdvisories from '../../assets/public/travel-advisories.json';
 import travelBlogInsights from '../../assets/editorial/travel-blog-insights.json';
 import {
   loadDestinationExperiences,
-  type MobileExperience,
 } from '../../src/lib/experiences';
 import { lookupPlaceByName } from '../../src/lib/googlePlaces';
 import {
@@ -42,6 +39,10 @@ import { useDestinationImages } from '../../src/lib/destinationImages';
 import { useSavedDestinations } from '../../src/providers/SavedDestinationsProvider';
 import { OutingIcon } from '../../components/ui/OutingIcon';
 import { Skeleton } from '../../components/ui/Skeleton';
+import { featureFlags } from '../../src/lib/featureFlags';
+import { loadAssistantInsights } from '../../src/lib/assistant-api';
+import { DecisionBriefCard } from '../../components/assistant/DecisionBriefCard';
+import { buildDestinationPulse } from '../../src/lib/communityPulse';
 
 type TabKey = 'overview' | 'lgbtq' | 'places' | 'events';
 
@@ -64,6 +65,12 @@ function priceBand(value?: number): string | undefined {
   if (value < 100) return '50_99';
   if (value < 250) return '100_249';
   return '250_plus';
+}
+
+function isOlderThan(value: string | undefined, days: number): boolean {
+  if (!value) return true;
+  const timestamp = new Date(value).getTime();
+  return !Number.isFinite(timestamp) || Date.now() - timestamp > days * 24 * 60 * 60 * 1000;
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -241,6 +248,7 @@ function DestinationPlaceCard({ place, destinationName, center, index }: { place
 export default function DestinationDetailScreen() {
   const { colors, spacing, radius } = useTheme();
   const { isSaved, toggleSaved } = useSavedDestinations();
+  const { user } = useAuth();
   const { slug, quizAnswers } = useLocalSearchParams<{ slug: string; quizAnswers?: string }>();
   const { getBySlug, getScoringBySlug } = useDestinations();
   const router = useRouter();
@@ -249,15 +257,46 @@ export default function DestinationDetailScreen() {
   const experienceImpressionKeyRef = useRef('');
 
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
-  const [destinationExperiences, setDestinationExperiences] = useState<MobileExperience[]>(
-    [],
-  );
-  const [experienceSource, setExperienceSource] = useState<
-    'viator_live' | 'editorial_fallback'
-  >('editorial_fallback');
-
   const destination = useMemo(() => getBySlug(slug ?? ''), [slug, getBySlug]);
   const scoringDestination = useMemo(() => getScoringBySlug(slug ?? ''), [slug, getScoringBySlug]);
+  const destinationExperiencesQuery = useQuery({
+    queryKey: ['destination-experiences-v4', destination?.slug, destination?.interests ?? []],
+    queryFn: ({ signal }) => loadDestinationExperiences({
+      destinationSlug: destination!.slug,
+      destinationName: destination!.name,
+      country: destination!.country,
+      lat: destination!.lat,
+      lng: destination!.lng,
+      destinationType: destination!.destinationType,
+      currency: destination!.currency,
+      interests: destination!.interests,
+      minRating: 3.5,
+      preferFreeCancellation: true,
+      limit: 8,
+      signal,
+    }),
+    enabled: Boolean(destination),
+    staleTime: 6 * 60 * 60_000,
+    retry: 1,
+  });
+  const destinationExperiences = destinationExperiencesQuery.data?.experiences ?? [];
+  const experienceSource = destinationExperiencesQuery.data?.source ?? 'editorial_fallback';
+  const personalizedInsight = useQuery({
+    queryKey: ['assistant-insights', 'destination', destination?.slug, user?.id],
+    queryFn: ({ signal }) => loadAssistantInsights({
+      surface: 'destination',
+      destinationSlug: destination!.slug,
+      trigger: 'screen',
+      force: false,
+    }, signal),
+    enabled: Boolean(user && destination && featureFlags.proactiveInsightsV1),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+  const fitRecommendation = personalizedInsight.data?.insights
+    .flatMap((insight) => insight.recommendations)
+    .find((recommendation) => recommendation.destinationSlug === destination?.slug);
+  const decisionInsight = personalizedInsight.data?.insights.find((insight) => insight.kind === 'decision_brief');
   const destinationImages = useDestinationImages(destination);
   const weatherQuery = useQuery({
     queryKey: ['destination-weather-v1', destination?.slug],
@@ -286,6 +325,8 @@ export default function DestinationDetailScreen() {
     track(ANALYTICS_EVENTS.DESTINATION_VIEWED, {
       destinationSlug: destination.slug,
       source: quizAnswers ? 'questionnaire_results' : 'discovery',
+      catalogCohort: destination.catalogWave ?? 'original',
+      advisoryLevel: destination.travelerAdvisoryLevel ?? 'standard',
     });
     const timer = setTimeout(() => {
       observePreference({
@@ -323,47 +364,9 @@ export default function DestinationDetailScreen() {
     });
   }, [destination?.slug, destinationExperiences, track]);
 
-  useEffect(() => {
-    if (!slug) {
-      setDestinationExperiences([]);
-      setExperienceSource('editorial_fallback');
-      return;
-    }
-
-    let cancelled = false;
-    void (async () => {
-      try {
-        const { experiences, source } = await loadDestinationExperiences(slug);
-        if (cancelled) return;
-        setDestinationExperiences(experiences);
-        setExperienceSource(source);
-      } catch {
-        if (cancelled) return;
-        setDestinationExperiences([]);
-        setExperienceSource('editorial_fallback');
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [slug]);
-
   const pulse = useMemo(() => {
-    if (!destination?.communityPulseComponents) return null;
-    const c = destination.communityPulseComponents;
-    const inputs: PulseInputs = {
-      eventCount30d: c.upcomingEvents30d ?? 0,
-      venueDensityPer100k: c.venueDensity ?? 0,
-      reviewCount: c.recentReviews ?? 0,
-      activeContributors30d: c.activeContributors ?? 0,
-      publicTripsCount: c.publicTrips ?? 0,
-      aggregateCheckins30d: c.aggregateCheckins ?? 0,
-      responseRate: c.questionResponseRate ?? 0,
-      verifiedVenueCount: Math.round((c.venueDensity ?? 0) * 0.4),
-      prideEventThisYear: (destination.events ?? []).some((e: { category: string }) => e.category === 'pride'),
-    };
-    return computePulse(inputs);
+    if (!destination) return null;
+    return buildDestinationPulse(destination);
   }, [destination]);
 
   const advisoryLinks = useMemo(() => {
@@ -424,7 +427,6 @@ export default function DestinationDetailScreen() {
   const legal = lgbtq?.legalEqualityScore ?? 0;
   const opinion = lgbtq?.publicOpinionScore ?? 0;
   const destinationRating = getDestinationRating({
-    reviewScore: scoringDestination?.reviewScore,
     communityScore: scoringDestination?.communityScore,
     nightlifeScore: scoringDestination?.nightlifeScore,
     legalEqualityScore: lgbtq?.legalEqualityScore,
@@ -434,6 +436,9 @@ export default function DestinationDetailScreen() {
     legalEqualityScore: lgbtq?.legalEqualityScore,
     publicOpinionScore: lgbtq?.publicOpinionScore,
   });
+  const advisoryLevel = destination.travelerAdvisoryLevel ?? 'standard';
+  const showAdvisory = advisoryLevel === 'elevated' || advisoryLevel === 'severe';
+  const lgbtqContextIsStale = isOlderThan(lgbtq?.lastReviewedAt, 90);
 
   const TABS: Array<{ key: TabKey; label: string }> = [
     { key: 'overview', label: 'Overview' },
@@ -450,7 +455,6 @@ export default function DestinationDetailScreen() {
           <DestinationHeroImage
             destination={destination}
             style={{ width: '100%', height: 380 }}
-            attributionTop={insets.top + 58}
           />
           <View style={{ position: 'absolute', top: insets.top + spacing.sm, left: spacing.base, right: spacing.base, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Pressable onPress={() => router.back()} style={{ backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: radius.full, padding: spacing.sm }}>
@@ -490,16 +494,69 @@ export default function DestinationDetailScreen() {
         </View>
 
         <View style={{ paddingHorizontal: spacing.base }}>
+          {showAdvisory ? (
+            <View
+              accessibilityRole="alert"
+              style={{ marginTop: spacing.base, padding: spacing.base, borderRadius: radius.lg, backgroundColor: colors.warningLight, gap: spacing.xs }}
+            >
+              <Text variant="h4">Review current LGBTQ+ guidance</Text>
+              <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                {advisoryLevel === 'severe'
+                  ? 'Local laws or enforcement can create serious risk for LGBTQ+ travelers. Review the sourced legal context and current government guidance before planning.'
+                  : 'Legal protections and day-to-day experiences can vary. Review the sourced local context before deciding whether this destination fits you.'}
+              </Text>
+              <Button
+                size="sm"
+                variant="secondary"
+                onPress={() => {
+                  track(ANALYTICS_EVENTS.DESTINATION_ADVISORY_OPENED, {
+                    destinationSlug: destination.slug,
+                    advisoryLevel,
+                  });
+                  setActiveTab('lgbtq');
+                }}
+              >
+                Read LGBTQ+ context
+              </Button>
+            </View>
+          ) : null}
           {/* ─── Overview ─── */}
           {activeTab === 'overview' && (
             <View style={{ gap: spacing.xs }}>
+              {featureFlags.decisionBriefsV1 && decisionInsight?.decisionCard ? (
+                <View style={{ marginTop: spacing.lg }}>
+                  <DecisionBriefCard
+                    card={decisionInsight.decisionCard}
+                    surface="destination"
+                    onAction={(card) => router.push({
+                      pathname: '/ask',
+                      params: { destinationSlug: destination.slug, prompt: card.action?.value },
+                    })}
+                  />
+                </View>
+              ) : null}
               <SectionTitle>About</SectionTitle>
               <Text variant="bodyLg" style={{ color: colors.textSecondary, lineHeight: 26 }}>
                 {destination.editorialSummary}
               </Text>
+              {!featureFlags.decisionBriefsV1 && fitRecommendation ? (
+                <View style={{ marginTop: spacing.md, padding: spacing.base, borderRadius: radius.xl, backgroundColor: colors.poolLight, gap: spacing.sm }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md }}>
+                    <Text variant="h3">Why this fits you</Text>
+                    {fitRecommendation.fitScore !== undefined ? <Badge label={`${Math.round(fitRecommendation.fitScore)}% match`} variant="info" /> : null}
+                  </View>
+                  <Text variant="bodySm" style={{ color: colors.textSecondary }}>{fitRecommendation.fitReasons.join(' · ')}</Text>
+                  {fitRecommendation.tradeoffs.length ? (
+                    <Text variant="caption" style={{ color: colors.textTertiary }}>Consider: {fitRecommendation.tradeoffs.join(' · ')}</Text>
+                  ) : null}
+                  <Button size="sm" variant="secondary" onPress={() => router.push({ pathname: '/ask', params: { destinationSlug: destination.slug } })}>Ask Outing about {destination.name}</Button>
+                </View>
+              ) : user && featureFlags.assistantV1 ? (
+                <Button size="sm" variant="secondary" onPress={() => router.push({ pathname: '/ask', params: { destinationSlug: destination.slug } })}>Ask Outing about {destination.name}</Button>
+              ) : null}
               {destinationRating ? (
                 <Text variant="caption" style={{ color: colors.textTertiary }}>
-                  Destination rating {destinationRating.score}/100 blends assigned review, community, nightlife, legal-equality, and public-opinion scores. It is not a safety rating.
+                  Destination rating {destinationRating.score}/100 blends sourced community infrastructure, nightlife, legal-equality, and public-opinion context. It is not a user review or safety rating.
                 </Text>
               ) : null}
               {contextRating ? (
@@ -610,9 +667,20 @@ export default function DestinationDetailScreen() {
                 ))}
               </View>
 
-              {destinationExperiences.length > 0 && (
+              <SectionTitle>Things to do</SectionTitle>
+              {destinationExperiencesQuery.isPending ? (
+                <Card elevated padded style={{ marginBottom: spacing.sm }}>
+                  <View style={{ gap: spacing.sm }}>
+                    <Skeleton height={150} borderRadius={radius.md} />
+                    <Skeleton height={20} width="72%" borderRadius={radius.sm} />
+                    <Skeleton height={14} width="94%" borderRadius={radius.sm} />
+                    <Text variant="caption" style={{ color: colors.textTertiary }}>
+                      Finding the best bookable experiences in {destination.name}…
+                    </Text>
+                  </View>
+                </Card>
+              ) : destinationExperiences.length > 0 ? (
                 <>
-                  <SectionTitle>Things to do</SectionTitle>
                   {destinationExperiences.map((experience, index) => (
                     <Card key={experience.id} elevated padded style={{ marginBottom: spacing.sm }}>
                       <View style={{ gap: spacing.sm }}>
@@ -632,6 +700,11 @@ export default function DestinationDetailScreen() {
                           {experienceSource === 'viator_live' || experience.provider === 'viator' ? (
                             <Badge label="Viator" variant="warning" />
                           ) : null}
+                          {experience.rating ? <Badge label={`${experience.rating.toFixed(1)} ★`} variant="success" /> : null}
+                          {experience.priceFrom !== undefined ? (
+                            <Badge label={`From ${experience.currency ?? ''} ${Math.round(experience.priceFrom)}`} variant="accent" />
+                          ) : null}
+                          {experience.freeCancellation ? <Badge label="Free cancellation" variant="success" /> : null}
                           {experience.tags?.slice(0, 4).map((tag) => (
                             <Badge key={tag} label={tag} variant="default" />
                           ))}
@@ -673,6 +746,20 @@ export default function DestinationDetailScreen() {
                     </Text>
                   ) : null}
                 </>
+              ) : (
+                <Card padded style={{ marginBottom: spacing.sm }}>
+                  <View style={{ gap: spacing.sm }}>
+                    <Text variant="h4">More experiences are coming</Text>
+                    <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                      Viator does not currently have a destination-matched option available here. Outing will still use verified places and events when planning your days.
+                    </Text>
+                    {destinationExperiencesQuery.isError ? (
+                      <Button size="sm" variant="secondary" onPress={() => void destinationExperiencesQuery.refetch()}>
+                        Try again
+                      </Button>
+                    ) : null}
+                  </View>
+                </Card>
               )}
 
               {destination.neighborhoods?.length > 0 && (
@@ -890,9 +977,14 @@ export default function DestinationDetailScreen() {
 
               {lgbtq?.lastReviewedAt && (
                 <Text variant="caption" style={{ color: colors.textTertiary, marginTop: spacing.md }}>
-                  Reviewed {lgbtq.lastReviewedAt}
+                  Reviewed {new Date(lgbtq.lastReviewedAt).toLocaleDateString()}
+                  {lgbtqContextIsStale ? ' · Context is due for review' : ''}
                 </Text>
               )}
+
+              {lgbtqContextIsStale ? (
+                <Badge label="Context may be stale" variant="warning" />
+              ) : null}
 
               <View style={{ marginTop: spacing.lg, padding: spacing.md, backgroundColor: colors.warningLight ?? colors.backgroundSecondary, borderRadius: radius.md }}>
                 <Text variant="bodySm" style={{ color: colors.textSecondary }}>

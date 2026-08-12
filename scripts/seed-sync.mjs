@@ -25,6 +25,10 @@ copyFileSync(
   resolve(ROOT, 'apps/mobile/assets/seed/destinations.scoring.json'),
 );
 copyFileSync(
+  resolve(ROOT, 'fixtures/seed/destinations.scoring.json'),
+  resolve(ROOT, 'packages/providers/src/plugins/destinations/catalog-scoring.json'),
+);
+copyFileSync(
   resolve(ROOT, 'fixtures/seed/experiences.json'),
   resolve(ROOT, 'apps/mobile/assets/seed/experiences.json'),
 );

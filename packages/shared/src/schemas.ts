@@ -19,6 +19,9 @@ export const LgbtqLegalStatusSchema = z.enum([
   'heavily_criminalized',
 ]);
 
+export const DestinationTypeSchema = z.enum(['city', 'island', 'resort_area']);
+export const TravelerAdvisoryLevelSchema = z.enum(['standard', 'caution', 'elevated', 'severe']);
+
 export const WeatherPreferenceSchema = z.enum(['hot', 'warm', 'mild', 'cool', 'any']);
 
 export const InterestSchema = z.enum([
@@ -121,6 +124,7 @@ export const UserTravelProfileSchema = z.object({
   homeAirports: z.array(HomeAirportSchema),
   coarseHomeRegion: z.string().optional(),
   defaultInterests: z.array(InterestSchema),
+  preferredTravelMonths: z.array(z.number().int().min(1).max(12)).max(12).optional(),
   defaultGroupSize: z.number().int().min(1).max(50).optional(),
   defaultTripLengthDays: z.number().int().min(1).max(90).optional(),
   preferredTravelRanges: z.array(TravelRangeSchema),
@@ -161,6 +165,8 @@ export const DestinationSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/),
   name: z.string().min(1),
   country: z.string().min(1),
+  destinationType: DestinationTypeSchema.default('city'),
+  travelerAdvisoryLevel: TravelerAdvisoryLevelSchema.default('standard'),
   continentCode: z.string().min(2).max(3),
   nearestAirportCodes: z.array(z.string().length(3).toUpperCase()),
   legalStatus: LgbtqLegalStatusSchema,

@@ -2,9 +2,11 @@ appId: com.gayi.app
 ---
 - launchApp:
     clearState: true
-- assertVisible: "Skip"
+- assertVisible: "Sign in"
 - takeScreenshot: "screenshots/first-open-light"
-- tapOn: "Skip"
+- tapOn: "Sign in"
+- assertVisible: "Browse as guest"
+- tapOn: "Browse as guest"
 - assertVisible: "What are we getting into?"
 - assertVisible: "Find my place"
 - assertVisible: "Plan a trip"

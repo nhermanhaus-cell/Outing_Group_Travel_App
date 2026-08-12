@@ -1,7 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -9,21 +10,35 @@ import {
   View,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import type {
+  AssistantRecommendation,
+  AssistantDecisionCard,
   AssistantProposal,
   AssistantScope,
   AssistantSource,
+  DestinationCandidate,
   ConversationVisibility,
 } from '@gayi/shared';
+import { ANALYTICS_EVENTS } from '@gayi/shared';
 import { posthog } from '../../src/config/posthog';
-import { reviewAssistantProposal, streamAssistant } from '../../src/lib/assistant-api';
+import { useAnalytics } from '../../src/analytics/analytics-provider';
+import {
+  loadAssistantConversationMessages,
+  loadAssistantInsights,
+  reviewAssistantProposal,
+  streamAssistant,
+} from '../../src/lib/assistant-api';
 import { applyAssistantProposalToTrip } from '../../src/lib/assistantProposals';
+import { featureFlags } from '../../src/lib/featureFlags';
 import { useAuth, useTrips } from '../../src/providers/AppProviders';
 import { useSavedDestinations } from '../../src/providers/SavedDestinationsProvider';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { Text } from '../ui/Text';
 import { Button } from '../ui/Button';
 import { OutingIcon } from '../ui/OutingIcon';
+import { DecisionBriefCard } from './DecisionBriefCard';
 
 type Message = {
   id: string;
@@ -31,6 +46,9 @@ type Message = {
   content: string;
   sources?: AssistantSource[];
   proposals?: AssistantProposal[];
+  recommendations?: AssistantRecommendation[];
+  decisionCards?: AssistantDecisionCard[];
+  provisionalDestinations?: DestinationCandidate[];
 };
 
 const STARTERS = [
@@ -44,27 +62,92 @@ export function AssistantChat({
   scope,
   visibility,
   onVisibilityChange,
+  initialConversationId,
+  initialDraft,
 }: {
   scope: AssistantScope;
   visibility: ConversationVisibility;
   onVisibilityChange?: (visibility: ConversationVisibility) => void;
+  initialConversationId?: string;
+  initialDraft?: string;
 }) {
   const { colors, spacing, radius } = useTheme();
   const { user } = useAuth();
+  const { track } = useAnalytics();
+  const router = useRouter();
   const { getTrip, updateTrip } = useTrips();
   const { toggleSaved } = useSavedDestinations();
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState(initialDraft ?? '');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [conversationId, setConversationId] = useState<string>();
+  const [conversationId, setConversationId] = useState<string | undefined>(initialConversationId);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
+  const [status, setStatus] = useState<string>();
   const abortRef = useRef<AbortController | null>(null);
+  const trackedInsightIdsRef = useRef(new Set<string>());
   const scrollRef = useRef<ScrollView | null>(null);
   const scopedTrip = scope.kind === 'trip' ? getTrip(scope.tripId) : undefined;
   const memberRole = scopedTrip?.members?.find((member) => member.id === user?.id)?.role;
   const canApplyDirectly = !scopedTrip?.members?.length ||
     memberRole === 'owner' ||
     memberRole === 'organizer';
+  const insightSurface = scope.kind === 'trip' ? 'trip' : scope.kind === 'destination' ? 'destination' : 'ask';
+  const insights = useQuery({
+    queryKey: ['assistant-insights', insightSurface, scope.kind === 'trip' ? scope.tripId : scope.kind === 'destination' ? scope.destinationSlug : 'general'],
+    queryFn: ({ signal }) => loadAssistantInsights({
+      surface: insightSurface,
+      ...(scope.kind === 'trip' ? { tripId: scope.tripId } : {}),
+      ...(scope.kind === 'destination' ? { destinationSlug: scope.destinationSlug } : {}),
+      trigger: 'screen',
+      force: false,
+    }, signal),
+    enabled: Boolean(user && featureFlags.assistantPersonalizationV1),
+    staleTime: 5 * 60_000,
+    retry: 1,
+  });
+  const starters = useMemo(() => {
+    const personalized = insights.data?.insights.flatMap((insight) => insight.prompts) ?? [];
+    return [...new Set(personalized.length ? personalized : STARTERS)].slice(0, 4);
+  }, [insights.data?.insights]);
+
+  useEffect(() => {
+    for (const insight of insights.data?.insights ?? []) {
+      if (trackedInsightIdsRef.current.has(insight.id)) continue;
+      trackedInsightIdsRef.current.add(insight.id);
+      track(ANALYTICS_EVENTS.ASSISTANT_INSIGHT_VIEWED, {
+        surface: insight.surface,
+        insightKind: insight.kind,
+        resultCountBucket: insight.recommendations.length >= 5 ? '5+' : String(insight.recommendations.length),
+      });
+    }
+  }, [insights.data?.insights, track]);
+
+  useEffect(() => {
+    if (!initialConversationId) {
+      setConversationId(undefined);
+      setMessages([]);
+      return;
+    }
+    let active = true;
+    setConversationId(initialConversationId);
+    setLoading(true);
+    void loadAssistantConversationMessages(initialConversationId)
+      .then((stored) => {
+        if (!active) return;
+        setMessages(stored.map((message) => ({
+          id: message.id,
+          role: message.role,
+          content: message.content,
+        })));
+      })
+      .catch((caught) => active && setError(caught instanceof Error ? caught.message : 'Could not reopen this conversation.'))
+      .finally(() => active && setLoading(false));
+    return () => { active = false; };
+  }, [initialConversationId]);
+
+  useEffect(() => {
+    if (!conversationId && messages.length === 0 && initialDraft) setDraft(initialDraft);
+  }, [conversationId, initialDraft, messages.length]);
 
   const updateProposalStatus = (
     proposalId: string,
@@ -131,6 +214,7 @@ export function AssistantChat({
     setMessages((current) => [...current, userMessage, { id: assistantId, role: 'assistant', content: '' }]);
     setDraft('');
     setError(undefined);
+    setStatus('Understanding what would fit best…');
     setLoading(true);
     const startedAt = Date.now();
     const controller = new AbortController();
@@ -143,9 +227,17 @@ export function AssistantChat({
 
     try {
       await streamAssistant(
-        { conversationId, scope, visibility, message },
+        {
+          conversationId,
+          scope,
+          visibility,
+          message,
+          agentRollout: featureFlags.mistralAgentV1,
+          globalDiscoveryRollout: featureFlags.globalDiscoveryV1,
+        },
         (event) => {
           if (event.type === 'start') setConversationId(event.conversationId);
+          if (event.type === 'status') setStatus(event.message);
           if (event.type === 'delta') {
             setMessages((current) => current.map((item) =>
               item.id === assistantId ? { ...item, content: item.content + event.text } : item,
@@ -160,6 +252,25 @@ export function AssistantChat({
             setMessages((current) => current.map((item) =>
               item.id === assistantId
                 ? { ...item, proposals: [...(item.proposals ?? []), event.proposal] }
+                : item,
+            ));
+          }
+          if (event.type === 'recommendations') {
+            setMessages((current) => current.map((item) =>
+              item.id === assistantId ? { ...item, recommendations: event.recommendations } : item,
+            ));
+          }
+          if (event.type === 'decision') {
+            setMessages((current) => current.map((item) =>
+              item.id === assistantId
+                ? { ...item, decisionCards: [...(item.decisionCards ?? []), event.card] }
+                : item,
+            ));
+          }
+          if (event.type === 'provisional_destination') {
+            setMessages((current) => current.map((item) =>
+              item.id === assistantId
+                ? { ...item, provisionalDestinations: [...(item.provisionalDestinations ?? []), event.destination] }
                 : item,
             ));
           }
@@ -187,6 +298,7 @@ export function AssistantChat({
     } finally {
       abortRef.current = null;
       setLoading(false);
+      setStatus(undefined);
       requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
     }
   };
@@ -243,7 +355,7 @@ export function AssistantChat({
               Ask about destinations, timing, places, events, fares, or how to make a trip fit the people going.
             </Text>
             <View style={{ gap: spacing.sm }}>
-              {STARTERS.map((starter) => (
+              {starters.map((starter) => (
                 <Pressable
                   key={starter}
                   onPress={() => void send(starter)}
@@ -283,6 +395,86 @@ export function AssistantChat({
                   ))}
                 </View>
               ) : null}
+              {message.recommendations?.map((recommendation) => (
+                <Pressable
+                  key={recommendation.id}
+                  onPress={() => {
+                    const primarySource = message.sources?.find((source) =>
+                      recommendation.sourceIds.includes(source.id))?.provider ?? 'unknown';
+                    track(ANALYTICS_EVENTS.ASSISTANT_RECOMMENDATION_SELECTED, {
+                      recommendationKind: recommendation.kind,
+                      sourceProvider: primarySource,
+                      fitScoreBucket: recommendation.fitScore === undefined
+                        ? 'unknown'
+                        : recommendation.fitScore >= 80 ? '80-100' : recommendation.fitScore >= 60 ? '60-79' : '0-59',
+                      provisional: recommendation.provisional,
+                      bookable: recommendation.bookable,
+                    });
+                    if (recommendation.bookable) {
+                      track(ANALYTICS_EVENTS.AFFILIATE_CLICKED, {
+                        provider: primarySource,
+                        productCategory: recommendation.kind,
+                      });
+                    }
+                    if (recommendation.action?.type === 'open_destination' && recommendation.destinationSlug) {
+                      router.push(`/destinations/${recommendation.destinationSlug}`);
+                    } else if (recommendation.action?.type === 'ask_follow_up') {
+                      void send(recommendation.action.value);
+                    } else if (
+                      recommendation.action?.type === 'open_url' &&
+                      /^https:\/\//i.test(recommendation.action.value)
+                    ) {
+                      void Linking.openURL(recommendation.action.value);
+                    }
+                  }}
+                  style={{ padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.backgroundSecondary, borderWidth: 1, borderColor: colors.border, gap: spacing.xs }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
+                    <Text variant="labelMd" style={{ flex: 1 }}>{recommendation.title}</Text>
+                    {recommendation.fitScore !== undefined ? <Text variant="labelSm" style={{ color: colors.pool }}>{Math.round(recommendation.fitScore)}% fit</Text> : null}
+                  </View>
+                  <Text variant="bodySm" style={{ color: colors.textSecondary }}>{recommendation.summary}</Text>
+                  {recommendation.fitReasons.length ? (
+                    <Text variant="caption" style={{ color: colors.pool }}>Why it fits: {recommendation.fitReasons.join(' · ')}</Text>
+                  ) : null}
+                  {recommendation.tradeoffs.length ? (
+                    <Text variant="caption" style={{ color: colors.textTertiary }}>Consider: {recommendation.tradeoffs.join(' · ')}</Text>
+                  ) : null}
+                  {recommendation.affiliateDisclosure ? <Text variant="caption">{recommendation.affiliateDisclosure}</Text> : null}
+                </Pressable>
+              ))}
+              {message.decisionCards?.map((card) => (
+                <DecisionBriefCard
+                  key={card.id}
+                  card={card}
+                  surface={scope.kind === 'trip' ? 'trip' : scope.kind === 'destination' ? 'destination' : 'home'}
+                  onAction={() => {
+                    if (card.action?.type === 'ask_follow_up') void send(card.action.value);
+                    else if (card.action?.type === 'open_destination') router.push(`/destinations/${card.action.value}`);
+                    else if (card.action?.type === 'open_trip') router.push(`/trips/${card.action.value}`);
+                    else if (card.action?.type === 'open_compare') router.push({ pathname: '/compare', params: { slugs: card.action.value } });
+                    else if (card.action?.type === 'open_url' && /^https:\/\//i.test(card.action.value)) void Linking.openURL(card.action.value);
+                  }}
+                />
+              ))}
+              {message.provisionalDestinations?.map((destination) => (
+                <Pressable
+                  key={destination.id}
+                  onPress={() => {
+                    track(ANALYTICS_EVENTS.DESTINATION_CANDIDATE_VIEWED, {
+                      candidateStatus: destination.status,
+                      sourceCountBucket: destination.sources.length >= 5 ? '5+' : String(destination.sources.length),
+                    });
+                    router.push(`/destinations/provisional/${destination.id}`);
+                  }}
+                  style={{ padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.accentLight, borderWidth: 1, borderColor: colors.accent, gap: spacing.xs }}
+                >
+                  <Text variant="labelSm" style={{ color: colors.accent }}>PROVISIONAL DESTINATION</Text>
+                  <Text variant="h3">{destination.name}, {destination.country}</Text>
+                  <Text variant="bodySm" style={{ color: colors.textSecondary }}>{destination.summary}</Text>
+                  <Text variant="caption">Provider-backed suggestions are available now; editorial and LGBTQ+ context are still under review.</Text>
+                </Pressable>
+              ))}
               {message.proposals?.map((proposal) => (
                 <View key={proposal.id} style={{ backgroundColor: colors.poolLight, borderRadius: radius.lg, padding: spacing.md, gap: spacing.sm }}>
                   <Text variant="labelSm" style={{ color: colors.pool, textTransform: 'uppercase' }}>Review before changing</Text>
@@ -316,6 +508,7 @@ export function AssistantChat({
             <Text variant="bodySm" style={{ color: colors.error }}>{error}</Text>
           </View>
         ) : null}
+        {loading && status ? <Text variant="caption" style={{ color: colors.textTertiary, textAlign: 'center' }}>{status}</Text> : null}
       </ScrollView>
 
       <View style={{ padding: spacing.md, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.background, gap: spacing.sm }}>

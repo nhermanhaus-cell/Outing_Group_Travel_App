@@ -1,11 +1,17 @@
-import React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useAuth } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
+import { useAnalytics } from '../../src/analytics/analytics-provider';
+import { supabase } from '../../src/lib/supabase';
+import {
+  resetAssistantPersonalization,
+  setAssistantPersonalizationEnabled,
+} from '../../src/lib/assistant-api';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   const { colors, spacing } = useTheme();
@@ -19,10 +25,14 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function RowToggle({ label, subtitle, value }: { label: string; subtitle?: string; value: boolean }) {
+function RowToggle({ label, subtitle, value, onPress }: { label: string; subtitle?: string; value: boolean; onPress?: () => void }) {
   const { colors, spacing, radius } = useTheme();
   return (
-    <View
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value, disabled: !onPress }}
+      onPress={onPress}
+      disabled={!onPress}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -59,7 +69,7 @@ function RowToggle({ label, subtitle, value }: { label: string; subtitle?: strin
           }}
         />
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -74,6 +84,58 @@ export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
+  const {
+    policy,
+    preferenceSignals,
+    setPersonalizationEnabled,
+    clearPreferenceSignals,
+  } = useAnalytics();
+  const [personalizationSaving, setPersonalizationSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user || !supabase) return;
+    void supabase.from('user_privacy_settings')
+      .select('personalization_enabled')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (typeof data?.personalization_enabled === 'boolean') {
+          void setPersonalizationEnabled(data.personalization_enabled);
+        }
+      });
+  }, [setPersonalizationEnabled, user]);
+
+  const togglePersonalization = async () => {
+    const next = !policy.personalizationEnabled;
+    setPersonalizationSaving(true);
+    try {
+      await setPersonalizationEnabled(next);
+      if (user) await setAssistantPersonalizationEnabled(next);
+    } catch (caught) {
+      await setPersonalizationEnabled(!next);
+      Alert.alert('Could not update personalization', caught instanceof Error ? caught.message : 'Try again shortly.');
+    } finally {
+      setPersonalizationSaving(false);
+    }
+  };
+
+  const resetLearnedPreferences = () => Alert.alert(
+    'Reset what Outing learned?',
+    'This clears inferred preferences from saves, views, likes, dismissals, and accepted recommendations. Your questionnaire answers stay intact.',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reset',
+        style: 'destructive',
+        onPress: () => {
+          void Promise.all([
+            clearPreferenceSignals(),
+            user ? resetAssistantPersonalization() : Promise.resolve(),
+          ]).catch((caught) => Alert.alert('Could not reset preferences', caught instanceof Error ? caught.message : 'Try again shortly.'));
+        },
+      },
+    ],
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -132,6 +194,15 @@ export default function SettingsScreen() {
         </Section>
 
         <Section title="Privacy">
+          <RowToggle
+            label="Learn from my activity"
+            subtitle={personalizationSaving
+              ? 'Saving your preference…'
+              : `Use saves and feedback to improve recommendations${preferenceSignals.length ? ` · ${preferenceSignals.length} learned signals` : ''}`}
+            value={policy.personalizationEnabled}
+            onPress={personalizationSaving ? undefined : () => void togglePersonalization()}
+          />
+          <Button size="sm" variant="secondary" onPress={resetLearnedPreferences}>Reset learned preferences</Button>
           <RowToggle label="Share trip activity" subtitle="Show trips on community map" value={false} />
         </Section>
 

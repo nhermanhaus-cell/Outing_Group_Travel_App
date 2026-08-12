@@ -70,5 +70,8 @@
     "web": "expo start --web",
     "export:hosting": "node scripts/generate-link-associations.mjs && expo export --platform web"
   },
-  "private": true
+  "private": true,
+  "volta": {
+    "node": "22.22.0"
+  }
 }

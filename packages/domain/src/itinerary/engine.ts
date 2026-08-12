@@ -35,7 +35,7 @@ const BALANCED_SLOTS: TimeSlot[] = [
 ];
 
 const DOWNTIME_SLOTS: TimeSlot[] = [
-  { time: '10:00', bias: ['cafe', 'park', 'beach', 'spa'], maxMinutes: 90 },
+  { time: '10:00', bias: ['cafe', 'park', 'beach', 'spa', 'tour', 'landmark'], maxMinutes: 120 },
   { time: '12:30', bias: ['restaurant', 'cafe', 'food'], maxMinutes: 75 },
   { time: '14:00', bias: [], maxMinutes: 120, freeBlock: true },
   { time: '16:30', bias: ['museum', 'shop', 'landmark', 'park'], maxMinutes: 90 },
@@ -101,6 +101,19 @@ function scorePlaceForSlot(
   }
 
   return score;
+}
+
+function categoryFitsSlot(place: Place, slot: TimeSlot): boolean {
+  if (slot.bias.length === 0) return true;
+  if (place.category === 'restaurant' || place.category === 'cafe') {
+    return slot.bias.some((category) => ['restaurant', 'cafe', 'food'].includes(category));
+  }
+  if (place.category === 'bar' || place.category === 'club') {
+    return slot.bias.some((category) => ['bar', 'club', 'event'].includes(category));
+  }
+  return slot.bias.includes(place.category)
+    || (place.category === 'tour' && slot.bias.includes('landmark'))
+    || (place.category === 'event' && slot.bias.includes('tour'));
 }
 
 function whySelected(place: Place, prefs: TravelPreferences): string {
@@ -259,6 +272,14 @@ export function generateItinerary(input: ItineraryInput): ItineraryItem[] {
   }
 
   for (let day = 1; day <= tripDurationDays; day++) {
+    const remainingCandidateCount = places.filter(
+      (place) => !used.has(place.placeId) && !excluded.has(place.placeId),
+    ).length;
+    const remainingDays = tripDurationDays - day + 1;
+    // Reserve scarce offline/editorial candidates for later days instead of
+    // exhausting the entire destination catalog on day one.
+    const newPlaceTarget = Math.max(1, Math.ceil(remainingCandidateCount / remainingDays));
+    let newPlacesScheduled = 0;
     const dayDate = dateForDay(input.startDate, day);
     const locked = (lockedByDay.get(day) ?? []).sort((a, b) => a.time.localeCompare(b.time));
     items.push(...locked);
@@ -297,9 +318,10 @@ export function generateItinerary(input: ItineraryInput): ItineraryItem[] {
         cursor = endMinute;
         continue;
       }
+      if (newPlacesScheduled >= newPlaceTarget) continue;
 
       const candidates = places
-        .filter((p) => !used.has(p.placeId) && !excluded.has(p.placeId))
+        .filter((p) => !used.has(p.placeId) && !excluded.has(p.placeId) && categoryFitsSlot(p, slot))
         .map((p) => {
           const route = routeBetween(
             previousId,
@@ -358,6 +380,7 @@ export function generateItinerary(input: ItineraryInput): ItineraryItem[] {
 
       const { place } = top;
       used.add(place.placeId);
+      newPlacesScheduled += 1;
 
       const confidence = Math.min(1, 0.5 + (top.score / 100) * 0.5);
       const arrivalBufferMinutes = place.bookingRequired ? 15 : 10;
@@ -369,6 +392,7 @@ export function generateItinerary(input: ItineraryInput): ItineraryItem[] {
         day,
         time: clockFromMinutes(startMinute),
         title: place.name,
+        ...(place.summary !== undefined && { summary: place.summary }),
         category: place.category,
         placeId: place.placeId,
         duration,

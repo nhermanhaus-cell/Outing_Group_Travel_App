@@ -36,6 +36,7 @@ import { TripPathChooser } from '../../components/trip-wizard/TripPathChooser';
 import type { QuizAnswers } from '../quiz';
 import { AirportAutocomplete } from '../../components/trip-wizard/airport-autocomplete';
 import { DateField } from '../../components/trip-wizard/date-field';
+import { UnknownDestinationResults } from '../../components/destinations/unknown-destination-results';
 import { QUIZ_BUDDY_DRAFT_KEY, TravelBuddyPicker } from '../../components/trip-wizard/travel-buddy-picker';
 import { airports } from '../../src/content/airports';
 import { destinationPlanHref } from '../../src/lib/tripPlanningFlow';
@@ -61,9 +62,12 @@ export default function NewTripScreen() {
   const params = useLocalSearchParams<{
     destinationSlug?: string;
     destinationName?: string;
+    destinationCandidateId?: string;
     lodgingAddress?: string;
     activityPace?: ActivityPace;
     quizAnswers?: string;
+    resumePlaceId?: string;
+    resumeQuery?: string;
   }>();
   let quizAnswers: Partial<QuizAnswers> = {};
   try { quizAnswers = params.quizAnswers ? JSON.parse(params.quizAnswers) : {}; } catch { /* ignore */ }
@@ -71,14 +75,15 @@ export default function NewTripScreen() {
 
   const [loading, setLoading] = useState(false);
   const [creationPath, setCreationPath] = useState<'choose' | 'destination' | 'manual'>(
-    params.destinationName || !featureFlags.tripWizardV2 ? 'manual' : 'choose',
+    params.resumePlaceId ? 'destination' : params.destinationName || !featureFlags.tripWizardV2 ? 'manual' : 'choose',
   );
-  const [destinationQuery, setDestinationQuery] = useState('');
+  const [destinationQuery, setDestinationQuery] = useState(params.resumeQuery ?? '');
   const primaryAirport = profile.homeAirports.find((airport) => airport.primary) ?? profile.homeAirports[0];
 
   const [form, setForm] = useState({
     name: params.destinationName ? `${params.destinationName} trip` : '',
     destinationSlug: params.destinationSlug ?? '',
+    destinationCandidateId: params.destinationCandidateId ?? '',
     destinationName: params.destinationName ?? '',
     startDate: '',
     endDate: '',
@@ -223,6 +228,7 @@ export default function NewTripScreen() {
       const trip = await createTrip({
         name: form.name || 'Untitled trip',
         destinationSlug: form.destinationSlug || undefined,
+        destinationCandidateId: form.destinationCandidateId || undefined,
         destinationName: form.destinationName || undefined,
         startDate: form.startDate || undefined,
         endDate: form.endDate || undefined,
@@ -396,6 +402,11 @@ export default function NewTripScreen() {
                 <Text variant="caption" style={{ color: colors.textSecondary }}>{destination.country}</Text>
               </Pressable>
             ))}
+            <UnknownDestinationResults
+              query={destinationQuery}
+              enabled={featureFlags.globalDiscoveryV1 && needle.length >= 2 && destinationOptions.length === 0}
+              returnPath="/trips/new"
+            />
             <Button variant="ghost" onPress={() => setCreationPath('manual')}>
               My destination isn’t listed
             </Button>

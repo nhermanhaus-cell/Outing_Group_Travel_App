@@ -169,6 +169,44 @@ describe('generateItinerary pace', () => {
     expect(fixed?.scheduleStatus).toBe('verified');
   });
 
+  it('keeps a coordinate-resolved Viator experience and exact booking handoff in the itinerary', () => {
+    const items = generateItinerary({
+      destination,
+      places: [{
+        placeId: 'experience-479P1',
+        name: 'Architecture walk',
+        summary: 'A provider-backed guided walk with a verified meeting point.',
+        category: 'tour',
+        coords: { lat: 48.861, lng: 2.335 },
+        durationMinutes: 120,
+        estimatedCostPerPerson: 85,
+        bookingRequired: true,
+        interests: ['culture', 'history'],
+        source: 'viator',
+        rating: 4.9,
+        reviewCount: 320,
+        bookingOffer: {
+          provider: 'viator',
+          url: 'https://www.viator.com/tours/example',
+          affiliate: true,
+          disclosure: 'Outing may earn a commission if you book through this link.',
+          price: 85,
+          currency: 'USD',
+        },
+      }],
+      preferences: { ...basePrefs, interests: ['culture', 'history'] },
+      tripDurationDays: 1,
+      lodging: { placeId: 'hotel', coords: { lat: 48.86, lng: 2.34 } },
+    });
+    const experience = items.find((item) => item.placeId === 'experience-479P1');
+    expect(experience).toMatchObject({
+      kind: 'experience',
+      source: 'viator',
+      bookingRequired: true,
+      bookingOffer: { provider: 'viator', affiliate: true, price: 85, currency: 'USD' },
+    });
+  });
+
   it('preserves locked items and never overlaps generated stops with them', () => {
     const locked = {
       day: 1, time: '12:00', title: 'Booked lunch', category: 'restaurant', placeId: 'locked',

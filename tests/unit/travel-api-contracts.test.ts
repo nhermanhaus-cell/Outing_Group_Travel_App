@@ -19,7 +19,42 @@ describe('travel API contracts', () => {
 
   it('requires Viator product codes and provider attribution', () => {
     expect(() => validateTravelApiContract('viatorSearch', { products: [{ title: 'No product code' }] })).toThrow(/malformed/i);
-    expect(validateTravelApiContract<{ products: unknown[] }>('viatorSearch', { products: [{ productCode: '123P1', title: 'Tour', images: [], provider: 'viator', bookingMode: 'none' }] }).products).toHaveLength(1);
+    const value = validateTravelApiContract<{ products: unknown[]; resolvedDestination?: { destinationId: string } }>('viatorSearch', {
+      products: [{ productCode: '123P1', title: 'Tour', images: [], provider: 'viator', bookingMode: 'none' }],
+      resolvedDestination: { destinationId: '684', name: 'San Francisco', type: 'CITY', distanceKm: 0.8, matchScore: 248 },
+      source: 'viator_live',
+    });
+    expect(value.products).toHaveLength(1);
+    expect(value.resolvedDestination?.destinationId).toBe('684');
+  });
+
+  it('accepts planning-ready Viator enrichment without weakening provider attribution', () => {
+    const value = validateTravelApiContract<{ products: Array<Record<string, unknown>> }>('viatorSearch', {
+      products: [{
+        productCode: '479P1',
+        title: 'Architecture and food walk',
+        description: 'A guided city experience.',
+        productUrl: 'https://www.viator.com/tours/example',
+        images: [{ url: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/example.jpg' }],
+        provider: 'viator',
+        bookingMode: 'external',
+        category: 'landmark',
+        interestTags: ['history', 'food'],
+        lat: 48.861,
+        lng: 2.335,
+        address: 'Paris, France',
+        confirmationType: 'INSTANT',
+        freeCancellation: true,
+        flags: ['FREE_CANCELLATION'],
+      }],
+      source: 'viator_live',
+    });
+    expect(value.products[0]).toMatchObject({
+      provider: 'viator',
+      category: 'landmark',
+      lat: 48.861,
+      freeCancellation: true,
+    });
   });
 
   it('accepts attributed public images and rejects unattributed files', () => {

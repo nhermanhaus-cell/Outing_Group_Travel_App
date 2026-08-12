@@ -25,6 +25,13 @@ describe('Ask Outing evaluation set', () => {
       'prompt_injection',
       'provenance',
       'lgbtq_context',
+      'personalization',
+      'global_discovery',
+      'provider_resilience',
+      'semantic_retrieval',
+      'decision_comparison',
+      'trip_audit',
+      'constraint_relaxation',
     ]));
   });
 

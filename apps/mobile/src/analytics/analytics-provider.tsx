@@ -45,6 +45,7 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 const QUEUE_KEY = 'outing:analytics:queue:v1';
 const SUBJECT_KEY = 'outing:analytics:subject:v1';
 const PREFERENCES_KEY = 'outing:preference-signals:v1';
+const PERSONALIZATION_ENABLED_KEY = 'outing:personalization-enabled:v1';
 const MAX_QUEUE_SIZE = 500;
 const MAX_EVENT_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const FLUSH_INTERVAL_MS = 15_000;
@@ -68,6 +69,8 @@ interface AnalyticsContextValue {
   flush: () => Promise<void>;
   recordActivity: () => void;
   observePreference: (observation: PreferenceObservation) => void;
+  setPersonalizationEnabled: (enabled: boolean) => Promise<void>;
+  clearPreferenceSignals: () => Promise<void>;
   resetIdentity: () => Promise<void>;
   startNewSession: () => void;
   setCurrentScreen: (screenName?: string) => void;
@@ -124,6 +127,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const retryAtRef = useRef(0);
   const retryCountRef = useRef(0);
   const preferencesRef = useRef<Record<string, PreferenceAggregate>>({});
+  const personalizationOverrideRef = useRef<boolean | null>(null);
   const transportRef = useRef<PluginHandle<AnalyticsReq, AnalyticsRes>>(
     (isSupabaseConfigured ? analyticsSupabase : analyticsNoop).create(),
   );
@@ -139,7 +143,8 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
       AsyncStorage.getItem(QUEUE_KEY),
       AsyncStorage.getItem(SUBJECT_KEY),
       AsyncStorage.getItem(PREFERENCES_KEY),
-    ]).then(async ([storedQueue, storedSubject, storedPreferences]) => {
+      AsyncStorage.getItem(PERSONALIZATION_ENABLED_KEY),
+    ]).then(async ([storedQueue, storedSubject, storedPreferences, storedPersonalization]) => {
       if (cancelled) return;
       queueRef.current = validQueuedEvents(safeParseJson(storedQueue));
       subjectIdRef.current = storedSubject || Crypto.randomUUID();
@@ -149,6 +154,12 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
         preferenceValue && typeof preferenceValue === 'object' && !Array.isArray(preferenceValue)
           ? preferenceValue as Record<string, PreferenceAggregate>
           : {};
+      if (storedPersonalization === 'true' || storedPersonalization === 'false') {
+        personalizationOverrideRef.current = storedPersonalization === 'true';
+        const nextPolicy = { ...policyRef.current, personalizationEnabled: personalizationOverrideRef.current };
+        policyRef.current = nextPolicy;
+        setPolicy(nextPolicy);
+      }
       setPreferenceSignals(Object.values(preferencesRef.current));
       setQueueDepth(queueRef.current.length);
       initializedRef.current = true;
@@ -198,8 +209,11 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
       ]);
       queueRef.current = queueRef.current.filter((event) => !completed.has(event.eventId));
       if (response.policy) {
-        policyRef.current = response.policy;
-        setPolicy(response.policy);
+        const nextPolicy = personalizationOverrideRef.current === null
+          ? response.policy
+          : { ...response.policy, personalizationEnabled: personalizationOverrideRef.current };
+        policyRef.current = nextPolicy;
+        setPolicy(nextPolicy);
       }
       retryCountRef.current = 0;
       retryAtRef.current = 0;
@@ -270,7 +284,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     if (!initialized || !supabase) return;
     const client = supabase;
     const hydrate = async (userId?: string) => {
-      if (!userId) return;
+      if (!userId || !policyRef.current.personalizationEnabled) return;
       const { data } = await client
         .from('user_preference_signals')
         .select('subject_type,subject_key,score,evidence_weight,confidence,last_source,last_observed_at')
@@ -320,6 +334,20 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     void syncPreference(next);
   }, [syncPreference]);
 
+  const setPersonalizationEnabled = useCallback(async (enabled: boolean) => {
+    personalizationOverrideRef.current = enabled;
+    const nextPolicy = { ...policyRef.current, personalizationEnabled: enabled };
+    policyRef.current = nextPolicy;
+    setPolicy(nextPolicy);
+    await AsyncStorage.setItem(PERSONALIZATION_ENABLED_KEY, String(enabled));
+  }, []);
+
+  const clearPreferenceSignals = useCallback(async () => {
+    preferencesRef.current = {};
+    setPreferenceSignals([]);
+    await AsyncStorage.removeItem(PREFERENCES_KEY);
+  }, []);
+
   const resetIdentity = useCallback(async () => {
     await flush();
     subjectIdRef.current = Crypto.randomUUID();
@@ -349,6 +377,8 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     flush,
     recordActivity,
     observePreference,
+    setPersonalizationEnabled,
+    clearPreferenceSignals,
     resetIdentity,
     startNewSession,
     setCurrentScreen,
@@ -361,6 +391,8 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     flush,
     recordActivity,
     observePreference,
+    setPersonalizationEnabled,
+    clearPreferenceSignals,
     resetIdentity,
     startNewSession,
     setCurrentScreen,

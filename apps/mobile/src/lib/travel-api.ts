@@ -53,8 +53,25 @@ export interface ApiExperience {
   logistics?: unknown;
   cancellationPolicy?: unknown;
   tags?: unknown;
+  category?: 'bar' | 'club' | 'restaurant' | 'cafe' | 'museum' | 'park' | 'beach' | 'spa' | 'hotel' | 'tour' | 'event' | 'shop' | 'landmark' | 'other';
+  interestTags?: string[];
+  lat?: number;
+  lng?: number;
+  address?: string;
+  locationName?: string;
+  confirmationType?: string;
+  freeCancellation?: boolean;
+  flags?: string[];
   provider: 'viator';
   bookingMode: 'external' | 'none';
+}
+
+export interface ApiViatorDestination {
+  destinationId: string;
+  name: string;
+  type?: string;
+  distanceKm?: number;
+  matchScore: number;
 }
 
 export interface ApiAttributedImage {
@@ -86,12 +103,14 @@ export interface ApiFlightDeal { id: string; originIata?: string; destinationIat
 export async function invokeTravelApi<T>(
   operation: string,
   input: Record<string, unknown>,
+  signal?: AbortSignal,
 ): Promise<T> {
   if (operation.startsWith('viator') && !featureFlags.viatorV2) throw new TravelApiError('Viator v2 is disabled');
   if (!operation.startsWith('viator') && !featureFlags.smartItineraryV2) throw new TravelApiError('Smart itinerary v2 is disabled');
   if (!supabase) throw new TravelApiError('Live travel APIs are not configured', 'NOT_CONFIGURED');
   const { data, error } = await supabase.functions.invoke('travel-api', {
     body: { operation, ...input },
+    signal,
   });
   if (error) throw new TravelApiError(error.message);
   if (data && typeof data === 'object' && 'error' in data && typeof data.error === 'string') {

@@ -323,7 +323,12 @@ export function scoreDestinations(
   destinations: Destination[],
   weights: WeightConfig = DEFAULT_WEIGHTS,
 ): RecommendationResult[] {
-  const results: RecommendationResult[] = destinations.map((dest) => {
+  const eligibleDestinations = destinations.filter((destination) => {
+    if (preferences.lgbtqSafetyPriority < 0.8) return true;
+    return destination.legalStatus !== 'criminalized' && destination.legalStatus !== 'heavily_criminalized';
+  });
+
+  const results: RecommendationResult[] = eligibleDestinations.map((dest) => {
     const scores: ComponentScores = {
       budgetFit: scoreBudgetFit(dest, preferences),
       seasonalFit: scoreSeasonalFit(dest, preferences),

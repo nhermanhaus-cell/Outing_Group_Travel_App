@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   assistantRequestSchema,
+  assistantInsightRequestSchema,
   assistantStreamEventSchema,
   canAccessAssistantConversation,
   decideProposalVote,
@@ -87,6 +88,28 @@ describe('Ask Outing contracts and privacy', () => {
       type: 'delta',
       prompt: 'private content',
     }).success).toBe(false);
+    expect(assistantStreamEventSchema.safeParse({
+      type: 'recommendations',
+      recommendations: [{
+        id: 'lisbon',
+        kind: 'destination',
+        title: 'Lisbon',
+        summary: 'A strong food and neighborhood match.',
+        fitReasons: ['Food', 'Neighborhoods'],
+        tradeoffs: ['Hills'],
+        sourceIds: ['outing'],
+        confidence: 0.8,
+        destinationSlug: 'lisbon',
+        provisional: false,
+        bookable: false,
+      }],
+    }).success).toBe(true);
+  });
+
+  it('requires scoped insight identifiers', () => {
+    expect(assistantInsightRequestSchema.safeParse({ surface: 'home' }).success).toBe(true);
+    expect(assistantInsightRequestSchema.safeParse({ surface: 'trip' }).success).toBe(false);
+    expect(assistantInsightRequestSchema.safeParse({ surface: 'destination' }).success).toBe(false);
   });
 
   it('limits private access to the owner and shared access to trip members', () => {

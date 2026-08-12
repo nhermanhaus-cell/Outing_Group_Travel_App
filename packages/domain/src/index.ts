@@ -4,6 +4,7 @@ export type {
   BudgetCategoryKey,
   BudgetLineItem,
   BudgetResult,
+  CatalogPulseInputs,
   CategoryOverrides,
   ComponentScores,
   CostRange,
@@ -13,6 +14,8 @@ export type {
   ItineraryTravelLeg,
   PersonBudget,
   PulseComponentBreakdown,
+  PulseDataBasis,
+  PulseEvidenceItem,
   PulseInputs,
   PulseLabel,
   PulseResult,
@@ -71,7 +74,7 @@ export type {
 } from './recommendation/nearby';
 
 // ─── Community Pulse ──────────────────────────────────────────────────────────
-export { computePulse, PULSE_MIN_THRESHOLDS } from './pulse/engine';
+export { computeCatalogPulse, computePulse, PULSE_MIN_THRESHOLDS } from './pulse/engine';
 
 // ─── Glamour Budget ───────────────────────────────────────────────────────────
 export { estimateBudget } from './budget/engine';
@@ -83,11 +86,13 @@ export type { ItineraryInput } from './itinerary/engine';
 export type { ItineraryRouteEstimate } from './itinerary/engine';
 export {
   createLegacyTripPlan,
+  buildActivityPreferenceSignals,
   generateTripPlan,
   refineTripPlan,
   replaceTripPlanItems,
 } from './itinerary/tripPlan';
 export type {
+  ActivityPreferenceSignals,
   PlannerTraveler,
   TripPlanFlightPriceContext,
   TripPlanInput,

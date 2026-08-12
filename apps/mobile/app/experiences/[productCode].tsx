@@ -91,8 +91,11 @@ export default function ExperienceDetailScreen() {
                 {experience.rating ? <Badge label={`${experience.rating.toFixed(1)} ★ · ${experience.reviewCount ?? 0} reviews`} variant="success" /> : null}
                 {experience.durationMinutes ? <Badge label={`${Math.round(experience.durationMinutes / 60 * 10) / 10} hours`} /> : null}
                 {experience.priceFrom ? <Badge label={`From ${experience.currency ?? ''} ${experience.priceFrom}`} variant="accent" /> : null}
+                {experience.freeCancellation ? <Badge label="Free cancellation" variant="success" /> : null}
+                {experience.confirmationType === 'INSTANT' ? <Badge label="Instant confirmation" variant="info" /> : null}
               </View>
               <Text variant="bodyLg" style={{ color: colors.textSecondary }}>{experience.summary}</Text>
+              {experience.address ? <Text variant="bodySm" style={{ color: colors.textTertiary }}>Starts near {experience.address}</Text> : null}
             </View>
             <DetailBlock title="What to expect" value={experience.itinerary} />
             <DetailBlock title="Meeting and pickup" value={experience.logistics} />

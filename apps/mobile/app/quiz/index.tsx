@@ -11,6 +11,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { useTheme } from '../../src/theme/ThemeProvider';
+import { featureFlags } from '../../src/lib/featureFlags';
+import { loadAssistantInsights } from '../../src/lib/assistant-api';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { ProgressBar } from '../../components/ui/ProgressBar';
@@ -287,6 +289,7 @@ export default function QuizScreen() {
   const params = useLocalSearchParams<{
     destinationSlug?: string;
     destinationName?: string;
+    destinationCandidateId?: string;
     quizAnswers?: string;
   }>();
   const selectedDestination = selectedDestinationFromParams(params);
@@ -448,6 +451,7 @@ export default function QuizScreen() {
       travelScope: answers.travelScope,
       longDistanceTransportModes: answers.transportModes,
       defaultInterests: answers.interests as never[],
+      preferredTravelMonths: answers.months,
       defaultGroupSize: answers.groupSize,
       defaultTripLengthDays: answers.duration,
       ...(answers.tripGoals.length > 0 ? { defaultTripGoals: answers.tripGoals } : {}),
@@ -456,6 +460,14 @@ export default function QuizScreen() {
       ...(answers.mealPreferences.length > 0 ? { defaultMealPreferences: answers.mealPreferences } : {}),
       ...(answers.avoidances.length > 0 ? { defaultAvoidances: answers.avoidances } : {}),
       coarseHomeRegion: airport?.city,
+    }).then(() => {
+      if (featureFlags.proactiveInsightsV1) {
+        void loadAssistantInsights({
+          surface: 'home',
+          trigger: 'quiz_completed',
+          force: true,
+        }).catch(() => undefined);
+      }
     });
     router.push(questionnaireCompletionHref(answers, selectedDestination));
   };
@@ -829,8 +841,8 @@ export default function QuizScreen() {
     },
     {
       phase: 'personalization' as const,
-      title: 'What should we protect you from?',
-      subtitle: 'These are soft constraints—we’ll use them to shape timing and recommendations.',
+      title: 'Things to avoid',
+      subtitle: 'Choose anything you’d rather have less of. We’ll use it to shape your recommendations.',
       content: (
         <View style={{ gap: spacing.xl }}>
           <ChipSelect
