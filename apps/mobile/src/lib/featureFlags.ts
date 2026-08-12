@@ -1,6 +1,11 @@
 const enabled = (value: string | undefined, fallback = true) => value === undefined ? fallback : value !== 'false' && value !== '0';
 let fullExperience = enabled(process.env.EXPO_PUBLIC_FEATURE_OUTING_FULL_EXPERIENCE_V1, false);
 
+export const isFullExperiencePreview = enabled(
+  process.env.EXPO_PUBLIC_FULL_EXPERIENCE_PREVIEW,
+  false,
+);
+
 export function setRuntimeFullExperience(enabledValue: boolean): void {
   fullExperience = enabledValue;
 }

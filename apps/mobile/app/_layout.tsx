@@ -26,7 +26,7 @@ import {
 } from '../src/analytics/analytics-provider';
 import { InternalSessionReplayProvider } from '../src/analytics/internal-session-replay';
 import { posthog } from '../src/config/posthog';
-import { featureFlags, setRuntimeFullExperience } from '../src/lib/featureFlags';
+import { featureFlags, isFullExperiencePreview, setRuntimeFullExperience } from '../src/lib/featureFlags';
 import { supabase } from '../src/lib/supabase';
 import { readOnboardingComplete, shouldOfferOnboarding } from '../src/lib/onboardingState';
 import { ConnectionBanner } from '../components/ui/ConnectionBanner';
@@ -60,7 +60,7 @@ export default function RootLayout() {
   const [, setFeatureRevision] = useState(0);
 
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase || isFullExperiencePreview) return;
     let active = true;
     const applyFlag = (enabled: unknown) => {
       if (!active || typeof enabled !== 'boolean') return;
