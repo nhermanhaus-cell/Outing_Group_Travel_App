@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { ConversationVisibility } from '@gayi/shared';
+import type { AssistantFocus, ConversationVisibility, TodaySituation } from '@gayi/shared';
 import { AssistantChat } from '../../../components/assistant/AssistantChat';
 import { Text } from '../../../components/ui/Text';
 import { useAuth, useTrips } from '../../../src/providers/AppProviders';
 import { useTheme } from '../../../src/theme/ThemeProvider';
 
 export default function TripAskScreen() {
-  const { tripId, prompt } = useLocalSearchParams<{ tripId: string; prompt?: string }>();
+  const { tripId, prompt, focusKind, focusAction, day, itemId, situation } = useLocalSearchParams<{
+    tripId: string; prompt?: string; focusKind?: string; focusAction?: string; day?: string; itemId?: string; situation?: string; pollId?: string;
+  }>();
   const { getTrip } = useTrips();
   const { user } = useAuth();
   const trip = getTrip(tripId);
@@ -17,6 +19,17 @@ export default function TripAskScreen() {
   const { colors, spacing } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const focus: AssistantFocus | undefined = focusKind === 'today'
+    ? { kind: 'today', tripId, ...(situation ? { situation: situation as TodaySituation } : {}) }
+    : focusKind === 'day' && Number.isFinite(Number(day))
+      ? { kind: 'itinerary_day', tripId, day: Number(day), action: focusAction === 'rework' ? 'rework' : focusAction === 'nearby' ? 'nearby' : 'explain' }
+      : focusKind === 'item' && itemId
+        ? { kind: 'itinerary_item', tripId, itemId, action: 'explain' }
+        : focusKind === 'map'
+          ? { kind: 'trip_map', tripId, ...(Number.isFinite(Number(day)) ? { day: Number(day) } : {}) }
+          : focusKind === 'group'
+            ? { kind: 'group_decision', tripId }
+        : undefined;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
@@ -35,6 +48,7 @@ export default function TripAskScreen() {
           visibility={visibility}
           onVisibilityChange={setVisibility}
           initialDraft={prompt}
+          focus={focus}
         />
       ) : (
         <View style={{ padding: spacing.xl }}>

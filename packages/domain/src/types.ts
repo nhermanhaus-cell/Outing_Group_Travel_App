@@ -252,6 +252,41 @@ export interface TripPlanDay {
   itemIds: string[];
   sharedAnchorItemIds: string[];
   freeWindowSuggestions: FreeWindowSuggestion[];
+  /** Schema-v2 explanation fields. Omitted on decoded schema-v1 plans. */
+  rationale?: string;
+  pace?: 'packed' | 'balanced' | 'light';
+  estimatedTravelMinutes?: number;
+  fitReasons?: string[];
+  tradeoffs?: string[];
+  backups?: Array<{
+    placeId: string;
+    title: string;
+    reason: string;
+    source: string;
+  }>;
+  reservationRisk?: 'low' | 'medium' | 'high';
+  freshness?: 'live' | 'recent' | 'cached' | 'stale' | 'limited';
+}
+
+export type TripPlanDayReworkAction =
+  | 'less_walking'
+  | 'cheaper'
+  | 'more_spontaneous'
+  | 'rainy_day'
+  | 'later_start'
+  | 'lighter_pace';
+
+export interface TripPlanPreviewProposal {
+  proposalId: string;
+  tripId?: string;
+  action: TripPlanDayReworkAction;
+  day: number;
+  priorPlanId: string;
+  priorRevision: number;
+  preview: TripPlan;
+  summary: string;
+  createdAt: string;
+  status: 'preview' | 'polling' | 'accepted' | 'dismissed';
 }
 
 export interface TripPlanBookingAction {
@@ -284,7 +319,7 @@ export interface FlightPriceGuidance {
 export interface TripPlan {
   planId: string;
   revision: number;
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   algorithmVersion: string;
   generatedAt: string;
   inputHash: string;

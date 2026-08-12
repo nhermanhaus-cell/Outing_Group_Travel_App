@@ -1,8 +1,11 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Stack, useGlobalSearchParams, usePathname, useRouter } from 'expo-router';
+import { Stack, type Href, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
+import Constants from 'expo-constants';
+import { ShareIntentProvider } from 'expo-share-intent';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Notifications from 'expo-notifications';
 import {
   Fraunces_600SemiBold,
   Fraunces_700Bold,
@@ -14,6 +17,7 @@ import {
   Manrope_700Bold,
   useFonts as useManropeFonts,
 } from '@expo-google-fonts/manrope';
+import { normalizeAnalyticsRoute } from '@gayi/shared';
 import { PostHogProvider, usePostHog } from 'posthog-react-native';
 import { AppProviders } from '../src/providers/AppProviders';
 import {
@@ -22,25 +26,30 @@ import {
 } from '../src/analytics/analytics-provider';
 import { InternalSessionReplayProvider } from '../src/analytics/internal-session-replay';
 import { posthog } from '../src/config/posthog';
-import { featureFlags } from '../src/lib/featureFlags';
+import { featureFlags, setRuntimeFullExperience } from '../src/lib/featureFlags';
+import { supabase } from '../src/lib/supabase';
 import { readOnboardingComplete, shouldOfferOnboarding } from '../src/lib/onboardingState';
 import { ConnectionBanner } from '../components/ui/ConnectionBanner';
 import { useTheme } from '../src/theme/ThemeProvider';
+import { IncomingShareHandler } from '../components/inspiration/incoming-share-handler';
+import { TripAwarenessCoordinator } from '../components/trips/trip-awareness-coordinator';
+import '../src/lib/trip-awareness';
+import '../src/lib/notifications';
 
 void SplashScreen.preventAutoHideAsync();
 
 function PostHogScreenObserver() {
   const ph = usePostHog();
   const pathname = usePathname();
-  const params = useGlobalSearchParams();
   const previousPathnameRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    if (previousPathnameRef.current !== pathname) {
-      ph.screen(pathname, { previous_screen: previousPathnameRef.current ?? null, ...params });
-      previousPathnameRef.current = pathname;
+    const normalized = normalizeAnalyticsRoute(pathname);
+    if (previousPathnameRef.current !== normalized) {
+      ph.screen(normalized, { previous_screen: previousPathnameRef.current ?? null });
+      previousPathnameRef.current = normalized;
     }
-  }, [pathname, params, ph]);
+  }, [pathname, ph]);
 
   return null;
 }
@@ -48,6 +57,30 @@ function PostHogScreenObserver() {
 export default function RootLayout() {
   const [frauncesLoaded] = useFrauncesFonts({ Fraunces_600SemiBold, Fraunces_700Bold });
   const [manropeLoaded] = useManropeFonts({ Manrope_400Regular, Manrope_600SemiBold, Manrope_700Bold });
+  const [, setFeatureRevision] = useState(0);
+
+  useEffect(() => {
+    if (!supabase) return;
+    let active = true;
+    const applyFlag = (enabled: unknown) => {
+      if (!active || typeof enabled !== 'boolean') return;
+      setRuntimeFullExperience(enabled);
+      setFeatureRevision((value) => value + 1);
+    };
+    void supabase.from('feature_flags').select('enabled').eq('key', 'outingFullExperienceV1').maybeSingle().then(({ data, error }) => {
+      if (!active || error || typeof data?.enabled !== 'boolean') return;
+      applyFlag(data.enabled);
+    });
+    const channel = supabase.channel('outing-full-experience-flag')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'feature_flags', filter: 'key=eq.outingFullExperienceV1' }, (payload) => {
+        applyFlag((payload.new as { enabled?: unknown }).enabled);
+      })
+      .subscribe();
+    return () => {
+      active = false;
+      void supabase?.removeChannel(channel);
+    };
+  }, []);
 
   useEffect(() => {
     if (frauncesLoaded && manropeLoaded) void SplashScreen.hideAsync();
@@ -56,6 +89,11 @@ export default function RootLayout() {
   if (!frauncesLoaded || !manropeLoaded) return null;
 
   return (
+    <ShareIntentProvider options={{
+      scheme: 'gayi',
+      disabled: process.env.EXPO_OS === 'web' || Constants.appOwnership === 'expo',
+      resetOnBackground: false,
+    }}>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <InternalSessionReplayProvider>
         <PostHogProvider
@@ -68,6 +106,9 @@ export default function RootLayout() {
           }}
         >
           <AppProviders>
+            <IncomingShareHandler />
+            <TripAwarenessCoordinator />
+            <NotificationNavigationHandler />
             <AnalyticsBoundary>
               <PostHogScreenObserver />
               <AnalyticsRouteObserver />
@@ -86,11 +127,15 @@ export default function RootLayout() {
             <Stack.Screen name="invite" options={{ headerShown: false }} />
             <Stack.Screen name="trips/[tripId]/index" options={{ headerShown: false }} />
             <Stack.Screen name="trips/[tripId]/ask" options={{ headerShown: false }} />
+            <Stack.Screen name="trips/[tripId]/today" options={{ headerShown: false }} />
+            <Stack.Screen name="inspiration/index" options={{ headerShown: false }} />
+            <Stack.Screen name="inspiration/[importId]" options={{ headerShown: false }} />
             <Stack.Screen name="trips/[tripId]/invite" options={{ headerShown: false }} />
             <Stack.Screen name="auth/login" options={{ presentation: 'modal', headerShown: false }} />
             <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
             <Stack.Screen name="settings/index" options={{ headerShown: false }} />
             <Stack.Screen name="settings/integrations" options={{ headerShown: false }} />
+            <Stack.Screen name="settings/visit-history" options={{ headerShown: false }} />
             <Stack.Screen name="share/[tripId]" options={{ presentation: 'modal', headerShown: false }} />
             <Stack.Screen name="+not-found" />
             </Stack>
@@ -99,12 +144,31 @@ export default function RootLayout() {
         </PostHogProvider>
       </InternalSessionReplayProvider>
     </GestureHandlerRootView>
+    </ShareIntentProvider>
   );
 }
 
 function ThemedStatusBar() {
   const { isDark } = useTheme();
   return <StatusBar style={isDark ? 'light' : 'dark'} />;
+}
+
+function NotificationNavigationHandler() {
+  const router = useRouter();
+  const handled = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const open = (response: Notifications.NotificationResponse) => {
+      if (handled.current === response.notification.request.identifier) return;
+      const path = response.notification.request.content.data?.path ?? response.notification.request.content.data?.route;
+      if (typeof path !== 'string' || !(path === '/discover' || /^\/trips\/[0-9a-f-]{36}\/today$/i.test(path))) return;
+      handled.current = response.notification.request.identifier;
+      router.push(path as Href);
+    };
+    void Notifications.getLastNotificationResponseAsync().then((response) => { if (response) open(response); });
+    const subscription = Notifications.addNotificationResponseReceivedListener(open);
+    return () => subscription.remove();
+  }, [router]);
+  return null;
 }
 
 function OnboardingGate() {

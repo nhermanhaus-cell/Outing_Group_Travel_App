@@ -106,6 +106,21 @@ describe('Ask Outing contracts and privacy', () => {
     }).success).toBe(true);
   });
 
+  it('accepts only validated contextual focus identifiers', () => {
+    expect(assistantRequestSchema.safeParse({
+      scope: { kind: 'trip', tripId: '10000000-0000-4000-8000-000000000003' },
+      visibility: 'private',
+      message: 'Make Tuesday lighter',
+      focus: { kind: 'itinerary_day', tripId: '10000000-0000-4000-8000-000000000003', day: 2, action: 'rework' },
+    }).success).toBe(true);
+    expect(assistantRequestSchema.safeParse({
+      scope: { kind: 'trip', tripId: '10000000-0000-4000-8000-000000000003' },
+      visibility: 'private',
+      message: 'Use my context',
+      focus: { kind: 'today', tripId: 'not-a-trip', rawCoordinates: [1, 2], comments: ['private'] },
+    }).success).toBe(false);
+  });
+
   it('requires scoped insight identifiers', () => {
     expect(assistantInsightRequestSchema.safeParse({ surface: 'home' }).success).toBe(true);
     expect(assistantInsightRequestSchema.safeParse({ surface: 'trip' }).success).toBe(false);

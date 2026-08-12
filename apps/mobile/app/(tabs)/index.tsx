@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { type Href, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useQuery } from '@tanstack/react-query';
@@ -20,6 +20,7 @@ import { featureFlags } from '../../src/lib/featureFlags';
 import { loadAssistantInsights } from '../../src/lib/assistant-api';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { DecisionBriefCard } from '../../components/assistant/DecisionBriefCard';
+import { deriveHomeJourney, isActivityPreferenceSessionComplete } from '@gayi/domain';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -33,9 +34,23 @@ export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const activeTrip = trips
-    .filter((trip) => !trip.endDate || new Date(`${trip.endDate}T23:59:59`) >= new Date())
-    .sort((a, b) => (a.startDate ?? '9999').localeCompare(b.startDate ?? '9999'))[0];
+  const journey = useMemo(() => deriveHomeJourney(trips.map((trip) => ({
+    tripId: trip.tripId,
+    destinationName: trip.destinationName,
+    destinationTimezone: trip.destinationSlug ? getBySlug(trip.destinationSlug)?.timezone : undefined,
+    startDate: trip.startDate,
+    endDate: trip.endDate,
+    hasLodging: trip.lodgingStatus === 'booked',
+    hasBlockingPlanIssue: trip.tripPlan?.days.some((day) => day.reservationRisk === 'high') ?? false,
+    pendingVoteCount: trip.polls?.filter((poll) =>
+      poll.options.every((option) => !option.votes.includes(user?.id ?? '__guest__')),
+    ).length ?? 0,
+    tasteDeckComplete: trip.activityPreferenceSessionComplete === true || isActivityPreferenceSessionComplete(
+      (trip.activityPreferences ?? []).filter((vote) => vote.memberId === (user?.id ?? `owner-${trip.tripId}`)),
+      Number.POSITIVE_INFINITY,
+    ),
+  })), { hasOpportunity: scoring.length > 0 }), [getBySlug, scoring.length, trips, user?.id]);
+  const activeTrip = trips.find((trip) => trip.tripId === journey.trip?.tripId);
   const pendingDecisions = activeTrip?.polls?.filter((poll) =>
     poll.options.every((option) => !option.votes.includes(user?.id ?? '__guest__')),
   ).length ?? 0;
@@ -131,24 +146,30 @@ export default function HomeScreen() {
       </View>
 
       <View style={{ paddingHorizontal: spacing.base, paddingTop: spacing.xl, gap: spacing.md }}>
+        {featureFlags.outingFullExperienceV1 ? <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push(journey.nextAction.href as Href)}
+          style={{ borderRadius: radius['2xl'], padding: spacing.xl, backgroundColor: journey.nextAction.blocking ? colors.accentLight : colors.poolLight, borderWidth: 1, borderColor: journey.nextAction.blocking ? colors.accent : colors.pool, gap: spacing.sm }}
+        >
+          <Text variant="labelSm" style={{ color: journey.nextAction.blocking ? colors.accent : colors.pool, letterSpacing: 1.1 }}>
+            {journey.state.replace('_', ' ').toUpperCase()} · NEXT
+          </Text>
+          <Text variant="displaySm">{journey.nextAction.title}</Text>
+          <Text variant="bodyMd" style={{ color: colors.textSecondary }}>{journey.nextAction.summary}</Text>
+          <Text variant="labelMd" style={{ color: journey.nextAction.blocking ? colors.accent : colors.pool }}>Open →</Text>
+        </Pressable> : null}
+
         <View style={{ flexDirection: 'row', gap: spacing.md }}>
-          <ActionCard
-            title="Find my place"
-            detail="Preference match"
-            icon="spark"
-            accent={colors.accent}
-            tint={colors.accentLight}
-            onPress={() => router.push('/quiz')}
-          />
-          <ActionCard
-            title="Plan a trip"
-            detail="I know where"
-            icon="route"
-            accent={colors.pool}
-            tint={colors.poolLight}
-            onPress={() => router.push('/trips/new')}
-          />
+          <ActionCard title="Find my place" detail="Preference match" icon="spark" accent={colors.accent} tint={colors.accentLight} onPress={() => router.push('/quiz')} />
+          <ActionCard title="Plan a trip" detail="I know where" icon="route" accent={colors.pool} tint={colors.poolLight} onPress={() => router.push('/trips/new')} />
         </View>
+        {featureFlags.outingFullExperienceV1 ? (
+          <Pressable onPress={() => router.push('/inspiration' as Href)} style={{ padding: spacing.md, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.poolLight, alignItems: 'center', justifyContent: 'center' }}><OutingIcon name="image" color={colors.pool} size={20} /></View>
+            <View style={{ flex: 1 }}><Text variant="labelLg">Bring in an idea</Text><Text variant="caption" style={{ color: colors.textSecondary }}>Screenshots, links, maps, and place files</Text></View>
+            <OutingIcon name="arrow" color={colors.pool} size={18} />
+          </Pressable>
+        ) : null}
         {featureFlags.assistantV1 ? (
           <Pressable
             onPress={() => router.push('/ask')}
@@ -205,22 +226,6 @@ export default function HomeScreen() {
               {pendingDecisions ? <StatusPill label={`${pendingDecisions} to vote on`} accent /> : null}
               <StatusPill label={`${activeTrip.travelers} going`} />
             </View>
-          </Pressable>
-        </Section>
-      ) : null}
-
-      {pendingDecisions > 0 && activeTrip ? (
-        <Section title="Your group needs you">
-          <Pressable
-            onPress={() => router.push(`/trips/${activeTrip.tripId}?section=group`)}
-            style={{ borderRadius: radius['2xl'], backgroundColor: colors.poolLight, padding: spacing.lg, flexDirection: 'row', gap: spacing.md, alignItems: 'center' }}
-          >
-            <OutingIcon name="vote" color={colors.pool} size={30} />
-            <View style={{ flex: 1 }}>
-              <Text variant="h3">{pendingDecisions} decision{pendingDecisions === 1 ? '' : 's'} waiting</Text>
-              <Text variant="bodySm" style={{ color: colors.textSecondary }}>Vote so the plan can keep moving.</Text>
-            </View>
-            <OutingIcon name="arrow" color={colors.pool} size={20} />
           </Pressable>
         </Section>
       ) : null}

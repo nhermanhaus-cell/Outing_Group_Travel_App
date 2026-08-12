@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
+import { Alert, Pressable, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
+import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,6 +30,7 @@ import {
   travelSearchChips,
 } from '../../src/lib/smartSearch';
 import { loadDestinationExperiences } from '../../src/lib/experiences';
+import { OutingIcon } from '../../components/ui/OutingIcon';
 
 function nextMonth() {
   const date = new Date();
@@ -51,6 +53,8 @@ export default function DiscoverScreen() {
   const { width } = useWindowDimensions();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [nearbySlugs, setNearbySlugs] = useState<string[]>([]);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
   const { track } = useAnalytics();
   const impressionKeyRef = useRef('');
   const primaryAirport = profile.homeAirports.find((airport) => airport.primary) ?? profile.homeAirports[0];
@@ -115,7 +119,45 @@ export default function DiscoverScreen() {
     const destination = recommendation.destinationSlug ? getBySlug(recommendation.destinationSlug) : undefined;
     return destination ? [destination] : [];
   }) ?? [];
-  const visibleResults = serverResults.length ? serverResults : results;
+  const nearbyResults = nearbySlugs.flatMap((slug) => {
+    const destination = getBySlug(slug);
+    return destination ? [destination] : [];
+  });
+  const visibleResults = !query.trim() && nearbyResults.length
+    ? nearbyResults
+    : serverResults.length ? serverResults : results;
+
+  const findNearby = async () => {
+    setNearbyLoading(true);
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Location is off', 'You can still explore by destination, mood, dates, or your saved home airport.');
+        return;
+      }
+      const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const latitude = location.coords.latitude;
+      const longitude = location.coords.longitude;
+      const radians = (value: number) => value * Math.PI / 180;
+      const slugs = catalog.map((destination) => {
+        const deltaLat = radians(destination.lat - latitude);
+        const deltaLng = radians(destination.lng - longitude);
+        const left = radians(latitude);
+        const right = radians(destination.lat);
+        const value = Math.sin(deltaLat / 2) ** 2 + Math.cos(left) * Math.cos(right) * Math.sin(deltaLng / 2) ** 2;
+        return { slug: destination.slug, distanceKm: 6_371 * 2 * Math.atan2(Math.sqrt(value), Math.sqrt(1 - value)) };
+      }).sort((left, right) => left.distanceKm - right.distanceKm).slice(0, 8).map((item) => item.slug);
+      // Exact coordinates are intentionally discarded here; only selected catalog slugs remain in memory.
+      setNearbySlugs(slugs);
+      track(ANALYTICS_EVENTS.SEARCH_PERFORMED, {
+        searchContext: 'foreground_nearby',
+        queryLengthBucket: '0',
+        resultCountBucket: bucketCount(slugs.length),
+      });
+    } catch {
+      Alert.alert('Nearby ideas are unavailable', 'Try again, or use your home airport and travel range preferences.');
+    } finally { setNearbyLoading(false); }
+  };
   const experienceDestination = useMemo(() => {
     const normalizedQuery = normalizedLookup(debouncedQuery);
     if (normalizedQuery.length < 3) return undefined;
@@ -202,7 +244,14 @@ export default function DiscoverScreen() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.background }} contentInsetAdjustmentBehavior="automatic">
       <View style={{ paddingTop: insets.top + spacing.base, paddingHorizontal: spacing.base, gap: spacing.xs }}>
-        <Text variant="displayMd">Discover</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md }}>
+          <Text variant="displayMd">Discover</Text>
+          {featureFlags.outingFullExperienceV1 ? (
+            <Pressable accessibilityRole="button" accessibilityLabel="Import travel inspiration" onPress={() => router.push('/inspiration' as never)} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.poolLight, alignItems: 'center', justifyContent: 'center' }}>
+              <OutingIcon name="image" color={colors.pool} size={21} />
+            </Pressable>
+          ) : null}
+        </View>
         <Text variant="bodyLg" style={{ color: colors.textSecondary }}>Places picked for the way you like to travel.</Text>
       </View>
 
@@ -286,6 +335,16 @@ export default function DiscoverScreen() {
             placeholderTextColor={colors.textTertiary}
             style={{ backgroundColor: colors.backgroundSecondary, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, color: colors.textPrimary, fontSize: 15 }}
           />
+          {featureFlags.outingFullExperienceV1 && !query.trim() ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => nearbySlugs.length ? setNearbySlugs([]) : void findNearby()}
+              style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full, backgroundColor: nearbySlugs.length ? colors.poolLight : colors.surface, borderWidth: 1, borderColor: nearbySlugs.length ? colors.pool : colors.border }}
+            >
+              <OutingIcon name="pin" color={colors.pool} size={16} />
+              <Text variant="labelSm" style={{ color: colors.pool }}>{nearbyLoading ? 'Finding nearby ideas…' : nearbySlugs.length ? 'Show all destinations' : 'Ideas near me'}</Text>
+            </Pressable>
+          ) : null}
           {chips.length ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
               {chips.map((chip) => (

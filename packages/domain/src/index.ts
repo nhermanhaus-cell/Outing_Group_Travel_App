@@ -25,6 +25,8 @@ export type {
   TripPlanBookingAction,
   TripPlanDay,
   TripPlanFeedback,
+  TripPlanDayReworkAction,
+  TripPlanPreviewProposal,
   TripPlanReaction,
   TripPublicPayload,
   WeightConfig,
@@ -87,10 +89,17 @@ export type { ItineraryRouteEstimate } from './itinerary/engine';
 export {
   createLegacyTripPlan,
   buildActivityPreferenceSignals,
+  isActivityPreferenceSessionComplete,
+  normalizeActivityPreferenceChoice,
   generateTripPlan,
   refineTripPlan,
   replaceTripPlanItems,
+  createTripPlanReworkPreview,
+  decodeTripPlan,
 } from './itinerary/tripPlan';
+
+export { deriveHomeJourney } from './journey/homeJourney';
+export type { HomeJourneyResult, HomeJourneyTripInput } from './journey/homeJourney';
 export type {
   ActivityPreferenceSignals,
   PlannerTraveler,

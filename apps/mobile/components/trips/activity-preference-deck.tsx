@@ -14,10 +14,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import type { ActivityPreferenceChoice, ActivityPreferenceVote, Place } from '@gayi/shared';
+import { isActivityPreferenceSessionComplete, normalizeActivityPreferenceChoice } from '@gayi/domain';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { Text } from '../ui/Text';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { featureFlags } from '../../src/lib/featureFlags';
 
 type Props = {
   visible: boolean;
@@ -61,7 +63,12 @@ export function ActivityPreferenceDeck({
     () => reviewAll ? candidates : candidates.filter((place) => !existingForMember.has(place.placeId)),
     [candidates, existingForMember, reviewAll],
   );
-  const current = queue[index];
+  const memberVotes = useMemo(() => [
+    ...existingVotes.filter((vote) => vote.memberId === memberId),
+    ...sessionVotes,
+  ], [existingVotes, memberId, sessionVotes]);
+  const complete = isActivityPreferenceSessionComplete(memberVotes, candidates.length);
+  const current = complete ? undefined : queue[index];
   const translateX = useSharedValue(0);
   const rotate = useSharedValue(0);
   const cardWidth = Math.min(width - spacing.xl * 2, 520);
@@ -84,7 +91,7 @@ export function ActivityPreferenceDeck({
         createdAt: new Date().toISOString(),
       },
     ]);
-    const direction = choice === 'interested' ? 1 : -1;
+    const direction = choice === 'must_do' || choice === 'interested' ? 1 : -1;
     translateX.value = withTiming(direction * Math.max(width, 420), { duration: 180 }, (finished) => {
       if (finished) {
         translateX.value = 0;
@@ -101,7 +108,7 @@ export function ActivityPreferenceDeck({
     })
     .onEnd((event) => {
       if (event.translationX > 90) runOnJS(vote)('interested');
-      else if (event.translationX < -90) runOnJS(vote)('not_interested');
+      else if (event.translationX < -90) runOnJS(vote)('not_for_this_trip');
       else {
         translateX.value = withSpring(0, { damping: 18, stiffness: 180 });
         rotate.value = withSpring(0, { damping: 18, stiffness: 180 });
@@ -130,15 +137,20 @@ export function ActivityPreferenceDeck({
     }
   }, [onSave, saving, sessionVotes]);
 
+  const currentMemberHasResponded = current
+    ? memberVotes.some((entry) => entry.placeId === current.placeId)
+    : false;
   const tally = current
     ? groupVotes.filter((entry) => entry.placeId === current.placeId).reduce(
         (value, entry) => ({
-          interested: value.interested + (entry.choice === 'interested' ? 1 : 0),
-          notInterested: value.notInterested + (entry.choice === 'not_interested' ? 1 : 0),
+          mustDo: value.mustDo + (normalizeActivityPreferenceChoice(entry.choice) === 'must_do' ? 1 : 0),
+          interested: value.interested + (normalizeActivityPreferenceChoice(entry.choice) === 'interested' ? 1 : 0),
+          maybe: value.maybe + (normalizeActivityPreferenceChoice(entry.choice) === 'maybe' ? 1 : 0),
+          notForTrip: value.notForTrip + (normalizeActivityPreferenceChoice(entry.choice) === 'not_for_this_trip' ? 1 : 0),
         }),
-        { interested: 0, notInterested: 0 },
+        { mustDo: 0, interested: 0, maybe: 0, notForTrip: 0 },
       )
-    : { interested: 0, notInterested: 0 };
+    : { mustDo: 0, interested: 0, maybe: 0, notForTrip: 0 };
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => void saveAndClose(false)}>
@@ -150,7 +162,9 @@ export function ActivityPreferenceDeck({
           <View style={{ flex: 1, gap: spacing.xxs }}>
             <Text variant="h2">Shape your {destinationName} plan</Text>
             <Text variant="bodySm" style={{ color: colors.textSecondary }}>
-              Swipe or tap. Your choices guide the itinerary; they never book anything.
+              {featureFlags.outingFullExperienceV1
+                ? 'Swipe for a quick yes or no, or use all four reactions. Group results stay hidden until you answer.'
+                : 'Swipe or tap. Your choices guide the itinerary; they never book anything.'}
             </Text>
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Save and close activity picker" onPress={() => void saveAndClose(false)}>
@@ -203,6 +217,10 @@ export function ActivityPreferenceDeck({
                     ) : null}
                     {current.bookingOffer?.cancellationSummary ? <Badge label="Free cancellation" variant="success" /> : null}
                     {current.bookingRequired ? <Badge label="May need booking" variant="warning" /> : null}
+                    {current.neighborhood ? <Badge label={current.neighborhood} variant="default" /> : null}
+                    {current.routeTimeMinutes !== undefined ? <Badge label={`${current.routeTimeMinutes} min from the prior stop`} variant="info" /> : null}
+                    {current.freshness ? <Badge label={`${current.freshness} details`} variant={current.freshness === 'stale' ? 'warning' : 'info'} /> : null}
+                    {current.confidence !== undefined ? <Badge label={`${Math.round(current.confidence * 100)}% confidence`} variant="info" /> : null}
                   </View>
                   <View style={{ gap: spacing.xs }}>
                     <Text variant="h2">{current.name}</Text>
@@ -213,9 +231,16 @@ export function ActivityPreferenceDeck({
                   {current.lgbtqRelevance ? (
                     <Text variant="bodySm" style={{ color: colors.accent }}>✦ {current.lgbtqRelevance}</Text>
                   ) : null}
-                  {tally.interested + tally.notInterested > 0 ? (
+                  {current.fitReasons?.length ? (
+                    <View style={{ padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.accentLight, gap: spacing.xs }}>
+                      <Text variant="labelSm" style={{ color: colors.accent }}>WHY THIS FITS</Text>
+                      {current.fitReasons.slice(0, 2).map((reason) => <Text key={reason} variant="bodySm">{reason}</Text>)}
+                    </View>
+                  ) : null}
+                  {current.providerDisclosure ? <Text variant="caption" style={{ color: colors.textTertiary }}>{current.providerDisclosure}</Text> : null}
+                  {(!featureFlags.outingFullExperienceV1 || currentMemberHasResponded) && tally.mustDo + tally.interested + tally.maybe + tally.notForTrip > 0 ? (
                     <Text variant="caption" style={{ color: colors.textTertiary }}>
-                      Group so far: {tally.interested} interested · {tally.notInterested} pass
+                      Group so far: {tally.mustDo} must-do · {tally.interested} interested · {tally.maybe} maybe · {tally.notForTrip} pass
                     </Text>
                   ) : null}
                 </View>
@@ -244,9 +269,20 @@ export function ActivityPreferenceDeck({
           </Animated.View>
         )}
 
-        {current ? (
+        {current && featureFlags.outingFullExperienceV1 ? (
+          <View style={{ gap: spacing.sm }}>
+            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+              <Button disabled={saving} variant="secondary" style={{ flex: 1 }} onPress={() => vote('not_for_this_trip')}>Not this trip</Button>
+              <Button disabled={saving} variant="secondary" style={{ flex: 1 }} onPress={() => vote('maybe')}>Maybe</Button>
+            </View>
+            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+              <Button disabled={saving} variant="secondary" style={{ flex: 1 }} onPress={() => vote('interested')}>Interested</Button>
+              <Button disabled={saving} style={{ flex: 1 }} onPress={() => vote('must_do')}>Must do</Button>
+            </View>
+          </View>
+        ) : current ? (
           <View style={{ flexDirection: 'row', gap: spacing.md }}>
-            <Button disabled={saving} variant="secondary" style={{ flex: 1 }} onPress={() => vote('not_interested')}>Not for me</Button>
+            <Button disabled={saving} variant="secondary" style={{ flex: 1 }} onPress={() => vote('not_for_this_trip')}>Not for me</Button>
             <Button disabled={saving} style={{ flex: 1 }} onPress={() => vote('interested')}>Interested</Button>
           </View>
         ) : null}

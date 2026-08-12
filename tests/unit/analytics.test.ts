@@ -16,6 +16,14 @@ describe('analytics contracts', () => {
       .toBe('/trips/[tripId]/invite');
     expect(normalizeAnalyticsRoute('/experiences/VIATOR-123'))
       .toBe('/experiences/[productCode]');
+    expect(normalizeAnalyticsRoute('/trips/65ed0f44-95e0-481f-81b6-44a236c33281/today?prompt=private'))
+      .toBe('/trips/[tripId]/today');
+    expect(normalizeAnalyticsRoute('/trips/65ed0f44-95e0-481f-81b6-44a236c33281/ask'))
+      .toBe('/trips/[tripId]/ask');
+    expect(normalizeAnalyticsRoute('/inspiration/65ed0f44-95e0-481f-81b6-44a236c33281'))
+      .toBe('/inspiration/[importId]');
+    expect(normalizeAnalyticsRoute('/destinations/provisional/65ed0f44-95e0-481f-81b6-44a236c33281'))
+      .toBe('/destinations/provisional/[id]');
     expect(normalizeAnalyticsRoute('/discover')).toBe('/discover');
   });
 

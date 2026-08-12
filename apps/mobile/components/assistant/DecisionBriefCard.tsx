@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Linking, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { type Href, useRouter } from 'expo-router';
 import type { AssistantDecisionCard } from '@gayi/shared';
 import { ANALYTICS_EVENTS } from '@gayi/shared';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -63,6 +63,13 @@ export function DecisionBriefCard({
     if (card.action.type === 'open_destination') router.push(`/destinations/${card.action.value}`);
     else if (card.action.type === 'open_compare') router.push({ pathname: '/compare', params: { slugs: card.action.value } });
     else if (card.action.type === 'open_trip') router.push(`/trips/${card.action.value}`);
+    else if (card.action.type === 'open_today') router.push(`/trips/${card.action.value}/today`);
+    else if (card.action.type === 'start_taste_deck') router.push(`/trips/${card.action.value}?deck=1`);
+    else if (card.action.type === 'rework_day') {
+      const [tripId, day] = card.action.value.split(':');
+      router.push(`/trips/${tripId}?section=plan&day=${day}&rework=1`);
+    }
+    else if (card.action.type === 'review_import') router.push(`/inspiration/${card.action.value}` as Href);
     else if (card.action.type === 'ask_follow_up') router.push({ pathname: '/ask', params: { prompt: card.action.value } });
     else if (card.action.type === 'open_url') await Linking.openURL(card.action.value);
   };

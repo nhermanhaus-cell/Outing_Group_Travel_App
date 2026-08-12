@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assistantFocusSchema } from './fullExperience';
 
 export const assistantScopeSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('general') }),
@@ -105,7 +106,10 @@ export const assistantRecommendationSchema = z.object({
   bookable: z.boolean().default(false),
   affiliateDisclosure: z.string().max(240).optional(),
   action: z.object({
-    type: z.enum(['open_destination', 'ask_follow_up', 'review_proposal', 'open_url']),
+    type: z.enum([
+      'open_destination', 'ask_follow_up', 'review_proposal', 'open_url',
+      'open_today', 'start_taste_deck', 'rework_day', 'review_import',
+    ]),
     value: z.string().min(1).max(1000),
   }).optional(),
 });
@@ -121,6 +125,10 @@ export const assistantDecisionActionSchema = z.object({
     'review_proposal',
     'apply_filters',
     'open_url',
+    'open_today',
+    'start_taste_deck',
+    'rework_day',
+    'review_import',
   ]),
   value: z.string().min(1).max(1_000),
   label: z.string().min(1).max(120),
@@ -479,6 +487,8 @@ export const assistantRequestSchema = z.object({
   evaluationProvider: z.enum(['mistral', 'qwen']).optional(),
   agentRollout: z.boolean().optional(),
   globalDiscoveryRollout: z.boolean().optional(),
+  /** IDs and action only. The Edge Function derives and redacts all entity context. */
+  focus: assistantFocusSchema.optional(),
 }).superRefine((value, ctx) => {
   if (value.visibility === 'trip_shared' && value.scope.kind !== 'trip') {
     ctx.addIssue({

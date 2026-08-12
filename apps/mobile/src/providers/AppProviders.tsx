@@ -107,6 +107,10 @@ export interface LocalTrip {
   tripPlan?: TripPlan;
   itineraryFeedback?: TripPlanFeedback[];
   activityPreferences?: ActivityPreferenceVote[];
+  /** V2 source of truth; legacy activityPreferences remains yes/no for old clients. */
+  activityPreferencesV2?: ActivityPreferenceVote[];
+  activityPreferenceSessionComplete?: boolean;
+  tripPlanProposals?: import('@gayi/domain').TripPlanPreviewProposal[];
   /** Local-first draft that will be synced after authentication. */
   localOnly?: boolean;
 }
@@ -132,6 +136,7 @@ export interface TripPoll {
   options: Array<{ id: string; label: string; votes: string[] }>;
   createdAt: string;
   assistantProposal?: AssistantProposal;
+  planProposalId?: string;
   resolution?: 'accepted' | 'dismissed' | 'tie';
 }
 
@@ -139,6 +144,7 @@ export interface TripsContext {
   trips: LocalTrip[];
   createTrip: (trip: Omit<LocalTrip, 'tripId' | 'createdAt'>) => Promise<LocalTrip>;
   updateTrip: (tripId: string, updates: Partial<LocalTrip>) => Promise<void>;
+  castPollVote: (tripId: string, pollId: string, optionId: string) => Promise<TripPoll[]>;
   deleteTrip: (tripId: string) => Promise<void>;
   getTrip: (tripId: string) => LocalTrip | undefined;
 }
@@ -525,7 +531,7 @@ function DestinationsProvider({ children }: { children: React.ReactNode }) {
 // ─── Trips Provider ───────────────────────────────────────────────────────────
 
 const TRIPS_KEY = 'gayi:trips';
-const LOCAL_TRIP_MIGRATION_VERSION = 3;
+const LOCAL_TRIP_MIGRATION_VERSION = 4;
 
 function generateId() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
@@ -631,13 +637,25 @@ function rowToLocalTrip(row: TripRow): LocalTrip {
 }
 
 function migrateLegacyTrip(trip: LocalTrip): LocalTrip {
-  if (trip.tripPlan || !trip.itineraryItems?.length) return trip;
-  return {
+  const preferences = trip.activityPreferencesV2 ?? trip.activityPreferences;
+  const normalized: LocalTrip = {
     ...trip,
+    activityPreferences: preferences?.map((vote) => ({
+      ...vote,
+      choice: vote.choice === 'not_interested' ? 'not_for_this_trip' : vote.choice,
+    })),
+    activityPreferencesV2: preferences?.map((vote) => ({
+      ...vote,
+      choice: vote.choice === 'not_interested' ? 'not_for_this_trip' : vote.choice,
+    })),
+  };
+  if (normalized.tripPlan || !normalized.itineraryItems?.length) return normalized;
+  return {
+    ...normalized,
     tripPlan: createLegacyTripPlan(
-      trip.destinationName ?? trip.name,
-      trip.itineraryItems as unknown as ItineraryItem[],
-      trip.createdAt,
+      normalized.destinationName ?? normalized.name,
+      normalized.itineraryItems as unknown as ItineraryItem[],
+      normalized.createdAt,
     ),
   };
 }
@@ -645,8 +663,22 @@ function migrateLegacyTrip(trip: LocalTrip): LocalTrip {
 function tripPayload(trip: Omit<LocalTrip, 'tripId' | 'createdAt'> | LocalTrip): Record<string, unknown> {
   const { name: _name, destinationSlug: _destinationSlug, destinationCandidateId: _destinationCandidateId, startDate: _startDate,
     endDate: _endDate, origin: _origin, travelers: _travelers,
-    glamourLevel: _glamourLevel, localOnly: _localOnly, ...payload } = trip;
-  return payload;
+    glamourLevel: _glamourLevel, localOnly: _localOnly,
+    activityPreferences: preferences, activityPreferencesV2: preferencesV2,
+    ...payload } = trip;
+  const normalized = preferencesV2 ?? preferences;
+  return {
+    ...payload,
+    ...(normalized ? {
+      activityPreferencesV2: normalized,
+      activityPreferences: normalized.map((vote) => ({
+        ...vote,
+        choice: vote.choice === 'not_for_this_trip' || vote.choice === 'not_interested'
+          ? 'not_interested'
+          : 'interested',
+      })),
+    } : {}),
+  };
 }
 
 function TripsProvider({ children }: { children: React.ReactNode }) {
@@ -749,6 +781,16 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
     await storeSet(TRIPS_KEY, JSON.stringify(updated));
   }, []);
 
+  const patchLocalTrip = useCallback((tripId: string, updates: Partial<LocalTrip>) => {
+    setTrips((currentTrips) => {
+      const updated = currentTrips.map((trip) =>
+        trip.tripId === tripId ? { ...trip, ...updates } : trip,
+      );
+      void storeSet(TRIPS_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   const createTrip = useCallback(
     async (data: Omit<LocalTrip, 'tripId' | 'createdAt'>) => {
       if (tripClient && auth?.user) {
@@ -804,6 +846,7 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           'itineraryItems',
           'memberPrefs',
           'tripPlan',
+          'tripPlanProposals',
           'itineraryFeedback',
         ]);
         const patch = Object.fromEntries(Object.entries(updates).filter(([key]) => collaborativeKeys.has(key)));
@@ -815,10 +858,17 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           const ownVotes = updates.activityPreferences.filter(
             (vote) => vote.memberId === authenticatedUserId,
           );
-          const { error } = await tripClient.rpc('update_trip_activity_preferences', {
+          let { error } = await tripClient.rpc('update_trip_activity_preferences_v2', {
             p_trip_id: tripId,
             p_votes: ownVotes,
+            p_completed: updates.activityPreferenceSessionComplete ?? false,
           });
+          if (error?.code === 'PGRST202') {
+            ({ error } = await tripClient.rpc('update_trip_activity_preferences', {
+              p_trip_id: tripId,
+              p_votes: ownVotes,
+            }));
+          }
           if (error) throw error;
         }
         if (updates.tripPlan) {
@@ -833,6 +883,25 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
             is_current: true,
           }, { onConflict: 'trip_id,revision' });
           if (error) throw error;
+        }
+        if (updates.tripPlanProposals !== undefined) {
+          const currentIds = new Set((current?.tripPlanProposals ?? []).map((proposal) => proposal.proposalId));
+          const added = updates.tripPlanProposals.filter((proposal) => !currentIds.has(proposal.proposalId));
+          if (added.length) {
+            const { error } = await tripClient.from('trip_plan_proposals').insert(added.map((proposal) => ({
+              trip_id: tripId,
+              created_by: authenticatedUserId,
+              proposal_kind: 'day_rework',
+              action: proposal.action,
+              day_index: proposal.day,
+              prior_plan_id: proposal.priorPlanId,
+              prior_revision: proposal.priorRevision,
+              preview_plan: proposal.preview,
+              summary: proposal.summary,
+              status: proposal.status,
+            })));
+            if (error) throw error;
+          }
         }
         if (updates.itineraryFeedback !== undefined) {
           const ownFeedback = updates.itineraryFeedback.filter(
@@ -862,7 +931,14 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
             if (error) throw error;
           }
         }
-        const hasOrganizerUpdates = Object.keys(updates).some((key) => !collaborativeKeys.has(key));
+        const rpcOnlyKeys = new Set([
+          'activityPreferences',
+          'activityPreferencesV2',
+          'activityPreferenceSessionComplete',
+        ]);
+        const hasOrganizerUpdates = Object.keys(updates).some((key) =>
+          !collaborativeKeys.has(key) && !rpcOnlyKeys.has(key),
+        );
         if (hasOrganizerUpdates) {
           const { error } = await tripClient.from('trips').update({
             name: next.name,
@@ -879,7 +955,7 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           if (error) throw error;
         }
       }
-      await persist(trips.map((t) => (t.tripId === tripId ? { ...t, ...updates } : t)));
+      patchLocalTrip(tripId, updates);
       if (auth?.user && featureFlags.proactiveInsightsV1) {
         void loadAssistantInsights({
           surface: 'trip',
@@ -889,8 +965,61 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
         }).catch(() => undefined);
       }
     },
-    [auth?.user, trips, persist],
+    [auth?.user, patchLocalTrip, trips],
   );
+
+  const castPollVote = useCallback(async (
+    tripId: string,
+    pollId: string,
+    optionId: string,
+  ): Promise<TripPoll[]> => {
+    const trip = trips.find((item) => item.tripId === tripId);
+    if (!trip || !auth?.user) return trip?.polls ?? [];
+
+    let polls: TripPoll[];
+    if (tripClient && !trip.localOnly) {
+      const { data, error } = await tripClient.rpc('cast_trip_payload_poll_vote', {
+        p_trip_id: tripId,
+        p_poll_id: pollId,
+        p_option_id: optionId,
+      });
+      if (error) throw error;
+      polls = (data ?? []) as TripPoll[];
+    } else {
+      polls = (trip.polls ?? []).map((poll) => {
+        if (poll.id !== pollId) return poll;
+        const togglingOff = poll.options.some((option) =>
+          option.id === optionId && option.votes.includes(auth.user!.id),
+        );
+        const options = poll.options.map((option) => ({
+          ...option,
+          votes: [
+            ...option.votes.filter((memberId) => memberId !== auth.user!.id),
+            ...(option.id === optionId && !togglingOff ? [auth.user!.id] : []),
+          ],
+        }));
+        if (!poll.assistantProposal && !poll.planProposalId) {
+          return { ...poll, options };
+        }
+        const memberCount = Math.max(1, trip.members?.length ?? 1);
+        const majority = Math.floor(memberCount / 2) + 1;
+        const accepts = options[0]?.votes.length ?? 0;
+        const dismisses = options[1]?.votes.length ?? 0;
+        const voterCount = new Set(options.flatMap((option) => option.votes)).size;
+        const resolution = accepts >= majority
+          ? 'accepted' as const
+          : dismisses >= majority
+            ? 'dismissed' as const
+            : voterCount >= memberCount && accepts === dismisses
+              ? 'tie' as const
+              : undefined;
+        const { resolution: _oldResolution, ...unresolved } = poll;
+        return resolution ? { ...unresolved, options, resolution } : { ...unresolved, options };
+      });
+    }
+    patchLocalTrip(tripId, { polls });
+    return polls;
+  }, [auth?.user, patchLocalTrip, trips]);
 
   const deleteTrip = useCallback(
     async (tripId: string) => {
@@ -911,8 +1040,8 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
   const getTrip = useCallback((tripId: string) => trips.find((t) => t.tripId === tripId), [trips]);
 
   const value = useMemo(
-    () => ({ trips, createTrip, updateTrip, deleteTrip, getTrip }),
-    [trips, createTrip, updateTrip, deleteTrip, getTrip],
+    () => ({ trips, createTrip, updateTrip, castPollVote, deleteTrip, getTrip }),
+    [trips, createTrip, updateTrip, castPollVote, deleteTrip, getTrip],
   );
 
   return <TripsCtx.Provider value={value}>{children}</TripsCtx.Provider>;

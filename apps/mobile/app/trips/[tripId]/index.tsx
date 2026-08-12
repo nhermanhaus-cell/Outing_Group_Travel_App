@@ -7,11 +7,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   blendGroupPreferences,
   buildActivityPreferenceSignals,
+  createTripPlanReworkPreview,
   estimateBudget,
   generateTripPlan,
   rankPlacesNearLodging,
@@ -26,6 +27,8 @@ import type {
   TripPlan,
   TripPlanFeedback,
   TripPlanInput,
+  TripPlanDayReworkAction,
+  TripPlanPreviewProposal,
   TripPlanReaction,
 } from '@gayi/domain';
 import { useTheme } from '../../../src/theme/ThemeProvider';
@@ -41,7 +44,6 @@ import { GlamourSelector } from '../../../components/ui/GlamourSelector';
 import { ProgressBar } from '../../../components/ui/ProgressBar';
 import {
   ANALYTICS_EVENTS,
-  decideProposalVote,
   type GlamourLevel,
 } from '@gayi/shared';
 import type {
@@ -215,14 +217,15 @@ export default function TripHubScreen() {
   const { colors, spacing, radius } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { tripId, section: requestedSection } = useLocalSearchParams<{ tripId: string; section?: string }>();
-  const { getTrip, updateTrip, deleteTrip } = useTrips();
+  const { tripId, section: requestedSection, deck, day: requestedDay, rework } = useLocalSearchParams<{ tripId: string; section?: string; deck?: string; day?: string; rework?: string }>();
+  const { getTrip, updateTrip, castPollVote, deleteTrip } = useTrips();
   const { user } = useAuth();
   const { profile } = useTravelProfile();
   const { getBySlug, getScoringBySlug } = useDestinations();
   const { track, observePreference, preferenceSignals } = useAnalytics();
   const trackedGeneratedPlanRef = useRef('');
   const trackedBookingImpressionsRef = useRef('');
+  const fullExperienceEnabled = featureFlags.outingFullExperienceV1;
 
   const [section, setSection] = useState<SectionKey>('overview');
   const [comment, setComment] = useState('');
@@ -250,6 +253,7 @@ export default function TripHubScreen() {
   const [nameDraft, setNameDraft] = useState('');
   const [calendarExportVisible, setCalendarExportVisible] = useState(false);
   const [activityDeckVisible, setActivityDeckVisible] = useState(false);
+  const [planPreview, setPlanPreview] = useState<TripPlanPreviewProposal | null>(null);
   const lastGeocodeAttemptKeyRef = useRef<string | null>(null);
   const lastNearbyFetchKeyRef = useRef<string | null>(null);
   const activeHub = (Object.entries(HUB_SECTIONS).find(([, items]) =>
@@ -261,6 +265,11 @@ export default function TripHubScreen() {
     if (requestedSection === 'explore') setSection('places');
     if (requestedSection === 'group') setSection('polls');
   }, [requestedSection]);
+
+  useEffect(() => {
+    if (deck === '1') setActivityDeckVisible(true);
+    if (requestedDay && Number.isFinite(Number(requestedDay))) setSelectedItineraryDay(Number(requestedDay));
+  }, [deck, requestedDay]);
 
   useEffect(() => {
     track(ANALYTICS_EVENTS.TRIP_SECTION_VIEWED, { section });
@@ -715,6 +724,7 @@ export default function TripHubScreen() {
   const tripPlanInput = useMemo<TripPlanInput | null>(() => {
     if (!destination || !trip || !blendedPreferences || !ownerPreferences) return null;
     return {
+      planSchemaVersion: fullExperienceEnabled ? 2 : 1,
       destination,
       places: itineraryPlaces,
       preferences: blendedPreferences,
@@ -746,6 +756,8 @@ export default function TripHubScreen() {
       ...(budget !== null && { budget }),
       feedback: trip.itineraryFeedback ?? trip.tripPlan?.feedback ?? [],
       excludedPlaceIds: activityPreferenceSignals.excludedPlaceIds,
+      anchorCandidatePlaceIds: activityPreferenceSignals.anchorCandidatePlaceIds,
+      minorityFavoriteMemberIdsByPlace: activityPreferenceSignals.minorityFavoriteMemberIdsByPlace,
       scoreAdjustments: {
         ...inferredScoreAdjustments,
         ...Object.fromEntries(Object.entries(activityPreferenceSignals.scoreAdjustments).map(
@@ -773,6 +785,7 @@ export default function TripHubScreen() {
     catalogDestination?.timezone,
     destination,
     destinationFlightDeal,
+    fullExperienceEnabled,
     activityPreferenceSignals,
     itineraryPlaces,
     inferredScoreAdjustments,
@@ -872,7 +885,13 @@ export default function TripHubScreen() {
       observePreference({
         subjectType: 'activity_category',
         subjectKey: vote.category,
-        value: vote.choice === 'interested' ? 0.7 : -0.6,
+        value: vote.choice === 'must_do'
+          ? 1
+          : vote.choice === 'interested'
+            ? 0.7
+            : vote.choice === 'maybe'
+              ? 0.05
+              : -0.6,
         weight: 1,
         source: 'activity_deck',
         observedAt: vote.createdAt,
@@ -887,6 +906,8 @@ export default function TripHubScreen() {
       const plan = generateTripPlan({
         ...tripPlanInput,
         excludedPlaceIds: signals.excludedPlaceIds,
+        anchorCandidatePlaceIds: signals.anchorCandidatePlaceIds,
+        minorityFavoriteMemberIdsByPlace: signals.minorityFavoriteMemberIdsByPlace,
         scoreAdjustments: {
           ...(tripPlanInput.scoreAdjustments ?? {}),
           ...Object.fromEntries(Object.entries(signals.scoreAdjustments).map(
@@ -894,11 +915,29 @@ export default function TripHubScreen() {
           )),
         },
       });
+      const existingPollIds = new Set((trip.polls ?? []).map((poll) => poll.id));
+      const preferencePolls = signals.pollPlaceIds.flatMap((placeId) => {
+        const place = itineraryPlaces.find((candidate) => candidate.placeId === placeId);
+        const id = `activity-${placeId}`;
+        if (!place || existingPollIds.has(id)) return [];
+        return [{
+          id,
+          question: `Should ${place.name} become a shared anchor?`,
+          options: [
+            { id: `${id}-yes`, label: 'Add as a group anchor', votes: [] },
+            { id: `${id}-no`, label: 'Keep the shared plan open', votes: [] },
+          ],
+          createdAt: new Date().toISOString(),
+        }];
+      });
       await updateTrip(trip.tripId, {
         activityPreferences: merged,
+        activityPreferencesV2: merged,
+        activityPreferenceSessionComplete: true,
         tripPlan: plan,
         itineraryFeedback: plan.feedback,
         itineraryItems: plan.items as unknown as Array<Record<string, unknown>>,
+        ...(preferencePolls.length ? { polls: [...(trip.polls ?? []), ...preferencePolls] } : {}),
       });
       track(ANALYTICS_EVENTS.ACTIVITY_DECK_COMPLETED, {
         ratedCount: merged.filter((vote) => vote.memberId === memberId).length,
@@ -906,7 +945,11 @@ export default function TripHubScreen() {
         groupSize: Math.max(1, trip.members?.length ?? 0, trip.travelers),
       });
     } else {
-      await updateTrip(trip.tripId, { activityPreferences: merged });
+      await updateTrip(trip.tripId, {
+        activityPreferences: merged,
+        activityPreferencesV2: merged,
+        activityPreferenceSessionComplete: completed,
+      });
     }
     setActivityDeckVisible(false);
   }, [activityCandidates.length, inferredScoreAdjustments, itineraryPlaces, observePreference, track, trip, tripPlanInput, updateTrip, user?.id]);
@@ -997,7 +1040,20 @@ export default function TripHubScreen() {
       nextFeedback,
       [item.day],
     );
-    await saveTripPlan(refined);
+    if (!featureFlags.outingFullExperienceV1) {
+      await saveTripPlan(refined);
+    } else setPlanPreview({
+      proposalId: `feedback-${activeTripPlan.planId}-${item.day}-${Date.now()}`,
+      tripId: trip.tripId,
+      action: 'lighter_pace',
+      day: item.day,
+      priorPlanId: activeTripPlan.planId,
+      priorRevision: activeTripPlan.revision,
+      preview: refined,
+      summary: `Preview Day ${item.day} after applying this feedback. Review the replacements and timing before changing the accepted plan.`,
+      createdAt: new Date().toISOString(),
+      status: 'preview',
+    });
     const cleared = existing?.reaction === reaction;
     track(ANALYTICS_EVENTS.ITINERARY_FEEDBACK_SUBMITTED, {
       category: item.category || item.kind || 'activity',
@@ -1014,6 +1070,64 @@ export default function TripHubScreen() {
       });
     }
   }, [activeTripPlan, observePreference, saveTripPlan, track, trip, tripPlanInput, user?.id]);
+
+  const previewDayRework = useCallback((day: number, action: TripPlanDayReworkAction) => {
+    if (!trip || !tripPlanInput || !activeTripPlan) return;
+    try {
+      setPlanPreview(createTripPlanReworkPreview(tripPlanInput, activeTripPlan, day, action, trip.tripId));
+    } catch (error) {
+      Alert.alert('That preview isn’t available', error instanceof Error ? error.message : 'Try again after the plan finishes loading.');
+    }
+  }, [activeTripPlan, trip, tripPlanInput]);
+
+  useEffect(() => {
+    if (rework === '1' && activeTripPlan && tripPlanInput) previewDayRework(selectedItineraryDay, 'lighter_pace');
+  }, [activeTripPlan?.planId, rework]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const acceptPlanPreview = useCallback(async () => {
+    if (!trip || !planPreview) return;
+    const role = trip.members?.find((member) => member.id === user?.id)?.role;
+    const requiresVote = (trip.members?.length ?? trip.travelers) > 1 && role !== 'owner' && role !== 'organizer';
+    if (requiresVote) {
+      const pollingProposal = { ...planPreview, status: 'polling' as const };
+      await updateTrip(trip.tripId, {
+        tripPlanProposals: [...(trip.tripPlanProposals ?? []), pollingProposal],
+        polls: [...(trip.polls ?? []), {
+          id: `plan-${Date.now()}`,
+          question: planPreview.summary,
+          options: [
+            { id: `${planPreview.proposalId}-yes`, label: 'Use this version', votes: [] },
+            { id: `${planPreview.proposalId}-no`, label: 'Keep the current plan', votes: [] },
+          ],
+          createdAt: new Date().toISOString(),
+          planProposalId: planPreview.proposalId,
+        }],
+      });
+      setPlanPreview(null);
+      Alert.alert('Sent to the group', 'This day will change only if the proposal wins the vote. An organizer resolves a tie.');
+      return;
+    }
+    await updateTrip(trip.tripId, {
+      tripPlan: planPreview.preview,
+      itineraryFeedback: planPreview.preview.feedback,
+      itineraryItems: planPreview.preview.items as unknown as Array<Record<string, unknown>>,
+      tripPlanProposals: [...(trip.tripPlanProposals ?? []), { ...planPreview, status: 'accepted' }],
+    });
+    track(ANALYTICS_EVENTS.ITINERARY_REGENERATED, {
+      itemCount: planPreview.preview.items.length,
+      dayCount: planPreview.preview.days.length,
+      reasonCode: planPreview.action,
+    });
+    setPlanPreview(null);
+  }, [planPreview, track, trip, updateTrip, user?.id]);
+
+  const dismissPlanPreview = useCallback(async () => {
+    if (!trip || !planPreview) return;
+    await updateTrip(trip.tripId, {
+      tripPlanProposals: [...(trip.tripPlanProposals ?? []), { ...planPreview, status: 'dismissed' }],
+    });
+    setPlanPreview(null);
+  }, [planPreview, trip, updateTrip]);
 
   const toggleFreeWindowSuggestion = useCallback(async (
     suggestion: FreeWindowSuggestion,
@@ -1566,37 +1680,31 @@ export default function TripHubScreen() {
     const changedVote = Boolean(
       currentPoll?.options.some((option) => option.votes.includes(user.id)),
     );
-    let polls = (trip.polls ?? []).map((poll) => {
-      if (poll.id !== pollId) return poll;
-      return {
-        ...poll,
-        options: poll.options.map((opt) => {
-          if (opt.id !== optionId) return { ...opt, votes: opt.votes.filter((v) => v !== user.id) };
-          return { ...opt, votes: opt.votes.includes(user.id) ? opt.votes.filter((v) => v !== user.id) : [...opt.votes, user.id] };
-        }),
-      };
-    });
+    const polls = await castPollVote(trip.tripId, pollId, optionId);
     const nextPoll = polls.find((poll) => poll.id === pollId);
     let proposalUpdates = {};
-    if (nextPoll?.assistantProposal) {
-      const memberIds = (trip.members ?? []).map((member) => member.id);
-      const votes = nextPoll.options.flatMap((option, index) =>
-        option.votes.map((userId) => ({
-          userId,
-          choice: index === 0 ? 'accept' as const : 'dismiss' as const,
-        })),
-      );
-      const decision = decideProposalVote({ memberIds, votes });
-      if (decision.result === 'accepted') {
-        proposalUpdates = applyAssistantProposalToTrip(trip, nextPoll.assistantProposal);
-        polls = polls.map((poll) => poll.id === pollId ? { ...poll, resolution: 'accepted' as const } : poll);
-      } else if (decision.result === 'dismissed') {
-        polls = polls.map((poll) => poll.id === pollId ? { ...poll, resolution: 'dismissed' as const } : poll);
-      } else if (decision.result === 'tie') {
-        polls = polls.map((poll) => poll.id === pollId ? { ...poll, resolution: 'tie' as const } : poll);
+    if (nextPoll?.assistantProposal || nextPoll?.planProposalId) {
+      if (nextPoll.resolution === 'accepted') {
+        const planProposal = trip.tripPlanProposals?.find((proposal) => proposal.proposalId === nextPoll.planProposalId);
+        proposalUpdates = nextPoll.assistantProposal
+          ? applyAssistantProposalToTrip(trip, nextPoll.assistantProposal)
+          : planProposal
+            ? {
+                tripPlan: planProposal.preview,
+                itineraryFeedback: planProposal.preview.feedback,
+                itineraryItems: planProposal.preview.items as unknown as Array<Record<string, unknown>>,
+                tripPlanProposals: trip.tripPlanProposals?.map((proposal) => proposal.proposalId === planProposal.proposalId ? { ...proposal, status: 'accepted' as const } : proposal),
+              }
+            : {};
+      } else if (nextPoll.resolution === 'dismissed') {
+        proposalUpdates = nextPoll.planProposalId ? {
+          tripPlanProposals: trip.tripPlanProposals?.map((proposal) => proposal.proposalId === nextPoll.planProposalId ? { ...proposal, status: 'dismissed' as const } : proposal),
+        } : {};
       }
     }
-    await updateTrip(trip.tripId, { polls, ...proposalUpdates });
+    if (Object.keys(proposalUpdates).length > 0) {
+      await updateTrip(trip.tripId, proposalUpdates);
+    }
     track(ANALYTICS_EVENTS.POLL_VOTE_SUBMITTED, {
       optionCount: currentPoll?.options.length ?? 0,
       changedVote,
@@ -1609,7 +1717,7 @@ export default function TripHubScreen() {
   ) => {
     if (!trip || !user) return;
     const poll = (trip.polls ?? []).find((item) => item.id === pollId);
-    if (!poll?.assistantProposal) return;
+    if (!poll?.assistantProposal && !poll?.planProposalId) return;
     const role = trip.members?.find((member) => member.id === user.id)?.role;
     if (role !== 'owner' && role !== 'organizer') return;
     const polls = (trip.polls ?? []).map((item) =>
@@ -1617,16 +1725,30 @@ export default function TripHubScreen() {
         ? { ...item, resolution: choice === 'accept' ? 'accepted' as const : 'dismissed' as const }
         : item,
     );
+    const planProposal = trip.tripPlanProposals?.find((proposal) => proposal.proposalId === poll.planProposalId);
     await updateTrip(trip.tripId, {
       polls,
       ...(choice === 'accept'
-        ? applyAssistantProposalToTrip(trip, poll.assistantProposal)
+        ? poll.assistantProposal
+          ? applyAssistantProposalToTrip(trip, poll.assistantProposal)
+          : planProposal
+            ? {
+                tripPlan: planProposal.preview,
+                itineraryFeedback: planProposal.preview.feedback,
+                itineraryItems: planProposal.preview.items as unknown as Array<Record<string, unknown>>,
+              }
+            : {}
         : {}),
+      ...(poll.planProposalId ? {
+        tripPlanProposals: trip.tripPlanProposals?.map((proposal) => proposal.proposalId === poll.planProposalId ? { ...proposal, status: choice === 'accept' ? 'accepted' as const : 'dismissed' as const } : proposal),
+      } : {}),
     });
-    await reviewAssistantProposal(
-      poll.assistantProposal.id,
-      choice === 'accept' ? 'apply' : 'dismiss',
-    ).catch(() => undefined);
+    if (poll.assistantProposal) {
+      await reviewAssistantProposal(
+        poll.assistantProposal.id,
+        choice === 'accept' ? 'apply' : 'dismiss',
+      ).catch(() => undefined);
+    }
   };
 
   if (!trip) {
@@ -1735,7 +1857,16 @@ export default function TripHubScreen() {
               <Pressable
                 testID="ask-outing-trip"
                 accessibilityLabel="Ask Outing about this trip"
-                onPress={() => router.push(`/trips/${trip.tripId}/ask`)}
+                onPress={() => router.push({
+                  pathname: '/trips/[tripId]/ask',
+                  params: section === 'map'
+                    ? { tripId: trip.tripId, focusKind: 'map', day: String(selectedItineraryDay), prompt: 'Help me improve this route' }
+                    : ['polls', 'members', 'comments'].includes(section)
+                      ? { tripId: trip.tripId, focusKind: 'group', prompt: 'Help the group resolve the next decision' }
+                      : section === 'itinerary'
+                        ? { tripId: trip.tripId, focusKind: 'day', day: String(selectedItineraryDay), prompt: `Help me with Day ${selectedItineraryDay}` }
+                        : { tripId: trip.tripId },
+                })}
                 style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.plumLight, alignItems: 'center', justifyContent: 'center' }}
               >
                 <OutingIcon name="ask" size={20} color={colors.plum} />
@@ -1783,6 +1914,16 @@ export default function TripHubScreen() {
               </View>
             </Card>
 
+            {featureFlags.outingFullExperienceV1 && trip.tripPlan ? (
+              <Button
+                size="lg"
+                variant="secondary"
+                onPress={() => router.push(`/trips/${trip.tripId}/today` as Href)}
+              >
+                Open Today
+              </Button>
+            ) : null}
+
             {currentMemberActivityVotes.length === 0 ? (
               <Card elevated>
                 <View style={{ gap: spacing.md }}>
@@ -1790,7 +1931,7 @@ export default function TripHubScreen() {
                   <View style={{ gap: spacing.xs }}>
                     <Text variant="h3">Pick what sounds good</Text>
                     <Text variant="bodySm" style={{ color: colors.textSecondary }}>
-                      Make quick interested/not-interested choices, then Outing will spread the strongest group matches across every day.
+                      Mark must-dos, interests, maybes, and passes. Outing will spread the strongest group matches across every day.
                     </Text>
                   </View>
                   <Button disabled={activityCandidates.length === 0} onPress={() => setActivityDeckVisible(true)}>
@@ -2053,6 +2194,29 @@ export default function TripHubScreen() {
                     </Pressable>
                   ))}
                 </ScrollView>
+                {featureFlags.outingFullExperienceV1 && planPreview ? (
+                  <Card elevated style={{ borderColor: colors.pool, borderWidth: 1.5 }}>
+                    <View style={{ gap: spacing.md }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md }}>
+                        <View style={{ flex: 1, gap: spacing.xxs }}>
+                          <Text variant="labelSm" style={{ color: colors.pool, letterSpacing: 1.1 }}>PLAN PREVIEW · NOTHING CHANGED YET</Text>
+                          <Text variant="h2">A new take on Day {planPreview.day}</Text>
+                        </View>
+                        <Badge label={formatTokenLabel(planPreview.action)} variant="info" />
+                      </View>
+                      <Text variant="bodySm" style={{ color: colors.textSecondary }}>{planPreview.summary}</Text>
+                      <View style={{ padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.backgroundSecondary, gap: spacing.xs }}>
+                        {planPreview.preview.items.filter((item) => item.day === planPreview.day).map((item) => (
+                          <Text key={item.itemId ?? `${item.time}-${item.placeId}`} variant="bodySm">{item.time} · {item.title}</Text>
+                        ))}
+                      </View>
+                      <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                        <Button variant="secondary" style={{ flex: 1 }} onPress={() => void dismissPlanPreview()}>Keep current</Button>
+                        <Button style={{ flex: 1 }} onPress={() => void acceptPlanPreview()}>{(trip.members?.length ?? trip.travelers) > 1 && !['owner', 'organizer'].includes(trip.members?.find((member) => member.id === user?.id)?.role ?? '') ? 'Send to vote' : 'Use this plan'}</Button>
+                      </View>
+                    </View>
+                  </Card>
+                ) : null}
                 {itineraryMarkers.length > 0 ? (
                   <TripMap
                     markers={[...(lodgingMarker ? [lodgingMarker] : []), ...selectedDayItineraryMarkers].map((marker) => ({
@@ -2112,16 +2276,26 @@ export default function TripHubScreen() {
                 <Button
                   variant="secondary"
                   onPress={() => {
-                    if (!generatedTripPlan) return;
-                    track(ANALYTICS_EVENTS.ITINERARY_REGENERATED, {
-                      itemCount: generatedTripPlan.items.length,
-                      dayCount: generatedTripPlan.days.length,
-                      reasonCode: 'manual_reoptimize',
+                    if (!trip || !generatedTripPlan || !activeTripPlan) return;
+                    if (!featureFlags.outingFullExperienceV1) {
+                      void saveTripPlan(generatedTripPlan);
+                      return;
+                    }
+                    setPlanPreview({
+                      proposalId: `optimize-${activeTripPlan.planId}-${Date.now()}`,
+                      tripId: trip.tripId,
+                      action: 'less_walking',
+                      day: selectedItineraryDay,
+                      priorPlanId: activeTripPlan.planId,
+                      priorRevision: activeTripPlan.revision,
+                      preview: generatedTripPlan,
+                      summary: 'Preview the re-optimized route and timing before replacing the accepted plan.',
+                      createdAt: new Date().toISOString(),
+                      status: 'preview',
                     });
-                    void saveTripPlan(generatedTripPlan);
                   }}
                 >
-                  Re-optimize unlocked stops
+                  Preview re-optimized stops
                 </Button>
 
                 {blendedPreferences ? (
@@ -2152,9 +2326,27 @@ export default function TripHubScreen() {
                           Day {day}{dayPlan ? ` · ${dayPlan.title}` : ''}
                         </Text>
                         {dayPlan ? (
-                          <Text variant="caption" style={{ color: colors.textTertiary }}>
-                            {dayPlan.summary}
-                          </Text>
+                          <View style={{ gap: spacing.sm }}>
+                            <Text variant="caption" style={{ color: colors.textTertiary }}>{dayPlan.summary}</Text>
+                            {dayPlan.rationale ? <Text variant="bodySm" style={{ color: colors.textSecondary }}>{dayPlan.rationale}</Text> : null}
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+                              {dayPlan.pace ? <Badge label={`${formatTokenLabel(dayPlan.pace)} pace`} variant="default" /> : null}
+                              {dayPlan.estimatedTravelMinutes !== undefined ? <Badge label={`${dayPlan.estimatedTravelMinutes} min travel`} variant="info" /> : null}
+                              {dayPlan.reservationRisk ? <Badge label={`${formatTokenLabel(dayPlan.reservationRisk)} reservation risk`} variant={dayPlan.reservationRisk === 'high' ? 'warning' : 'default'} /> : null}
+                              {dayPlan.freshness ? <Badge label={`${dayPlan.freshness} data`} variant={dayPlan.freshness === 'stale' ? 'warning' : 'info'} /> : null}
+                            </View>
+                            {dayPlan.fitReasons?.length ? <Text variant="caption" style={{ color: colors.pool }}>Why it fits: {dayPlan.fitReasons.join(' · ')}</Text> : null}
+                            {dayPlan.tradeoffs?.length ? <Text variant="caption" style={{ color: colors.textTertiary }}>Tradeoffs: {dayPlan.tradeoffs.join(' · ')}</Text> : null}
+                            {featureFlags.outingFullExperienceV1 ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.xs }}>
+                              {([
+                                ['less_walking', 'Less walking'], ['cheaper', 'Cheaper'], ['more_spontaneous', 'More spontaneous'],
+                                ['rainy_day', 'Rainy day'], ['later_start', 'Later start'], ['lighter_pace', 'Lighter pace'],
+                              ] as Array<[TripPlanDayReworkAction, string]>).map(([action, label]) => (
+                                <Pressable key={action} onPress={() => previewDayRework(day, action)}><Badge label={label} variant="outline" /></Pressable>
+                              ))}
+                              <Pressable onPress={() => router.push({ pathname: '/trips/[tripId]/ask', params: { tripId: trip.tripId, focusKind: 'day', focusAction: 'rework', day: String(day), prompt: `Help me improve Day ${day}` } })}><Badge label="Ask about this day" variant="accent" /></Pressable>
+                            </ScrollView> : null}
+                          </View>
                         ) : null}
                       </View>
                       {items.map((item, i) => {
@@ -2244,6 +2436,7 @@ export default function TripHubScreen() {
                                     {day > 1 ? <Pressable onPress={() => editItineraryItem(item, { day: day - 1 })}><Badge label="Previous day" /></Pressable> : null}
                                     {day < getDuration(trip.startDate, trip.endDate) ? <Pressable onPress={() => editItineraryItem(item, { day: day + 1 })}><Badge label="Next day" /></Pressable> : null}
                                     {trip.startDate ? <Pressable onPress={() => void openItineraryItemInCalendar(item, { tripId: trip.tripId, tripName: trip.name, startDate: trip.startDate, destinationName: trip.destinationName, lodgingAddress: trip.lodgingAddress }).catch((error) => Alert.alert('Couldn’t open calendar', error instanceof Error ? error.message : 'Please try again.'))}><Badge label="Calendar" variant="info" /></Pressable> : null}
+                                    {item.itemId ? <Pressable onPress={() => router.push({ pathname: '/trips/[tripId]/ask', params: { tripId: trip.tripId, focusKind: 'item', itemId: item.itemId, prompt: `Tell me about ${item.title} and nearby alternatives` } })}><Badge label="Ask nearby" variant="accent" /></Pressable> : null}
                                     <Pressable onPress={() => editItineraryItem(item, null)}><Badge label="Remove" variant="warning" /></Pressable>
                                   </View>
                                 </View>
@@ -2406,7 +2599,7 @@ export default function TripHubScreen() {
                 <Card key={poll.id} elevated>
                   {poll.assistantProposal ? (
                     <Badge label="Ask Outing proposal" variant="info" />
-                  ) : null}
+                  ) : poll.planProposalId ? <Badge label="Itinerary preview" variant="accent" /> : null}
                   <Text variant="h4" style={{ marginBottom: spacing.sm }}>{poll.question}</Text>
                   {poll.options.map((opt) => {
                     const totalVotes = poll.options.reduce((s, o) => s + o.votes.length, 0);
@@ -3358,6 +3551,11 @@ function mapGooglePlaceToDomainPlace(
     priceLevel: normalizePriceLevel(place.priceLevel),
     openingHours: place.openingHours as Place['openingHours'],
     verifiedAt: place.verifiedAt,
+    confidence: place.rating && place.userRatingsTotal ? Math.min(0.96, 0.68 + Math.log10(place.userRatingsTotal + 1) / 10) : 0.68,
+    freshness: place.verifiedAt && Date.now() - new Date(place.verifiedAt).getTime() < 30 * 24 * 60 * 60 * 1000 ? 'recent' : 'cached',
+    neighborhood: place.vicinity?.split(',')[0],
+    fitReasons: inferPlaceInterests(category, place.vicinity ?? '', undefined, interests).slice(0, 2).map((interest) => `Matches the group’s ${formatTokenLabel(interest)} interest`),
+    providerDisclosure: 'Place identity, status, and public rating supplied by Google Places. No booking commission applies.',
     interests: inferPlaceInterests(category, place.vicinity ?? '', undefined, interests),
     lgbtqRelevance:
       category === 'bar' || category === 'club'
@@ -3398,6 +3596,13 @@ function mapExperienceToDomainPlace(
     fixedStartTimes: experience.availabilityStartTimes,
     interests: normalizeInterests(experience.tags),
     address: experience.address,
+    neighborhood: experience.locationName,
+    freshness: 'live',
+    confidence: experience.rating && experience.reviewCount ? Math.min(0.98, 0.72 + Math.log10(experience.reviewCount + 1) / 10) : 0.72,
+    fitReasons: normalizeInterests(experience.tags).slice(0, 2).map((interest) => `Matches the group’s ${formatTokenLabel(interest)} interest`),
+    providerDisclosure: experience.provider === 'viator'
+      ? 'Experience details and live bookability are supplied by Viator. Outing may earn a commission if you book.'
+      : `${formatTokenLabel(experience.provider)} supplies this experience. Fit is ranked before bookability.`,
     lgbtqRelevance: experience.lgbtqRelevance,
     source: experience.provider === 'viator' ? 'viator' : 'editorial_experience',
     ...(experience.affiliateUrl

@@ -73,9 +73,11 @@ module.exports = () => {
       associatedDomains: [`applinks:${appDomain}`],
       infoPlist: {
         ...((expo.ios && expo.ios.infoPlist) || {}),
+        ITSAppUsesNonExemptEncryption: false,
         NSContactsUsageDescription: 'Outing uses contacts only when you choose travel buddies to invite. Phone numbers stay on this device.',
         NSCalendarsUsageDescription: 'Outing uses calendar access only when you choose to add or update itinerary events.',
-        NSLocationWhenInUseUsageDescription: 'Outing uses an approximate one-time location only when you ask for nearby airport suggestions.',
+        NSLocationWhenInUseUsageDescription: 'Outing uses your location when you ask for nearby ideas or Today routing.',
+        NSLocationAlwaysAndWhenInUseUsageDescription: 'Outing can privately recognize your next trip stops when you explicitly enable trip awareness.',
       },
       config: {
         ...((expo.ios && expo.ios.config) || {}),

@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import type {
   AssistantRecommendation,
+  AssistantFocus,
   AssistantDecisionCard,
   AssistantProposal,
   AssistantScope,
@@ -64,12 +65,14 @@ export function AssistantChat({
   onVisibilityChange,
   initialConversationId,
   initialDraft,
+  focus,
 }: {
   scope: AssistantScope;
   visibility: ConversationVisibility;
   onVisibilityChange?: (visibility: ConversationVisibility) => void;
   initialConversationId?: string;
   initialDraft?: string;
+  focus?: AssistantFocus;
 }) {
   const { colors, spacing, radius } = useTheme();
   const { user } = useAuth();
@@ -107,8 +110,15 @@ export function AssistantChat({
   });
   const starters = useMemo(() => {
     const personalized = insights.data?.insights.flatMap((insight) => insight.prompts) ?? [];
-    return [...new Set(personalized.length ? personalized : STARTERS)].slice(0, 4);
-  }, [insights.data?.insights]);
+    const contextual = focus?.kind === 'today'
+      ? ['What should I know about the next stop?', 'Find something near dinner', 'Give me a lighter backup for today']
+      : focus?.kind === 'itinerary_day'
+        ? [`Explain why Day ${focus.day} works`, `Make Day ${focus.day} lighter`, `Find something near this day’s dinner`]
+        : focus?.kind === 'itinerary_item'
+          ? ['Why does this fit the trip?', 'Find a nearby alternative', 'What should we know before going?']
+          : [];
+    return [...new Set(personalized.length ? [...contextual, ...personalized] : contextual.length ? contextual : STARTERS)].slice(0, 4);
+  }, [focus, insights.data?.insights]);
 
   useEffect(() => {
     for (const insight of insights.data?.insights ?? []) {
@@ -232,6 +242,7 @@ export function AssistantChat({
           scope,
           visibility,
           message,
+          ...(focus ? { focus } : {}),
           agentRollout: featureFlags.mistralAgentV1,
           globalDiscoveryRollout: featureFlags.globalDiscoveryV1,
         },
@@ -452,6 +463,13 @@ export function AssistantChat({
                     if (card.action?.type === 'ask_follow_up') void send(card.action.value);
                     else if (card.action?.type === 'open_destination') router.push(`/destinations/${card.action.value}`);
                     else if (card.action?.type === 'open_trip') router.push(`/trips/${card.action.value}`);
+                    else if (card.action?.type === 'open_today') router.push(`/trips/${card.action.value}/today`);
+                    else if (card.action?.type === 'start_taste_deck') router.push(`/trips/${card.action.value}?deck=1`);
+                    else if (card.action?.type === 'rework_day') {
+                      const [tripId, day] = card.action.value.split(':');
+                      router.push(`/trips/${tripId}?section=plan&day=${day}&rework=1`);
+                    }
+                    else if (card.action?.type === 'review_import') router.push(`/inspiration/${card.action.value}` as never);
                     else if (card.action?.type === 'open_compare') router.push({ pathname: '/compare', params: { slugs: card.action.value } });
                     else if (card.action?.type === 'open_url' && /^https:\/\//i.test(card.action.value)) void Linking.openURL(card.action.value);
                   }}

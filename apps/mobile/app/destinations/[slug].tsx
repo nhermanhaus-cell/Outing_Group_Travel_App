@@ -494,6 +494,24 @@ export default function DestinationDetailScreen() {
         </View>
 
         <View style={{ paddingHorizontal: spacing.base }}>
+          {user && featureFlags.assistantV1 ? (
+            <Pressable
+              onPress={() => router.push({
+                pathname: '/ask',
+                params: {
+                  destinationSlug: destination.slug,
+                  destinationSection: activeTab === 'lgbtq' ? 'context' : activeTab,
+                  prompt: activeTab === 'overview'
+                    ? `What should I know before choosing ${destination.name}?`
+                    : `Help me explore ${destination.name} ${activeTab}`,
+                },
+              })}
+              style={{ marginTop: spacing.base, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full, backgroundColor: colors.plumLight, alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}
+            >
+              <OutingIcon name="ask" size={16} color={colors.plum} />
+              <Text variant="labelSm" style={{ color: colors.plum }}>Ask about this section</Text>
+            </Pressable>
+          ) : null}
           {showAdvisory ? (
             <View
               accessibilityRole="alert"

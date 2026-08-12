@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   blendGroupPreferences,
+  createTripPlanReworkPreview,
+  decodeTripPlan,
   generateTripPlan,
   generateItinerary,
   rankPlacesNearLodging,
@@ -342,7 +344,7 @@ describe('generateTripPlan', () => {
 
   it('builds themed days around at most two shared anchors', () => {
     const plan = makePlan();
-    expect(plan.schemaVersion).toBe(1);
+    expect(plan.schemaVersion).toBe(2);
     expect(plan.days).toHaveLength(2);
     for (const day of plan.days) {
       expect(day.title.length).toBeGreaterThan(0);
@@ -350,11 +352,16 @@ describe('generateTripPlan', () => {
       for (const anchorId of day.sharedAnchorItemIds) {
         expect(plan.items.find((item) => item.itemId === anchorId)?.anchor).toBe(true);
       }
+      expect(day.rationale).toBeTruthy();
+      expect(day.pace).toBe('light');
+      expect(day.estimatedTravelMinutes).toBeGreaterThanOrEqual(0);
+      expect(day.reservationRisk).toMatch(/low|medium|high/);
+      expect(day.freshness).toBeTruthy();
     }
   });
 
   it('keeps solo/subgroup ideas optional and inside a group free window', () => {
-    const plan = makePlan();
+    const plan = makePlan({ minorityFavoriteMemberIdsByPlace: { 'member-wellness': ['member'] } });
     const suggestion = plan.days.flatMap((day) => day.freeWindowSuggestions)
       .find((candidate) => candidate.placeId === 'member-wellness');
     expect(suggestion).toBeDefined();
@@ -364,6 +371,24 @@ describe('generateTripPlan', () => {
     expect(window?.kind).toBe('downtime');
     expect(suggestion!.suggestedStartTime >= window!.time).toBe(true);
     expect(suggestion!.returnBy).toBe(window!.windowEndTime);
+    expect(plan.items.some((item) => item.placeId === 'member-wellness')).toBe(false);
+  });
+
+  it('creates day reworks as previews and preserves schema-v1 decoding', () => {
+    const initial = makePlan();
+    const preview = createTripPlanReworkPreview({
+      destination,
+      places: planPlaces,
+      preferences: { ...basePrefs, departureAirports: ['SFO'], groupSize: 2, activityPace: 'downtime' },
+      tripDurationDays: 2,
+      startDate: '2026-08-10',
+    }, initial, 1, 'rainy_day', 'trip-1');
+    expect(preview.status).toBe('preview');
+    expect(preview.preview.revision).toBe(initial.revision + 1);
+    expect(initial.revision).toBe(1);
+    const legacy = { ...initial, schemaVersion: 1 as const, algorithmVersion: 'legacy-import-v1' };
+    expect(decodeTripPlan(legacy)?.schemaVersion).toBe(1);
+    expect(decodeTripPlan({ schemaVersion: 3 })).toBeUndefined();
   });
 
   it('preserves unaffected days and removes a vetoed place when refining', () => {

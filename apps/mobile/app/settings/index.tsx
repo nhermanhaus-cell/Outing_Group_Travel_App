@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { type Href, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useAuth } from '../../src/providers/AppProviders';
@@ -12,6 +12,9 @@ import {
   resetAssistantPersonalization,
   setAssistantPersonalizationEnabled,
 } from '../../src/lib/assistant-api';
+import type { NotificationPreferences } from '@gayi/shared';
+import { defaultNotificationPreferences, loadNotificationPreferences, saveNotificationPreferences } from '../../src/lib/notifications';
+import { featureFlags } from '../../src/lib/featureFlags';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   const { colors, spacing } = useTheme();
@@ -91,6 +94,10 @@ export default function SettingsScreen() {
     clearPreferenceSignals,
   } = useAnalytics();
   const [personalizationSaving, setPersonalizationSaving] = useState(false);
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(defaultNotificationPreferences());
+  const [notificationSaving, setNotificationSaving] = useState(false);
+
+  useEffect(() => { void loadNotificationPreferences().then(setNotificationPreferences); }, []);
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -136,6 +143,21 @@ export default function SettingsScreen() {
       },
     ],
   );
+
+  const updateNotifications = async (updates: Partial<NotificationPreferences>) => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+    const next = { ...notificationPreferences, ...updates };
+    setNotificationSaving(true);
+    try {
+      await saveNotificationPreferences(next);
+      setNotificationPreferences(next);
+    } catch (caught) {
+      Alert.alert('Could not update notifications', caught instanceof Error ? caught.message : 'Try again shortly.');
+    } finally { setNotificationSaving(false); }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -206,10 +228,20 @@ export default function SettingsScreen() {
           <RowToggle label="Share trip activity" subtitle="Show trips on community map" value={false} />
         </Section>
 
-        <Section title="Notifications">
-          <RowToggle label="Trip reminders" subtitle="Upcoming departure alerts" value={true} />
-          <RowToggle label="Pride event alerts" subtitle="Events near saved destinations" value={false} />
-        </Section>
+        {featureFlags.outingFullExperienceV1 ? <Section title="Notifications">
+          <RowToggle
+            label="Active-trip reminders"
+            subtitle="Leave-by and itinerary reminders · separate from discovery"
+            value={notificationPreferences.activeTripRemindersEnabled}
+            onPress={notificationSaving ? undefined : () => void updateNotifications({ activeTripRemindersEnabled: !notificationPreferences.activeTripRemindersEnabled })}
+          />
+          <RowToggle
+            label="Weekly discovery"
+            subtitle="One personalized digest · Wednesday at 6 p.m. · quiet hours 9 p.m.–8 a.m."
+            value={notificationPreferences.discoveryDigestEnabled}
+            onPress={notificationSaving ? undefined : () => void updateNotifications({ discoveryDigestEnabled: !notificationPreferences.discoveryDigestEnabled })}
+          />
+        </Section> : null}
 
         <Section title="Data">
           <View
@@ -234,6 +266,7 @@ export default function SettingsScreen() {
               See travel connections
             </Button>
           </View>
+          {featureFlags.outingFullExperienceV1 ? <Button size="sm" variant="secondary" onPress={() => router.push('/settings/visit-history' as Href)}>Private visit history</Button> : null}
         </Section>
 
         <Section title="Account">

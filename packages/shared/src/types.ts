@@ -298,9 +298,23 @@ export interface Place {
   fixedStartTimes?: string[];
   timezone?: string;
   bookingOffer?: BookableOffer;
+  /** Explainable-ranking metadata. Provider facts remain authoritative. */
+  fitReasons?: string[];
+  /** Confidence that identity and recommendation metadata are sufficient for planning. */
+  confidence?: number;
+  routeTimeMinutes?: number;
+  freshness?: 'live' | 'recent' | 'cached' | 'stale' | 'limited';
+  neighborhood?: string;
+  providerDisclosure?: string;
 }
 
-export type ActivityPreferenceChoice = 'interested' | 'not_interested';
+export type ActivityPreferenceChoice =
+  | 'must_do'
+  | 'interested'
+  | 'maybe'
+  | 'not_for_this_trip'
+  /** Accepted for one compatibility window and normalized on write. */
+  | 'not_interested';
 
 export interface ActivityPreferenceVote {
   placeId: string;

@@ -3,7 +3,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
-import type { AssistantScope, ConversationVisibility } from '@gayi/shared';
+import type { AssistantFocus, AssistantScope, ConversationVisibility } from '@gayi/shared';
 import { AssistantChat } from '../../components/assistant/AssistantChat';
 import { Button } from '../../components/ui/Button';
 import { Text } from '../../components/ui/Text';
@@ -16,12 +16,21 @@ export default function AskScreen() {
   const { colors, spacing } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const params = useLocalSearchParams<{ destinationSlug?: string; prompt?: string }>();
+  const params = useLocalSearchParams<{ destinationSlug?: string; destinationSection?: string; importId?: string; prompt?: string }>();
   const [conversationId, setConversationId] = useState<string>();
   const [scope, setScope] = useState<AssistantScope>(params.destinationSlug
     ? { kind: 'destination', destinationSlug: params.destinationSlug }
     : { kind: 'general' });
   const [visibility, setVisibility] = useState<ConversationVisibility>('private');
+  const focus: AssistantFocus | undefined = params.importId
+    ? { kind: 'inspiration_import', importId: params.importId }
+    : params.destinationSlug && params.destinationSection
+      ? {
+          kind: 'destination_section',
+          destinationSlug: params.destinationSlug,
+          section: params.destinationSection as Extract<AssistantFocus, { kind: 'destination_section' }>['section'],
+        }
+      : undefined;
   const conversations = useQuery({
     queryKey: ['assistant-conversations', user?.id],
     queryFn: () => listAssistantConversations(),
@@ -94,6 +103,7 @@ export default function AskScreen() {
             onVisibilityChange={setVisibility}
             initialConversationId={conversationId}
             initialDraft={conversationId ? undefined : params.prompt}
+            focus={conversationId ? undefined : focus}
           />
         </View>
       ) : null}

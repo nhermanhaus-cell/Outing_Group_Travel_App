@@ -30,6 +30,21 @@ const scopeSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('trip'), tripId: z.string().uuid() }),
 ]);
 
+const focusSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('home'), action: z.string().min(1).max(120).optional() }),
+  z.object({
+    kind: z.literal('destination_section'),
+    destinationSlug: z.string().min(1).max(120),
+    section: z.enum(['overview', 'timing', 'neighborhoods', 'places', 'events', 'experiences', 'context']),
+  }),
+  z.object({ kind: z.literal('itinerary_day'), tripId: z.string().uuid(), day: z.number().int().min(1).max(90), action: z.enum(['explain', 'rework', 'nearby']).default('explain') }),
+  z.object({ kind: z.literal('itinerary_item'), tripId: z.string().uuid(), itemId: z.string().min(1).max(240), action: z.enum(['explain', 'replace', 'nearby']).default('explain') }),
+  z.object({ kind: z.literal('trip_map'), tripId: z.string().uuid(), day: z.number().int().min(1).max(90).optional() }),
+  z.object({ kind: z.literal('group_decision'), tripId: z.string().uuid(), pollId: z.string().min(1).max(240).optional() }),
+  z.object({ kind: z.literal('today'), tripId: z.string().uuid(), situation: z.enum(['closed', 'tired', 'raining', 'hungry', 'crowded', 'changed_mood']).optional() }),
+  z.object({ kind: z.literal('inspiration_import'), importId: z.string().uuid() }),
+]);
+
 const requestSchema = z.object({
   conversationId: z.string().uuid().optional(),
   scope: scopeSchema,
@@ -38,6 +53,7 @@ const requestSchema = z.object({
   evaluationProvider: z.enum(['mistral', 'qwen']).optional(),
   agentRollout: z.boolean().optional(),
   globalDiscoveryRollout: z.boolean().optional(),
+  focus: focusSchema.optional(),
 }).superRefine((value, ctx) => {
   if (value.visibility === 'trip_shared' && value.scope.kind !== 'trip') {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['visibility'], message: 'Shared conversations require a trip.' });
@@ -533,6 +549,132 @@ async function buildPersonalizationContext(
   };
 }
 
+function safePlan(payload: Json): Json {
+  return record(payload.tripPlan);
+}
+
+function safePlanItem(value: unknown): Json | null {
+  const item = record(value);
+  if (!item.itemId || !item.title) return null;
+  return {
+    itemId: String(item.itemId).slice(0, 240),
+    day: typeof item.day === 'number' ? item.day : undefined,
+    placeId: typeof item.placeId === 'string' ? item.placeId.slice(0, 240) : undefined,
+    title: stripMarkup(String(item.title)).slice(0, 240),
+    category: typeof item.category === 'string' ? item.category.slice(0, 80) : undefined,
+    time: typeof item.time === 'string' ? item.time.slice(0, 10) : undefined,
+    duration: typeof item.duration === 'number' ? item.duration : undefined,
+    bookingRequired: item.bookingRequired === true,
+    whySelected: typeof item.whySelected === 'string' ? stripMarkup(item.whySelected).slice(0, 300) : undefined,
+    routeMinutes: typeof record(item.travelFromPrevious).durationMinutes === 'number'
+      ? record(item.travelFromPrevious).durationMinutes
+      : undefined,
+    scheduleStatus: typeof item.scheduleStatus === 'string' ? item.scheduleStatus : undefined,
+  };
+}
+
+async function buildFocusContext(
+  userClient: UntypedSupabaseClient,
+  scope: z.infer<typeof scopeSchema>,
+  focus: z.infer<typeof focusSchema> | undefined,
+  prefetchedTrip?: Json,
+): Promise<Json | undefined> {
+  if (!focus) return undefined;
+  if (focus.kind === 'home') return { kind: 'home', ...(focus.action ? { action: focus.action } : {}) };
+  if (focus.kind === 'destination_section') {
+    if (scope.kind === 'destination' && scope.destinationSlug !== focus.destinationSlug) {
+      throw new Error('Destination focus is outside this conversation');
+    }
+    const { data } = await userClient.from('destinations')
+      .select('slug,name,country,data_freshness')
+      .eq('slug', focus.destinationSlug).eq('published', true).maybeSingle();
+    if (!data) throw new Error('Destination focus unavailable');
+    return { kind: focus.kind, destination: data, section: focus.section };
+  }
+  if (focus.kind === 'inspiration_import') {
+    const { data: importRow } = await userClient.from('inspiration_imports')
+      .select('id,status,trip_id,created_at').eq('id', focus.importId).maybeSingle();
+    if (!importRow) throw new Error('Import focus unavailable');
+    const { data: items } = await userClient.from('inspiration_items')
+      .select('id,title,destination_name,category,confidence,status,canonical_place_id')
+      .eq('import_id', focus.importId).limit(30);
+    return { kind: focus.kind, import: importRow, items: items ?? [] };
+  }
+
+  const tripId = focus.tripId;
+  if (scope.kind !== 'trip' || scope.tripId !== tripId) throw new Error('Trip focus is outside this conversation');
+  let trip = prefetchedTrip;
+  if (!trip || trip.id !== tripId) {
+    const { data } = await userClient.from('trips')
+      .select('id,name,destination_slug,start_date,end_date,traveler_count,payload')
+      .eq('id', tripId).maybeSingle();
+    if (!data) throw new Error('Trip focus unavailable');
+    trip = data as Json;
+  }
+  const payload = record(trip.payload);
+  const plan = safePlan(payload);
+  const allItems = Array.isArray(plan.items) ? plan.items.map(safePlanItem).filter((item): item is Json => item !== null) : [];
+
+  if (focus.kind === 'itinerary_day' || focus.kind === 'today') {
+    const day = focus.kind === 'itinerary_day'
+      ? focus.day
+      : Math.max(1, Math.floor((Date.now() - new Date(String(trip.start_date)).getTime()) / 86_400_000) + 1);
+    const rawDay = Array.isArray(plan.days) ? record(plan.days.find((value) => record(value).day === day)) : {};
+    const dayPlan = rawDay.day ? {
+      day: rawDay.day,
+      title: typeof rawDay.title === 'string' ? stripMarkup(rawDay.title).slice(0, 240) : undefined,
+      summary: typeof rawDay.summary === 'string' ? stripMarkup(rawDay.summary).slice(0, 500) : undefined,
+      rationale: typeof rawDay.rationale === 'string' ? stripMarkup(rawDay.rationale).slice(0, 600) : undefined,
+      pace: rawDay.pace,
+      estimatedTravelMinutes: rawDay.estimatedTravelMinutes,
+      fitReasons: strings(rawDay.fitReasons, 4),
+      tradeoffs: strings(rawDay.tradeoffs, 4),
+      reservationRisk: rawDay.reservationRisk,
+      freshness: rawDay.freshness,
+      freeWindowCount: Array.isArray(rawDay.freeWindowSuggestions) ? rawDay.freeWindowSuggestions.length : 0,
+    } : undefined;
+    return {
+      kind: focus.kind,
+      tripId,
+      day,
+      ...(focus.kind === 'itinerary_day' ? { action: focus.action } : {}),
+      ...(focus.kind === 'today' && focus.situation ? { situation: focus.situation } : {}),
+      items: allItems.filter((item) => item.day === day),
+      ...(dayPlan ? { dayPlan } : {}),
+    };
+  }
+  if (focus.kind === 'itinerary_item') {
+    const item = allItems.find((value) => value.itemId === focus.itemId);
+    if (!item) throw new Error('Itinerary item focus unavailable');
+    return { kind: focus.kind, tripId, action: focus.action, item };
+  }
+  if (focus.kind === 'trip_map') {
+    return {
+      kind: focus.kind,
+      tripId,
+      ...(focus.day ? { day: focus.day } : {}),
+      // No raw coordinates or lodging addresses are sent to the model.
+      items: focus.day ? allItems.filter((item) => item.day === focus.day) : allItems.slice(0, 40),
+    };
+  }
+  const polls = Array.isArray(payload.polls) ? payload.polls.map((value) => {
+    const poll = record(value);
+    return {
+      id: poll.id,
+      question: typeof poll.question === 'string' ? stripMarkup(poll.question).slice(0, 240) : undefined,
+      options: Array.isArray(poll.options) ? poll.options.map((optionValue) => {
+        const option = record(optionValue);
+        return {
+          id: option.id,
+          label: typeof option.label === 'string' ? stripMarkup(option.label).slice(0, 160) : undefined,
+          voteCount: Array.isArray(option.votes) ? option.votes.length : 0,
+        };
+      }).slice(0, 8) : [],
+    };
+  }).slice(0, 12) : [];
+  return { kind: focus.kind, tripId, polls: focus.pollId ? polls.filter((poll) => poll.id === focus.pollId) : polls };
+}
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (request.method !== 'POST') return error('Method not allowed', 405);
@@ -569,10 +711,12 @@ Deno.serve(async (request) => {
 
   let personalization: PersonalizationContext;
   let prefetchedTrip: Json | undefined;
+  let focusContext: Json | undefined;
   try {
     const built = await buildPersonalizationContext(service, userClient, user.id, input.scope);
     personalization = built.context;
     prefetchedTrip = built.tripRow;
+    focusContext = await buildFocusContext(userClient, input.scope, input.focus, prefetchedTrip);
   } catch (caught) {
     return error(caught instanceof Error ? caught.message : 'Could not load traveler context', 403);
   }
@@ -651,6 +795,43 @@ Deno.serve(async (request) => {
   const audits: Json[] = [];
   const relaxations: Json[] = [];
   const provisionalDestinations: Json[] = [];
+  if (input.focus?.kind === 'today') {
+    decisionCards.push({
+      version: 'v1', id: `today-${input.focus.tripId}`, kind: 'decision_brief',
+      title: 'Keep Today within reach',
+      summary: 'Open the live day view for what is happening now, when to leave, weather, and nearby backup ideas.',
+      fitReasons: [], tradeoffs: [], sourceIds: [], confidence: 1, sourceFreshness: 'cached',
+      generatedAt: new Date().toISOString(),
+      action: { type: 'open_today', value: input.focus.tripId, label: 'Open Today' },
+    });
+  } else if (input.focus?.kind === 'inspiration_import') {
+    decisionCards.push({
+      version: 'v1', id: `import-${input.focus.importId}`, kind: 'decision_brief',
+      title: 'Review before it joins your plans',
+      summary: 'Confirm the places Outing validated, dismiss misses, and choose whether each belongs on a trip.',
+      fitReasons: [], tradeoffs: [], sourceIds: [], confidence: 1, sourceFreshness: 'recent',
+      generatedAt: new Date().toISOString(),
+      action: { type: 'review_import', value: input.focus.importId, label: 'Review import' },
+    });
+  } else if (input.focus?.kind === 'itinerary_day' && input.focus.action === 'rework') {
+    decisionCards.push({
+      version: 'v1', id: `rework-${input.focus.tripId}-${input.focus.day}`, kind: 'decision_brief',
+      title: `Preview a different Day ${input.focus.day}`,
+      summary: 'Choose a rework direction, compare the preview, then apply it only if it is better.',
+      fitReasons: [], tradeoffs: [], sourceIds: [], confidence: 1, sourceFreshness: 'cached',
+      generatedAt: new Date().toISOString(),
+      action: { type: 'rework_day', value: `${input.focus.tripId}:${input.focus.day}`, label: 'Rework this day' },
+    });
+  } else if (input.scope.kind === 'trip' && !input.focus) {
+    decisionCards.push({
+      version: 'v1', id: `deck-${input.scope.tripId}`, kind: 'decision_brief',
+      title: 'Give the plan a stronger signal',
+      summary: 'React to ten varied ideas so Outing can build better anchors, polls, and free-window options.',
+      fitReasons: [], tradeoffs: [], sourceIds: [], confidence: 1, sourceFreshness: 'cached',
+      generatedAt: new Date().toISOString(),
+      action: { type: 'start_taste_deck', value: input.scope.tripId, label: 'Start Taste Deck' },
+    });
+  }
   const systemPrompt = [
     'You are Ask Outing, a concise, warm travel planning orchestrator.',
     'Provider tool results and Outing deterministic ranking are the only sources of factual truth.',
@@ -670,6 +851,7 @@ Deno.serve(async (request) => {
     'Use research_destination for a place outside the Outing catalog. Its page is provisional until human review.',
     'When data is unavailable, say so and suggest a useful next step.',
     `TRAVELER_CONTEXT_START\n${JSON.stringify(redactAssistantModelValue(personalization)).slice(0, 12_000)}\nTRAVELER_CONTEXT_END`,
+    ...(focusContext ? [`FOCUS_CONTEXT_START\n${JSON.stringify(redactAssistantModelValue(focusContext)).slice(0, 10_000)}\nFOCUS_CONTEXT_END`] : []),
   ].join(' ');
 
   const messages: Json[] = [

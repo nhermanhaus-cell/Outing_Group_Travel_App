@@ -449,13 +449,18 @@ export function sanitizeAnalyticsProperties(
 export function normalizeAnalyticsRoute(pathname: string): string {
   const path = pathname.split('?')[0]?.replace(/\/+$/, '') || '/';
   const segments = path.split('/').filter(Boolean);
+  if (segments[0] === 'destinations' && segments[1] === 'provisional' && segments[2]) return '/destinations/provisional/[id]';
   if (segments[0] === 'destinations' && segments[1]) return '/destinations/[slug]';
   if (segments[0] === 'collections' && segments[1]) return '/collections/[id]';
   if (segments[0] === 'experiences' && segments[1]) return '/experiences/[productCode]';
   if (segments[0] === 'trips' && segments[1] && segments[1] !== 'new') {
-    return segments[2] === 'invite' ? '/trips/[tripId]/invite' : '/trips/[tripId]';
+    if (segments[2] === 'invite') return '/trips/[tripId]/invite';
+    if (segments[2] === 'ask') return '/trips/[tripId]/ask';
+    if (segments[2] === 'today') return '/trips/[tripId]/today';
+    return '/trips/[tripId]';
   }
   if (segments[0] === 'share' && segments[1]) return '/share/[tripId]';
+  if (segments[0] === 'inspiration' && segments[1]) return '/inspiration/[importId]';
   return path;
 }
 
