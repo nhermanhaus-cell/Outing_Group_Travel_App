@@ -13,6 +13,7 @@ import {
   type CommunitySignal,
   type PersonalizationContext,
 } from '../_shared/assistant-intelligence.ts';
+import { inferViatorAnalysisIntent, summarizeViatorSchedule } from '../_shared/viator-analysis.ts';
 
 type Json = Record<string, unknown>;
 type UntypedSupabaseClient = ReturnType<typeof createClient<any>>;
@@ -129,6 +130,21 @@ const toolSchemas = {
     preferFreeCancellation: z.boolean().default(true),
     limit: z.number().int().min(1).max(10).default(6),
   }),
+  analyze_viator_options: z.object({
+    destination: z.string().min(1).max(160),
+    productCodes: z.array(z.string().min(1).max(80)).max(4).default([]),
+    interests: z.array(z.string().min(1).max(80)).max(4).default([]),
+    searchTerm: z.string().min(2).max(160).optional(),
+    startDate: z.string().date().optional(),
+    endDate: z.string().date().optional(),
+    currency: z.string().length(3).default('USD'),
+    maxPrice: z.number().positive().max(10_000).optional(),
+    maxDurationMinutes: z.number().int().min(30).max(1_440).optional(),
+    minRating: z.number().min(0).max(5).default(3.5),
+    preferFreeCancellation: z.boolean().default(true),
+    priorities: z.array(z.enum(['fit', 'price', 'reviews', 'duration', 'cancellation', 'availability', 'location'])).max(7).default(['fit', 'reviews', 'price']),
+    limit: z.number().int().min(2).max(4).default(4),
+  }),
   get_trip_context: z.object({ tripId: z.string().uuid() }),
   semantic_search_catalog: z.object({
     query: z.string().min(2).max(400),
@@ -168,6 +184,7 @@ const modelTools = Object.entries(toolSchemas).map(([name, schema]) => ({
       get_weather_window: 'Get current seven-day weather from Open-Meteo.',
       get_fare_windows: 'Get indicative fare windows and observed price context from Skyscanner.',
       search_experiences: 'Find destination-matched Viator experiences using the traveler’s interests, dates, pace, budget ceiling, ratings, and cancellation preference.',
+      analyze_viator_options: 'Pull and compare two to four Viator experiences with provider-backed price, duration, reviews, cancellation, logistics, and schedule evidence. Use this when the user asks which experience is best or wants options analyzed.',
       get_trip_context: 'Get a redacted view of the current trip.',
       semantic_search_catalog: 'Retrieve approved Outing catalog evidence by semantic meaning before explaining or recommending.',
       compare_options: 'Build a source-backed structured comparison. Destination comparison is authoritative in this release.',
@@ -326,10 +343,50 @@ async function geocode(
 ): Promise<{ lat: number; lng: number }> {
   const result = await travelApi(authorization, 'geocode', { address: destination }, signal);
   const location = result.result as Json | null;
-  if (!location || typeof location.lat !== 'number' || typeof location.lng !== 'number') {
+  if (location && typeof location.lat === 'number' && typeof location.lng === 'number') {
+    return { lat: location.lat, lng: location.lng };
+  }
+  const placesResult = await travelApi(authorization, 'placeTextSearch', {
+    query: destination,
+    limit: 1,
+  }, signal);
+  const first = Array.isArray(placesResult.places) ? record(placesResult.places[0]) : {};
+  if (typeof first.lat !== 'number' || typeof first.lng !== 'number') {
     throw new Error(`Could not locate ${destination}`);
   }
-  return { lat: location.lat, lng: location.lng };
+  return { lat: first.lat, lng: first.lng };
+}
+
+async function viatorDestinationContext(
+  service: UntypedSupabaseClient,
+  destination: string,
+): Promise<Json> {
+  const slug = destination.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const columns = 'slug,name,country,lat,lng,payload';
+  const { data: bySlug } = await service.from('destinations')
+    .select(columns).eq('published', true).eq('slug', slug).maybeSingle();
+  let row = bySlug;
+  if (!row) {
+    const { data: byName } = await service.from('destinations')
+      .select(columns).eq('published', true).ilike('name', destination).limit(1).maybeSingle();
+    row = byName;
+  }
+  if (!row) return { destination };
+  const payload = record(row.payload);
+  const scoring = record(payload.scoring);
+  const destinationType = typeof payload.destinationType === 'string'
+    ? payload.destinationType
+    : typeof scoring.destinationType === 'string'
+      ? scoring.destinationType
+      : undefined;
+  return {
+    destination: typeof row.name === 'string' ? row.name : destination,
+    ...(typeof row.country === 'string' ? { country: row.country } : {}),
+    ...(typeof row.lat === 'number' ? { lat: row.lat } : {}),
+    ...(typeof row.lng === 'number' ? { lng: row.lng } : {}),
+    ...(destinationType ? { destinationType } : {}),
+  };
 }
 
 function source(
@@ -847,6 +904,7 @@ Deno.serve(async (request) => {
     'Rank by traveler fit and data quality. Bookability may only break close ties and must never override a clearly better fit.',
     'Use semantic_search_catalog before answering broad or natural-language catalog questions. Retrieve evidence first, then explain it.',
     'Use compare_options for explicit decisions, audit_itinerary for plan-quality questions, and suggest_constraint_relaxations only when current results are weak.',
+    'Use search_experiences to retrieve Viator ideas. Use analyze_viator_options when choosing among experiences or discussing price, reviews, duration, cancellation, logistics, or date-specific schedule evidence. Never describe schedule evidence as real-time inventory.',
     'Never silently relax accessibility, safety, avoidance, maximum-travel, or other explicit requirements.',
     'Use research_destination for a place outside the Outing catalog. Its page is provisional until human review.',
     'When data is unavailable, say so and suggest a useful next step.',
@@ -1029,10 +1087,10 @@ Deno.serve(async (request) => {
         ...personalization.explicit.interests,
       ])].slice(0, 4);
       const pace = personalization.trip?.activityPace ?? personalization.explicit.activityPace;
-      const location = await geocode(authorization, value.destination, request.signal);
+      const providerDestination = await viatorDestinationContext(service, value.destination);
       output = await travelApi(authorization, 'viatorSearch', {
         ...value,
-        ...location,
+        ...providerDestination,
         interests: mergedInterests,
         startDate: value.startDate ?? personalization.trip?.startDate,
         endDate: value.endDate ?? personalization.trip?.endDate,
@@ -1067,6 +1125,192 @@ Deno.serve(async (request) => {
         }
         recommendations.push(...sortFitFirst(experienceRecommendations as Array<Json & { id: string; fitScore: number; bookable: boolean }>));
       }
+    } else if (name === 'analyze_viator_options') {
+      const value = args as z.infer<typeof toolSchemas.analyze_viator_options>;
+      const mergedInterests = [...new Set([
+        ...value.interests,
+        ...(personalization.trip?.interests ?? []),
+        ...personalization.explicit.interests,
+      ])].slice(0, 4);
+      const pace = personalization.trip?.activityPace ?? personalization.explicit.activityPace;
+      const startDate = value.startDate ?? personalization.trip?.startDate;
+      const endDate = value.endDate ?? personalization.trip?.endDate;
+      let products: Json[] = [];
+      let resolvedDestination: unknown;
+
+      if (value.productCodes.length > 0) {
+        products = (await Promise.all(value.productCodes.slice(0, value.limit).map(async (productCode) => {
+          const detail = await travelApi(authorization, 'viatorProduct', { productCode }, request.signal);
+          const product = record(detail.product);
+          return typeof product.productCode === 'string' ? product : null;
+        }))).filter((product): product is Json => Boolean(product));
+      } else {
+        const providerDestination = await viatorDestinationContext(service, value.destination);
+        const searchResult = await travelApi(authorization, 'viatorSearch', {
+          ...providerDestination,
+          interests: mergedInterests,
+          searchTerm: value.searchTerm,
+          startDate,
+          endDate,
+          currency: value.currency,
+          maxPrice: value.maxPrice,
+          maxDurationMinutes: value.maxDurationMinutes ?? (pace === 'downtime' ? 180 : pace === 'packed' ? 480 : 300),
+          minRating: value.minRating,
+          preferFreeCancellation: value.preferFreeCancellation,
+          limit: value.limit,
+        }, request.signal);
+        products = Array.isArray(searchResult.products)
+          ? searchResult.products.map(record).filter((product) => typeof product.productCode === 'string').slice(0, value.limit)
+          : [];
+        resolvedDestination = searchResult.resolvedDestination;
+      }
+
+      const scheduleRows = new Map<string, ReturnType<typeof summarizeViatorSchedule>>();
+      if (startDate) {
+        await Promise.all(products.map(async (product) => {
+          const productCode = typeof product.productCode === 'string' ? product.productCode : undefined;
+          if (!productCode) return;
+          try {
+            const scheduleResult = await travelApi(authorization, 'viatorSchedule', { productCode }, request.signal);
+            scheduleRows.set(productCode, summarizeViatorSchedule(scheduleResult.schedule, startDate));
+          } catch {
+            scheduleRows.set(productCode, summarizeViatorSchedule(null, startDate));
+          }
+        }));
+      }
+
+      const numberValue = (candidate: unknown): number | undefined => typeof candidate === 'number' && Number.isFinite(candidate) ? candidate : undefined;
+      const money = (amount: number | undefined, currency: unknown) => amount === undefined
+        ? 'Not provided in the current result'
+        : `${typeof currency === 'string' ? currency : value.currency} ${amount.toFixed(2)} from-price`;
+      const durationLabel = (minutes: number | undefined) => minutes === undefined
+        ? 'Not provided'
+        : minutes >= 60
+          ? `${Math.floor(minutes / 60)}h${minutes % 60 ? ` ${minutes % 60}m` : ''}`
+          : `${minutes}m`;
+      const analysisRows = products.map((product) => {
+        const productCode = String(product.productCode);
+        const title = stripMarkup(String(product.title ?? 'Viator experience')).slice(0, 240);
+        const description = stripMarkup(String(product.description ?? `A current experience in ${value.destination}`)).slice(0, 800);
+        const price = numberValue(product.priceFrom);
+        const duration = numberValue(product.durationMinutes);
+        const rating = numberValue(product.rating);
+        const reviewCount = numberValue(product.reviewCount);
+        const schedule = scheduleRows.get(productCode);
+        const fit = providerFitScore(`${title} ${description} ${String(product.category ?? '')}`, rating, mergedInterests, personalization);
+        const hardTradeoffs: string[] = [];
+        if (value.maxPrice !== undefined && price !== undefined && price > value.maxPrice) hardTradeoffs.push(`Above the ${value.currency} ${value.maxPrice.toFixed(0)} price ceiling`);
+        if (value.maxDurationMinutes !== undefined && duration !== undefined && duration > value.maxDurationMinutes) hardTradeoffs.push(`Longer than the ${durationLabel(value.maxDurationMinutes)} duration ceiling`);
+        if (rating !== undefined && rating < value.minRating) hardTradeoffs.push(`Below the ${value.minRating.toFixed(1)} minimum rating`);
+        if (schedule?.status === 'unavailable_for_date' || schedule?.status === 'inactive') hardTradeoffs.push(schedule.note);
+        const eligible = hardTradeoffs.length === 0;
+        const fitScore = eligible ? fit.score : 0;
+        const productSource = source('viator', title, typeof product.productUrl === 'string' ? product.productUrl : undefined);
+        sources.push(productSource);
+        const bookable = product.bookingMode === 'external' && typeof product.productUrl === 'string';
+        const tradeoffs = [
+          ...hardTradeoffs,
+          ...(product.freeCancellation === true ? [] : ['Free cancellation was not confirmed']),
+          ...(schedule ? [schedule.note] : ['Choose dates to check Viator schedule evidence']),
+          'Final inventory and price are confirmed by Viator at handoff',
+        ].filter((item, index, values) => values.indexOf(item) === index).slice(0, 3);
+        const recommendation = {
+          id: `experience-${productCode}`,
+          kind: 'experience',
+          title,
+          summary: [
+            description,
+            money(price, product.currency),
+            duration !== undefined ? durationLabel(duration) : undefined,
+            rating !== undefined ? `${rating.toFixed(1)} from ${reviewCount ?? 'an unreported number of'} reviews` : undefined,
+          ].filter(Boolean).join(' · ').slice(0, 800),
+          fitScore,
+          fitReasons: eligible ? fit.reasons : ['Excluded by a stated trip constraint'],
+          tradeoffs,
+          sourceIds: [productSource.id],
+          confidence: rating !== undefined && reviewCount !== undefined ? Math.min(0.96, 0.68 + Math.log10(Math.max(1, reviewCount)) / 20) : 0.62,
+          provisional: false,
+          bookable,
+          ...(bookable ? { affiliateDisclosure: 'Outing may earn a commission if you book through this link.' } : {}),
+          ...(typeof product.productUrl === 'string' ? { action: { type: 'open_url', value: product.productUrl } } : {}),
+        };
+        return {
+          recommendation,
+          eligible,
+          productCode,
+          price,
+          currency: typeof product.currency === 'string' ? product.currency : value.currency,
+          durationMinutes: duration,
+          rating,
+          reviewCount,
+          freeCancellation: product.freeCancellation === true,
+          confirmationType: typeof product.confirmationType === 'string' ? product.confirmationType : undefined,
+          location: typeof product.locationName === 'string' ? product.locationName : typeof product.address === 'string' ? product.address : undefined,
+          schedule,
+        };
+      }).sort((left, right) => {
+        if (left.eligible !== right.eligible) return left.eligible ? -1 : 1;
+        const scoreDelta = Number(right.recommendation.fitScore) - Number(left.recommendation.fitScore);
+        if (scoreDelta !== 0) return scoreDelta;
+        return (right.rating ?? 0) - (left.rating ?? 0);
+      });
+
+      const publicRecommendations = analysisRows.map((row) => row.recommendation);
+      recommendations.push(...publicRecommendations);
+      const winner = analysisRows.find((row) => row.eligible) ?? analysisRows[0];
+      const comparisonSourceIds = [...new Set(publicRecommendations.flatMap((item) => item.sourceIds))];
+      const dimension = (key: string, label: string, values: Array<{ optionId: string; value: string; evidence?: string }>) => ({
+        key,
+        label,
+        values: values.map((item) => ({ ...item, sourceIds: comparisonSourceIds })),
+      });
+      if (analysisRows.length >= 2 && winner) {
+        const comparison = {
+          version: 'v1',
+          entityKind: 'activity',
+          options: publicRecommendations,
+          dimensions: [
+            dimension('fit', 'Your fit', analysisRows.map((row) => ({ optionId: row.recommendation.id, value: row.eligible ? `${row.recommendation.fitScore}%` : 'Excluded', evidence: row.recommendation.fitReasons.join(' · ') }))),
+            dimension('price', 'Current from-price', analysisRows.map((row) => ({ optionId: row.recommendation.id, value: money(row.price, row.currency) }))),
+            dimension('reviews', 'Viator reviews', analysisRows.map((row) => ({ optionId: row.recommendation.id, value: row.rating !== undefined ? `${row.rating.toFixed(1)} · ${row.reviewCount ?? 'count unavailable'} reviews` : 'Not provided' }))),
+            dimension('duration', 'Duration', analysisRows.map((row) => ({ optionId: row.recommendation.id, value: durationLabel(row.durationMinutes) }))),
+            dimension('cancellation', 'Cancellation', analysisRows.map((row) => ({ optionId: row.recommendation.id, value: row.freeCancellation ? 'Free cancellation flagged' : 'Not confirmed' }))),
+            dimension('schedule', startDate ? `Schedule for ${startDate}` : 'Schedule', analysisRows.map((row) => ({ optionId: row.recommendation.id, value: row.schedule?.note ?? 'Choose dates to check schedule evidence' }))),
+            dimension('location', 'Starting area', analysisRows.map((row) => ({ optionId: row.recommendation.id, value: row.location ?? 'Not provided' }))),
+          ],
+          recommendation: winner.eligible
+            ? `${winner.recommendation.title} is the strongest current fit among these Viator options.`
+            : 'None of these Viator options clears the stated trip constraints; adjust one constraint explicitly or search again.',
+          tradeoffs: publicRecommendations.flatMap((item) => item.tradeoffs.map((tradeoff) => `${item.title}: ${tradeoff}`)).slice(0, 6),
+          sourceIds: comparisonSourceIds,
+          confidence: Math.min(...publicRecommendations.map((item) => item.confidence)),
+          generatedAt: new Date().toISOString(),
+        };
+        comparisons.push(comparison);
+        decisionCards.push({
+          version: 'v1',
+          id: `viator-analysis-${await fingerprint(analysisRows.map((row) => row.productCode))}`,
+          kind: 'comparison',
+          title: winner.eligible ? `${winner.recommendation.title} leads` : 'These options need another pass',
+          summary: comparison.recommendation,
+          fitReasons: winner.recommendation.fitReasons,
+          tradeoffs: comparison.tradeoffs.slice(0, 4),
+          sourceIds: comparisonSourceIds,
+          confidence: comparison.confidence,
+          sourceFreshness: 'live',
+          generatedAt: comparison.generatedAt,
+          ...(winner.recommendation.action ? { action: { ...winner.recommendation.action, label: 'View on Viator' } } : {}),
+        });
+      }
+      output = {
+        destination: value.destination,
+        resolvedDestination,
+        priorities: value.priorities,
+        requestedDate: startDate,
+        options: analysisRows,
+        recommendation: winner?.recommendation ?? null,
+        providerCaveat: 'Viator schedule evidence is not a real-time inventory confirmation. Final price and availability are confirmed at provider handoff.',
+      };
     } else if (name === 'semantic_search_catalog') {
       const value = args as z.infer<typeof toolSchemas.semantic_search_catalog>;
       const embedding = await mistralEmbedding(value.query, request.signal);
@@ -1382,6 +1626,43 @@ Deno.serve(async (request) => {
     return redactAssistantModelValue(output);
   };
 
+  let viatorPrefetchError: string | undefined;
+  let prefetchedViatorModelContext: string | undefined;
+  const viatorIntent = inferViatorAnalysisIntent(
+    input.message,
+    input.scope.kind === 'destination'
+      ? input.scope.destinationSlug
+      : input.scope.kind === 'trip'
+        ? personalization.trip?.destinationSlug
+        : undefined,
+  );
+  if (viatorIntent) {
+    try {
+      const prefetched = await executeTool('analyze_viator_options', {
+        destination: viatorIntent.destination,
+        ...(viatorIntent.searchTerm ? { searchTerm: viatorIntent.searchTerm } : {}),
+        interests: [],
+        startDate: personalization.trip?.startDate,
+        endDate: personalization.trip?.endDate,
+        currency: 'USD',
+        preferFreeCancellation: true,
+        priorities: ['fit', 'reviews', 'price', 'duration', 'cancellation', 'availability', 'location'],
+        limit: 4,
+      });
+      prefetchedViatorModelContext = `PREFETCHED_VIATOR_ANALYSIS_START\n${JSON.stringify(prefetched).slice(0, 24_000)}\nPREFETCHED_VIATOR_ANALYSIS_END Use this provider-backed evidence to answer the user's question. Do not call the same Viator tool again unless the user requested a materially different filter. Schedule evidence is not real-time inventory.`;
+      messages.splice(messages.length - 1, 0, {
+        role: 'system',
+        content: prefetchedViatorModelContext,
+      });
+    } catch (viatorError) {
+      viatorPrefetchError = viatorError instanceof Error ? viatorError.message : 'provider unavailable';
+      messages.splice(messages.length - 1, 0, {
+        role: 'system',
+        content: 'Viator analysis was requested but the provider could not return usable options. Be transparent and suggest changing the destination, dates, or filters.',
+      });
+    }
+  }
+
   let assistantText = '';
   try {
     const isQwen = provider === 'qwen';
@@ -1467,7 +1748,7 @@ Deno.serve(async (request) => {
             body: JSON.stringify({
               agent_id: agentId,
               ...(optionalEnv('MISTRAL_AGENT_VERSION') ? { agent_version: optionalEnv('MISTRAL_AGENT_VERSION') } : {}),
-              instructions: systemPrompt,
+              instructions: [systemPrompt, prefetchedViatorModelContext].filter(Boolean).join(' '),
               inputs: [...agentInputs, ...localConversationEntries],
               tools: [...modelTools, { type: 'web_search' }],
               completion_args: { temperature: 0.2, max_tokens: 1_200 },
@@ -1579,6 +1860,7 @@ Deno.serve(async (request) => {
   const uniqueRecommendations = [...new Map(recommendations.map((item) => [String(item.id), item])).values()].slice(0, 8);
   return eventStream([
     { type: 'start', conversationId, messageId: assistantMessageId },
+    ...(viatorPrefetchError ? [{ type: 'status', message: 'Current Viator options are temporarily unavailable' }] : []),
     {
       type: 'status',
       message: provisionalDestinations.length
