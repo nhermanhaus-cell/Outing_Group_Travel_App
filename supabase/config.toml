@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.inspiration-cleanup]
 verify_jwt = false
+
+[functions.account-deletion]
+verify_jwt = false

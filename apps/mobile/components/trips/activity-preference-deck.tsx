@@ -2,24 +2,13 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, View, useWindowDimensions } from 'react-native';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  FadeIn,
-  FadeOut,
-  interpolate,
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import type { ActivityPreferenceChoice, ActivityPreferenceVote, Place } from '@gayi/shared';
 import { isActivityPreferenceSessionComplete, normalizeActivityPreferenceChoice } from '@gayi/domain';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { Text } from '../ui/Text';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { featureFlags } from '../../src/lib/featureFlags';
 
 type Props = {
   visible: boolean;
@@ -30,6 +19,18 @@ type Props = {
   groupVotes: ActivityPreferenceVote[];
   onSave: (votes: ActivityPreferenceVote[], completed: boolean) => Promise<void>;
 };
+
+const REACTIONS: Array<{
+  choice: ActivityPreferenceChoice;
+  label: string;
+  marker: string;
+}> = [
+  { choice: 'very_uninterested', label: 'Very uninterested', marker: '−−' },
+  { choice: 'uninterested', label: 'Uninterested', marker: '−' },
+  { choice: 'neutral', label: 'Neutral', marker: '•' },
+  { choice: 'interested', label: 'Interested', marker: '+' },
+  { choice: 'very_interested', label: 'Very interested', marker: '++' },
+];
 
 function categoryLabel(value: string): string {
   return value.replaceAll('_', ' ').replace(/\b\w/g, (character) => character.toUpperCase());
@@ -67,19 +68,20 @@ export function ActivityPreferenceDeck({
     ...existingVotes.filter((vote) => vote.memberId === memberId),
     ...sessionVotes,
   ], [existingVotes, memberId, sessionVotes]);
-  const complete = isActivityPreferenceSessionComplete(memberVotes, candidates.length);
+  const complete = !reviewAll && isActivityPreferenceSessionComplete(memberVotes, candidates.length);
   const current = complete ? undefined : queue[index];
-  const translateX = useSharedValue(0);
-  const rotate = useSharedValue(0);
   const cardWidth = Math.min(width - spacing.xl * 2, 520);
-  const advance = useCallback(() => setIndex((value) => value + 1), []);
+  const canGoBack = index > 0;
 
   const vote = useCallback((choice: ActivityPreferenceChoice) => {
     if (!current) return;
     if (process.env.EXPO_OS === 'ios') {
-      void Haptics.impactAsync(choice === 'interested'
-        ? Haptics.ImpactFeedbackStyle.Medium
-        : Haptics.ImpactFeedbackStyle.Light);
+      const normalized = normalizeActivityPreferenceChoice(choice);
+      void Haptics.impactAsync(
+        normalized === 'very_interested' || normalized === 'very_uninterested'
+          ? Haptics.ImpactFeedbackStyle.Medium
+          : Haptics.ImpactFeedbackStyle.Light,
+      );
     }
     setSessionVotes((prior) => [
       ...prior.filter((entry) => entry.placeId !== current.placeId),
@@ -91,33 +93,18 @@ export function ActivityPreferenceDeck({
         createdAt: new Date().toISOString(),
       },
     ]);
-    const direction = choice === 'must_do' || choice === 'interested' ? 1 : -1;
-    translateX.value = withTiming(direction * Math.max(width, 420), { duration: 180 }, (finished) => {
-      if (finished) {
-        translateX.value = 0;
-        rotate.value = 0;
-        runOnJS(advance)();
-      }
-    });
-  }, [advance, current, memberId, rotate, translateX, width]);
+    setIndex((value) => value + 1);
+  }, [current, memberId]);
 
-  const pan = Gesture.Pan()
-    .onUpdate((event) => {
-      translateX.value = event.translationX;
-      rotate.value = interpolate(event.translationX, [-cardWidth, cardWidth], [-8, 8]);
-    })
-    .onEnd((event) => {
-      if (event.translationX > 90) runOnJS(vote)('interested');
-      else if (event.translationX < -90) runOnJS(vote)('not_for_this_trip');
-      else {
-        translateX.value = withSpring(0, { damping: 18, stiffness: 180 });
-        rotate.value = withSpring(0, { damping: 18, stiffness: 180 });
-      }
-    });
-
-  const animatedCard = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }, { rotate: `${rotate.value}deg` }],
-  }));
+  const goBack = useCallback(() => {
+    if (!canGoBack) return;
+    const previous = queue[index - 1];
+    if (previous) {
+      setSessionVotes((prior) => prior.filter((entry) => entry.placeId !== previous.placeId));
+    }
+    setIndex((value) => Math.max(0, value - 1));
+    if (process.env.EXPO_OS === 'ios') void Haptics.selectionAsync();
+  }, [canGoBack, index, queue]);
 
   const saveAndClose = useCallback(async (completed: boolean) => {
     if (saving) return;
@@ -142,65 +129,79 @@ export function ActivityPreferenceDeck({
     : false;
   const tally = current
     ? groupVotes.filter((entry) => entry.placeId === current.placeId).reduce(
-        (value, entry) => ({
-          mustDo: value.mustDo + (normalizeActivityPreferenceChoice(entry.choice) === 'must_do' ? 1 : 0),
-          interested: value.interested + (normalizeActivityPreferenceChoice(entry.choice) === 'interested' ? 1 : 0),
-          maybe: value.maybe + (normalizeActivityPreferenceChoice(entry.choice) === 'maybe' ? 1 : 0),
-          notForTrip: value.notForTrip + (normalizeActivityPreferenceChoice(entry.choice) === 'not_for_this_trip' ? 1 : 0),
-        }),
-        { mustDo: 0, interested: 0, maybe: 0, notForTrip: 0 },
+        (value, entry) => {
+          const choice = normalizeActivityPreferenceChoice(entry.choice);
+          return {
+            veryInterested: value.veryInterested + (choice === 'very_interested' ? 1 : 0),
+            interested: value.interested + (choice === 'interested' ? 1 : 0),
+            neutral: value.neutral + (choice === 'neutral' ? 1 : 0),
+            uninterested: value.uninterested + (choice === 'uninterested' ? 1 : 0),
+            veryUninterested: value.veryUninterested + (choice === 'very_uninterested' ? 1 : 0),
+          };
+        },
+        { veryInterested: 0, interested: 0, neutral: 0, uninterested: 0, veryUninterested: 0 },
       )
-    : { mustDo: 0, interested: 0, maybe: 0, notForTrip: 0 };
+    : { veryInterested: 0, interested: 0, neutral: 0, uninterested: 0, veryUninterested: 0 };
+  const tallyCount = Object.values(tally).reduce((sum, value) => sum + value, 0);
+  const reactionColors = [colors.plum, colors.coral300, colors.textTertiary, colors.pool, colors.accent];
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => void saveAndClose(false)}>
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ flexGrow: 1, padding: spacing.lg, gap: spacing.lg, backgroundColor: colors.background }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-          <View style={{ flex: 1, gap: spacing.xxs }}>
-            <Text variant="h2">Shape your {destinationName} plan</Text>
-            <Text variant="bodySm" style={{ color: colors.textSecondary }}>
-              {featureFlags.outingFullExperienceV1
-                ? 'Swipe for a quick yes or no, or use all four reactions. Group results stay hidden until you answer.'
-                : 'Swipe or tap. Your choices guide the itinerary; they never book anything.'}
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.md, gap: spacing.md }}>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md }}>
+            <View style={{ flex: 1, gap: spacing.xxs }}>
+              <Text variant="h2">Shape your {destinationName} plan</Text>
+              <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                Read the details, then choose one clear response. Outing moves to the next activity automatically.
+              </Text>
+            </View>
+            <Pressable accessibilityRole="button" accessibilityLabel="Save and close activity picker" onPress={() => void saveAndClose(false)}>
+              <Text variant="labelMd" style={{ color: colors.accent }}>Save</Text>
+            </Pressable>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Go back to the previous activity"
+              disabled={!canGoBack}
+              onPress={goBack}
+              style={({ pressed }) => ({ opacity: !canGoBack ? 0.3 : pressed ? 0.55 : 1, paddingVertical: spacing.xs })}
+            >
+              <Text variant="labelSm" style={{ color: colors.accent }}>‹ Back</Text>
+            </Pressable>
+            <View style={{ flex: 1, height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: colors.backgroundTertiary }}>
+              <View style={{ width: `${queue.length ? Math.min(100, (index / queue.length) * 100) : 100}%`, height: '100%', backgroundColor: colors.accent }} />
+            </View>
+            <Text variant="caption" style={{ color: colors.textTertiary, fontVariant: ['tabular-nums'] }}>
+              {Math.min(index + 1, queue.length || 1)} / {queue.length || 1}
             </Text>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Save and close activity picker" onPress={() => void saveAndClose(false)}>
-            <Text variant="labelMd" style={{ color: colors.accent }}>Save</Text>
-          </Pressable>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-          <View style={{ flex: 1, height: 6, borderRadius: 3, overflow: 'hidden', backgroundColor: colors.backgroundTertiary }}>
-            <View style={{ width: `${queue.length ? Math.min(100, (index / queue.length) * 100) : 100}%`, height: '100%', backgroundColor: colors.accent }} />
-          </View>
-          <Text variant="caption" style={{ color: colors.textTertiary, fontVariant: ['tabular-nums'] }}>
-            {Math.min(index + 1, queue.length || 1)} / {queue.length || 1}
-          </Text>
-        </View>
-
-        {current ? (
-          <Animated.View key={current.placeId} entering={FadeIn.duration(160)} exiting={FadeOut.duration(120)} style={{ alignItems: 'center' }}>
-            <GestureDetector gesture={pan}>
-              <Animated.View
-                style={[
-                  {
-                    width: cardWidth,
-                    overflow: 'hidden',
-                    borderRadius: radius.xl,
-                    borderCurve: 'continuous',
-                    borderWidth: 1,
-                    borderColor: colors.cardBorder,
-                    backgroundColor: colors.cardBackground,
-                    boxShadow: '0 18px 40px rgba(28, 16, 32, 0.16)',
-                  },
-                  animatedCard,
-                ]}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentInsetAdjustmentBehavior="automatic"
+          showsVerticalScrollIndicator
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: spacing.lg, paddingBottom: spacing.xl }}
+        >
+          {current ? (
+            <Animated.View key={current.placeId} entering={FadeIn.duration(160)} exiting={FadeOut.duration(100)} style={{ alignItems: 'center' }}>
+              <View
+                style={{
+                  width: cardWidth,
+                  overflow: 'hidden',
+                  borderRadius: radius.xl,
+                  borderCurve: 'continuous',
+                  borderWidth: 1,
+                  borderColor: colors.cardBorder,
+                  backgroundColor: colors.cardBackground,
+                  boxShadow: '0 18px 40px rgba(28, 16, 32, 0.16)',
+                }}
               >
                 {current.photos?.[0]?.url ? (
-                  <Image source={{ uri: current.photos[0].url }} style={{ width: '100%', height: 250 }} contentFit="cover" transition={180} />
+                  <Image source={{ uri: current.photos[0].url }} style={{ width: '100%', height: 230 }} contentFit="cover" transition={180} />
                 ) : (
                   <View style={{ height: 150, backgroundColor: colors.plum, padding: spacing.xl, justifyContent: 'flex-end' }}>
                     <Text variant="h1" style={{ color: colors.white }}>{categoryLabel(current.category)}</Text>
@@ -238,55 +239,86 @@ export function ActivityPreferenceDeck({
                     </View>
                   ) : null}
                   {current.providerDisclosure ? <Text variant="caption" style={{ color: colors.textTertiary }}>{current.providerDisclosure}</Text> : null}
-                  {(!featureFlags.outingFullExperienceV1 || currentMemberHasResponded) && tally.mustDo + tally.interested + tally.maybe + tally.notForTrip > 0 ? (
+                  {currentMemberHasResponded && tallyCount > 0 ? (
                     <Text variant="caption" style={{ color: colors.textTertiary }}>
-                      Group so far: {tally.mustDo} must-do · {tally.interested} interested · {tally.maybe} maybe · {tally.notForTrip} pass
+                      Group so far: {tally.veryInterested} very interested · {tally.interested} interested · {tally.neutral} neutral · {tally.uninterested} uninterested · {tally.veryUninterested} very uninterested
                     </Text>
                   ) : null}
                 </View>
-              </Animated.View>
-            </GestureDetector>
-          </Animated.View>
-        ) : (
-          <Animated.View entering={FadeIn.duration(180)} style={{ flex: 1, justifyContent: 'center', gap: spacing.lg }}>
-            <View style={{ gap: spacing.sm, alignItems: 'center' }}>
-              <Text variant="h1">Your picks are in</Text>
-              <Text variant="bodyMd" style={{ color: colors.textSecondary, textAlign: 'center' }}>
-                Outing will balance the group’s interests, pace, travel time, meals, and open windows across every day.
-              </Text>
-            </View>
-            <Button loading={saving} onPress={() => void saveAndClose(true)}>Build the day-by-day plan</Button>
-            <Button
-              variant="secondary"
-              onPress={() => {
-                setReviewAll(true);
-                setIndex(0);
-                setSessionVotes([]);
-              }}
-            >
-              Review all choices
-            </Button>
-          </Animated.View>
-        )}
+              </View>
+            </Animated.View>
+          ) : (
+            <Animated.View entering={FadeIn.duration(180)} style={{ flex: 1, justifyContent: 'center', gap: spacing.lg, paddingVertical: spacing.xl }}>
+              <View style={{ gap: spacing.sm, alignItems: 'center' }}>
+                <Text variant="h1">Your picks are in</Text>
+                <Text variant="bodyMd" style={{ color: colors.textSecondary, textAlign: 'center' }}>
+                  Outing will balance the group’s interests, pace, travel time, meals, and open windows across every day.
+                </Text>
+              </View>
+              <Button loading={saving} onPress={() => void saveAndClose(true)}>Build the day-by-day plan</Button>
+              {canGoBack ? <Button variant="secondary" onPress={goBack}>Back to the last activity</Button> : null}
+              <Button
+                variant="secondary"
+                onPress={() => {
+                  setReviewAll(true);
+                  setIndex(0);
+                  setSessionVotes([]);
+                }}
+              >
+                Review all choices
+              </Button>
+            </Animated.View>
+          )}
+        </ScrollView>
 
-        {current && featureFlags.outingFullExperienceV1 ? (
-          <View style={{ gap: spacing.sm }}>
-            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-              <Button disabled={saving} variant="secondary" style={{ flex: 1 }} onPress={() => vote('not_for_this_trip')}>Not this trip</Button>
-              <Button disabled={saving} variant="secondary" style={{ flex: 1 }} onPress={() => vote('maybe')}>Maybe</Button>
+        {current ? (
+          <View
+            style={{
+              paddingHorizontal: spacing.md,
+              paddingTop: spacing.sm,
+              paddingBottom: spacing.lg,
+              gap: spacing.sm,
+              borderTopWidth: 1,
+              borderTopColor: colors.cardBorder,
+              backgroundColor: colors.background,
+            }}
+          >
+            <Text variant="labelSm" style={{ color: colors.textSecondary, textAlign: 'center' }}>How interested are you?</Text>
+            <View style={{ flexDirection: 'row', gap: spacing.xs }}>
+              {REACTIONS.map((reaction, reactionIndex) => (
+                <Pressable
+                  key={reaction.choice}
+                  accessibilityRole="button"
+                  accessibilityLabel={reaction.label}
+                  accessibilityHint="Records your response and moves to the next activity"
+                  disabled={saving}
+                  onPress={() => vote(reaction.choice)}
+                  style={({ pressed }) => ({
+                    flex: 1,
+                    minHeight: 76,
+                    paddingHorizontal: spacing.xxs,
+                    paddingVertical: spacing.xs,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: spacing.xxs,
+                    borderRadius: radius.md,
+                    borderCurve: 'continuous',
+                    borderWidth: 1,
+                    borderColor: pressed ? reactionColors[reactionIndex] : colors.cardBorder,
+                    backgroundColor: pressed ? colors.backgroundTertiary : colors.cardBackground,
+                    opacity: saving ? 0.45 : 1,
+                  })}
+                >
+                  <Text variant="h4" style={{ color: reactionColors[reactionIndex] }}>{reaction.marker}</Text>
+                  <Text variant="caption" numberOfLines={3} style={{ color: colors.textSecondary, textAlign: 'center', lineHeight: 13 }}>
+                    {reaction.label}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
-            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-              <Button disabled={saving} variant="secondary" style={{ flex: 1 }} onPress={() => vote('interested')}>Interested</Button>
-              <Button disabled={saving} style={{ flex: 1 }} onPress={() => vote('must_do')}>Must do</Button>
-            </View>
-          </View>
-        ) : current ? (
-          <View style={{ flexDirection: 'row', gap: spacing.md }}>
-            <Button disabled={saving} variant="secondary" style={{ flex: 1 }} onPress={() => vote('not_for_this_trip')}>Not for me</Button>
-            <Button disabled={saving} style={{ flex: 1 }} onPress={() => vote('interested')}>Interested</Button>
           </View>
         ) : null}
-      </ScrollView>
+      </View>
     </Modal>
   );
 }

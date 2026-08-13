@@ -33,10 +33,15 @@ export const homeNextActionSchema = z.object({
 export type HomeNextAction = z.infer<typeof homeNextActionSchema>;
 
 export const activityPreferenceChoiceV2Schema = z.enum([
-  'must_do',
+  'very_interested',
   'interested',
+  'neutral',
+  'uninterested',
+  'very_uninterested',
+  'must_do',
   'maybe',
   'not_for_this_trip',
+  'not_interested',
 ]);
 export type ActivityPreferenceChoiceV2 = z.infer<typeof activityPreferenceChoiceV2Schema>;
 

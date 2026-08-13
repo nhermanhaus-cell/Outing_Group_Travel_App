@@ -114,6 +114,37 @@ const flightDeal = z.object({
   source: z.literal('skyscanner_indicative'),
 });
 
+const scrappaFlightOption = z.object({
+  price: z.number().positive(),
+  currency: z.string().length(3),
+  airlineName: z.string().optional(),
+  durationMinutes: z.number().nonnegative().optional(),
+  stops: z.number().int().nonnegative().optional(),
+  emissionsDifferencePercent: z.number().optional(),
+});
+
+const scrappaRoundTripEstimate = z.object({
+  originIata: z.string().regex(/^[A-Z]{3}$/),
+  destinationIata: z.string().regex(/^[A-Z]{3}$/),
+  departureDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  returnDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  adults: z.number().int().min(1).max(9),
+  currency: z.string().length(3),
+  lowPrice: z.number().positive(),
+  typicalPrice: z.number().positive(),
+  highPrice: z.number().positive(),
+  optionCount: z.number().int().positive(),
+  nonstopOptionCount: z.number().int().nonnegative(),
+  observedAt: z.string(),
+  source: z.literal('scrappa_google_flights'),
+  pricingScope: z.literal('round_trip_search'),
+  returnSelectionRequired: z.boolean(),
+  priceIsPerTraveler: z.literal(true),
+  googleFlightsUrl: z.string().url(),
+  message: z.string(),
+  options: z.array(scrappaFlightOption).max(5),
+}).refine((value) => value.lowPrice <= value.typicalPrice && value.typicalPrice <= value.highPrice);
+
 const schemas: Record<string, z.ZodTypeAny> = {
   placeSearch: z.object({ places: z.array(place) }), placeTextSearch: z.object({ places: z.array(place) }), placeDetails: z.object({ place: place.nullable() }),
   geocode: z.object({ result: z.object({ formattedAddress: z.string().optional(), lat: z.number(), lng: z.number() }).nullable() }),
@@ -136,6 +167,10 @@ const schemas: Record<string, z.ZodTypeAny> = {
   npsNearby: z.object({ parks: z.array(park) }),
   bookingStays: z.object({ stays: z.array(bookingStay), destinationId: z.string().optional() }),
   skyscannerIndicative: z.object({ deals: z.array(flightDeal), observedAt: z.string(), indicative: z.literal(true) }),
+  scrappaRoundTrip: z.object({
+    estimate: scrappaRoundTripEstimate.nullable(),
+    unavailableReason: z.string().optional(),
+  }),
 };
 
 export function validateTravelApiContract<T>(operation: string, data: unknown): T {

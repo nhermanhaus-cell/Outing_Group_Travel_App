@@ -133,6 +133,7 @@ export default function RootLayout() {
             <Stack.Screen name="trips/[tripId]/invite" options={{ headerShown: false }} />
             <Stack.Screen name="auth/login" options={{ presentation: 'modal', headerShown: false }} />
             <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
+            <Stack.Screen name="account-deletion" options={{ headerShown: false }} />
             <Stack.Screen name="settings/index" options={{ headerShown: false }} />
             <Stack.Screen name="settings/integrations" options={{ headerShown: false }} />
             <Stack.Screen name="settings/visit-history" options={{ headerShown: false }} />

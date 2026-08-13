@@ -8,7 +8,6 @@ import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { DestinationHeroImage } from '../../components/ui/DestinationHeroImage';
 import { OutingIcon, type OutingIconName } from '../../components/ui/OutingIcon';
-import { RouteLine } from '../../components/ui/RouteLine';
 import {
   useAuth,
   useDestinations,
@@ -21,6 +20,7 @@ import { loadAssistantInsights } from '../../src/lib/assistant-api';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { DecisionBriefCard } from '../../components/assistant/DecisionBriefCard';
 import { deriveHomeJourney, isActivityPreferenceSessionComplete } from '@gayi/domain';
+import { CONTENT_DENSITY } from '../../src/lib/content-density';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -51,6 +51,7 @@ export default function HomeScreen() {
     ),
   })), { hasOpportunity: scoring.length > 0 }), [getBySlug, scoring.length, trips, user?.id]);
   const activeTrip = trips.find((trip) => trip.tripId === journey.trip?.tripId);
+  const activeDestination = activeTrip?.destinationSlug ? getBySlug(activeTrip.destinationSlug) : undefined;
   const pendingDecisions = activeTrip?.polls?.filter((poll) =>
     poll.options.every((option) => !option.votes.includes(user?.id ?? '__guest__')),
   ).length ?? 0;
@@ -145,57 +146,31 @@ export default function HomeScreen() {
         </Text>
       </View>
 
-      <View style={{ paddingHorizontal: spacing.base, paddingTop: spacing.xl, gap: spacing.md }}>
+      <View style={{ paddingHorizontal: spacing.base, paddingTop: spacing.lg, gap: spacing.md }}>
         {featureFlags.outingFullExperienceV1 ? <Pressable
           accessibilityRole="button"
           onPress={() => router.push(journey.nextAction.href as Href)}
-          style={{ borderRadius: radius['2xl'], padding: spacing.xl, backgroundColor: journey.nextAction.blocking ? colors.accentLight : colors.poolLight, borderWidth: 1, borderColor: journey.nextAction.blocking ? colors.accent : colors.pool, gap: spacing.sm }}
+          style={{ borderRadius: radius.xl, padding: spacing.base, backgroundColor: journey.nextAction.blocking ? colors.accentLight : colors.poolLight, flexDirection: 'row', alignItems: 'center', gap: spacing.md }}
         >
-          <Text variant="labelSm" style={{ color: journey.nextAction.blocking ? colors.accent : colors.pool, letterSpacing: 1.1 }}>
-            {journey.state.replace('_', ' ').toUpperCase()} · NEXT
-          </Text>
-          <Text variant="displaySm">{journey.nextAction.title}</Text>
-          <Text variant="bodyMd" style={{ color: colors.textSecondary }}>{journey.nextAction.summary}</Text>
-          <Text variant="labelMd" style={{ color: journey.nextAction.blocking ? colors.accent : colors.pool }}>Open →</Text>
+          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+            <OutingIcon name={journey.nextAction.blocking ? 'vote' : 'spark'} color={journey.nextAction.blocking ? colors.accent : colors.pool} size={21} />
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text variant="labelSm" style={{ color: journey.nextAction.blocking ? colors.accent : colors.pool }}>
+              {journey.state.replace('_', ' ').toUpperCase()} · NEXT
+            </Text>
+            <Text variant="h3" numberOfLines={1}>{journey.nextAction.title}</Text>
+            <Text variant="caption" numberOfLines={2} style={{ color: colors.textSecondary }}>{journey.nextAction.summary}</Text>
+          </View>
+          <OutingIcon name="arrow" color={journey.nextAction.blocking ? colors.accent : colors.pool} size={18} />
         </Pressable> : null}
 
-        <View style={{ flexDirection: 'row', gap: spacing.md }}>
-          <ActionCard title="Find my place" detail="Preference match" icon="spark" accent={colors.accent} tint={colors.accentLight} onPress={() => router.push('/quiz')} />
-          <ActionCard title="Plan a trip" detail="I know where" icon="route" accent={colors.pool} tint={colors.poolLight} onPress={() => router.push('/trips/new')} />
-        </View>
-        {featureFlags.outingFullExperienceV1 ? (
-          <Pressable onPress={() => router.push('/inspiration' as Href)} style={{ padding: spacing.md, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.poolLight, alignItems: 'center', justifyContent: 'center' }}><OutingIcon name="image" color={colors.pool} size={20} /></View>
-            <View style={{ flex: 1 }}><Text variant="labelLg">Bring in an idea</Text><Text variant="caption" style={{ color: colors.textSecondary }}>Screenshots, links, maps, and place files</Text></View>
-            <OutingIcon name="arrow" color={colors.pool} size={18} />
-          </Pressable>
-        ) : null}
-        {featureFlags.assistantV1 ? (
-          <Pressable
-            onPress={() => router.push('/ask')}
-            style={{
-              borderRadius: radius['2xl'],
-              padding: spacing.lg,
-              backgroundColor: colors.plum,
-              overflow: 'hidden',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: spacing.md,
-            }}
-          >
-            <View style={{ position: 'absolute', right: -35, top: 2, opacity: 0.38 }}>
-              <RouteLine color={colors.white} width={200} />
-            </View>
-            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' }}>
-              <OutingIcon name="ask" size={23} color={colors.white} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text variant="h3" style={{ color: colors.white }}>Ask Outing</Text>
-              <Text variant="caption" style={{ color: 'rgba(255,255,255,0.78)' }}>Where to go, when to go, or what to change</Text>
-            </View>
-            <OutingIcon name="arrow" color={colors.white} size={20} />
-          </Pressable>
-        ) : null}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
+          <ActionCard title="Find a place" detail="Match" icon="spark" accent={colors.accent} tint={colors.accentLight} onPress={() => router.push('/quiz')} />
+          <ActionCard title="Plan a trip" detail="Start" icon="route" accent={colors.pool} tint={colors.poolLight} onPress={() => router.push('/trips/new')} />
+          {featureFlags.outingFullExperienceV1 ? <ActionCard title="Import idea" detail="Save it" icon="image" accent={colors.pool} tint={colors.poolLight} onPress={() => router.push('/inspiration' as Href)} /> : null}
+          {featureFlags.assistantV1 ? <ActionCard title="Ask Outing" detail="Get advice" icon="ask" accent={colors.plum} tint={colors.plumLight} onPress={() => router.push('/ask')} /> : null}
+        </ScrollView>
       </View>
 
       {featureFlags.decisionBriefsV1 && decisionInsight?.decisionCard ? (
@@ -208,23 +183,18 @@ export default function HomeScreen() {
         <Section title="Up next" action="All trips" onAction={() => router.push('/trips')}>
           <Pressable
             onPress={() => router.push(`/trips/${activeTrip.tripId}`)}
-            style={{ backgroundColor: colors.surface, borderRadius: radius['2xl'], borderWidth: 1, borderColor: colors.border, padding: spacing.lg, gap: spacing.md, ...shadows.sm }}
+            style={{ backgroundColor: colors.surface, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, overflow: 'hidden', flexDirection: 'row', minHeight: 118, ...shadows.sm }}
           >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.md }}>
-              <View style={{ flex: 1, gap: spacing.xs }}>
-                <Text variant="h2">{activeTrip.name}</Text>
-                <Text variant="bodySm" style={{ color: colors.textSecondary }}>
-                  {activeTrip.startDate ? formatDateRange(activeTrip.startDate, activeTrip.endDate) : 'Dates are still open'}
-                </Text>
+            {activeDestination ? <DestinationHeroImage destination={activeDestination} style={{ width: 118, alignSelf: 'stretch' }} /> : <View style={{ width: 96, backgroundColor: colors.plumLight, alignItems: 'center', justifyContent: 'center' }}><OutingIcon name="route" color={colors.plum} size={28} /></View>}
+            <View style={{ flex: 1, padding: spacing.md, gap: spacing.xs, justifyContent: 'center' }}>
+              <Text variant="h3" numberOfLines={1}>{activeTrip.name}</Text>
+              <Text variant="caption" style={{ color: colors.textSecondary }}>
+                {activeTrip.startDate ? formatDateRange(activeTrip.startDate, activeTrip.endDate) : 'Dates are still open'} · {activeTrip.travelers} going
+              </Text>
+              <View style={{ flexDirection: 'row', gap: spacing.xs }}>
+                <StatusPill label={`${activeTrip.tripPlan?.days.length ?? 0} days`} />
+                {pendingDecisions ? <StatusPill label={`${pendingDecisions} to vote`} accent /> : null}
               </View>
-              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.poolLight, alignItems: 'center', justifyContent: 'center' }}>
-                <OutingIcon name="route" color={colors.pool} size={23} />
-              </View>
-            </View>
-            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-              <StatusPill label={`${activeTrip.tripPlan?.days.length ?? 0} plan days`} />
-              {pendingDecisions ? <StatusPill label={`${pendingDecisions} to vote on`} accent /> : null}
-              <StatusPill label={`${activeTrip.travelers} going`} />
             </View>
           </Pressable>
         </Section>
@@ -234,16 +204,13 @@ export default function HomeScreen() {
         <Section title="A date worth considering" action="Compare dates" onAction={() => router.push('/quiz')}>
           <Pressable
             onPress={() => router.push(`/destinations/${dateIdea.destination.slug}`)}
-            style={{ borderRadius: radius['2xl'], backgroundColor: colors.accentLight, padding: spacing.lg, gap: spacing.sm, overflow: 'hidden' }}
+            style={{ borderRadius: radius.xl, backgroundColor: colors.accentLight, padding: spacing.base, gap: spacing.xs, overflow: 'hidden' }}
           >
             <Text variant="labelSm" style={{ color: colors.accent, letterSpacing: 1.1, textTransform: 'uppercase' }}>
               {MONTHS[dateIdea.event.month - 1]} · {dateIdea.destination.name}
             </Text>
             <Text variant="h2">{dateIdea.event.name}</Text>
-            <Text variant="bodySm" style={{ color: colors.textSecondary }}>
-              This event overlaps with your preferences. Compare nearby dates against indicative fares before you lock it in.
-            </Text>
-            <Text variant="labelMd" style={{ color: colors.accent }}>See why it fits →</Text>
+            <Text variant="caption" numberOfLines={2} style={{ color: colors.textSecondary }}>Matches your interests. Compare nearby dates and indicative fares.</Text>
           </Pressable>
         </Section>
       ) : null}
@@ -255,20 +222,23 @@ export default function HomeScreen() {
               <Pressable
                 key={destination!.slug}
                 onPress={() => router.push(`/destinations/${destination!.slug}`)}
-                style={{ width: 244, height: 290, borderRadius: radius['2xl'], overflow: 'hidden', backgroundColor: colors.ink700 }}
+                style={{ width: CONTENT_DENSITY.horizontalCardWidth, gap: spacing.sm }}
               >
-                <DestinationHeroImage destination={destination!} style={{ width: '100%', height: '100%' }} />
-                <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15,13,10,0.25)' }} />
-                <View style={{ position: 'absolute', left: spacing.base, right: spacing.base, bottom: spacing.base, gap: spacing.xs }}>
+                <View style={{ position: 'relative' }}>
+                  <DestinationHeroImage destination={destination!} style={{ width: '100%', height: CONTENT_DENSITY.horizontalCardImageHeight, borderRadius: radius.xl }} />
+                  <View style={{ position: 'absolute', left: spacing.sm, top: spacing.sm, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: radius.full, backgroundColor: colors.surface }}>
                   <Text variant="labelSm" style={{ color: colors.coral300 }}>
                     {serverRecommendationBySlug.get(destination!.slug)?.fitScore !== undefined
                       ? `${Math.round(serverRecommendationBySlug.get(destination!.slug)!.fitScore!)}% MATCH`
                       : index === 0 ? 'BEST MATCH' : 'ALSO YOUR SPEED'}
                   </Text>
-                  <Text variant="displaySm" style={{ color: colors.white }}>{destination!.name}</Text>
-                  <Text variant="caption" style={{ color: 'rgba(255,255,255,0.82)' }}>{destination!.country}</Text>
+                  </View>
+                </View>
+                <View style={{ gap: 2 }}>
+                  <Text variant="h3" numberOfLines={1}>{destination!.name}</Text>
+                  <Text variant="caption" style={{ color: colors.textSecondary }}>{destination!.country}</Text>
                   {serverRecommendationBySlug.get(destination!.slug)?.fitReasons[0] ? (
-                    <Text variant="caption" style={{ color: 'rgba(255,255,255,0.92)' }}>
+                    <Text variant="caption" numberOfLines={2} style={{ color: colors.textTertiary }}>
                       {serverRecommendationBySlug.get(destination!.slug)!.fitReasons[0]}
                     </Text>
                   ) : null}
@@ -286,10 +256,10 @@ export default function HomeScreen() {
               <Pressable
                 key={destination!.slug}
                 onPress={() => router.push(`/destinations/${destination!.slug}`)}
-                style={{ width: 172, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}
+                style={{ width: 154, gap: spacing.sm }}
               >
-                <DestinationHeroImage destination={destination!} style={{ width: '100%', height: 112 }} />
-                <View style={{ padding: spacing.md }}>
+                <DestinationHeroImage destination={destination!} style={{ width: '100%', height: 118, borderRadius: radius.lg }} />
+                <View style={{ gap: 2 }}>
                   <Text variant="h3">{destination!.name}</Text>
                   <Text variant="caption" style={{ color: colors.textSecondary }}>{destination!.country}</Text>
                 </View>
@@ -334,11 +304,11 @@ function ActionCard({
         void Haptics.selectionAsync();
         onPress();
       }}
-      style={{ flex: 1, minHeight: 154, borderRadius: radius['2xl'], backgroundColor: tint, padding: spacing.base, justifyContent: 'space-between' }}
+      style={{ width: 112, minHeight: 92, borderRadius: radius.xl, backgroundColor: tint, padding: spacing.md, justifyContent: 'space-between', gap: spacing.sm }}
     >
-      <OutingIcon name={icon} color={accent} size={30} />
+      <OutingIcon name={icon} color={accent} size={23} />
       <View style={{ gap: 2 }}>
-        <Text variant="h3">{title}</Text>
+        <Text variant="labelMd" numberOfLines={1}>{title}</Text>
         <Text variant="caption" style={{ color: colors.textSecondary }}>{detail}</Text>
       </View>
     </Pressable>
@@ -358,11 +328,11 @@ function Section({
 }) {
   const { colors, spacing } = useTheme();
   return (
-    <View style={{ paddingTop: spacing['2xl'], gap: spacing.md }}>
+    <View style={{ paddingTop: spacing.xl, gap: spacing.sm }}>
       <View style={{ paddingHorizontal: spacing.base, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <Text variant="h2">{title}</Text>
         {action && onAction ? (
-          <Pressable onPress={onAction}><Text variant="labelMd" style={{ color: colors.accent }}>{action} →</Text></Pressable>
+          <Pressable onPress={onAction} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}><Text variant="labelMd" style={{ color: colors.textSecondary }}>{action}</Text><OutingIcon name="arrow" size={16} color={colors.textSecondary} /></Pressable>
         ) : null}
       </View>
       <View style={{ paddingHorizontal: spacing.base }}>{children}</View>

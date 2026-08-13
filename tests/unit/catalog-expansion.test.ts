@@ -43,6 +43,22 @@ describe('60-destination catalog expansion', () => {
     }
   });
 
+  it('ships source-backed editorial research for every review-gated addition', () => {
+    const additions = catalog.filter((destination) => destination.catalogWave !== 'original');
+    expect(additions).toHaveLength(42);
+    for (const destination of additions) {
+      expect(destination.editorialResearch?.status).toBe('requires_human_review');
+      expect(destination.editorialSummary.split(/\s+/).length).toBeGreaterThanOrEqual(80);
+      expect(destination.neighborhoods.every((neighborhood) => neighborhood.summary.split(/\s+/).length >= 25)).toBe(true);
+      expect(destination.places.every((place) => place.summary.split(/\s+/).length >= 25)).toBe(true);
+      expect(destination.practical?.gettingAround).toBeTruthy();
+      expect(destination.practical?.typicalStay).toBeTruthy();
+      expect(destination.practical?.costContext).toBeTruthy();
+      expect(destination.sources.length).toBeGreaterThanOrEqual(7);
+      expect(destination.events.every((event) => event.scheduleStatus === 'estimated')).toBe(true);
+    }
+  });
+
   it('keeps scoring lightweight and in slug parity with catalog detail', () => {
     expect(scoring).toHaveLength(60);
     expect(scoring.map((destination) => destination.slug).sort()).toEqual(catalog.map((destination) => destination.slug).sort());

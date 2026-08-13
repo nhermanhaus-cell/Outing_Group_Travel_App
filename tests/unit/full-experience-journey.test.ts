@@ -50,11 +50,11 @@ describe('Taste Deck v2 aggregation', () => {
     memberId, placeId, choice, category, createdAt: '2026-08-12T12:00:00.000Z',
   });
 
-  it('uses 3/1/0/-1 weights, creates anchors, ties, and minority favorites', () => {
+  it('uses a symmetric five-point scale, creates anchors, ties, and minority favorites', () => {
     const signals = buildActivityPreferenceSignals([
-      vote('a', 'anchor', 'must_do'), vote('b', 'anchor', 'interested'),
-      vote('a', 'tie', 'interested'), vote('b', 'tie', 'not_for_this_trip'),
-      vote('a', 'minority', 'must_do'), vote('b', 'minority', 'maybe'), vote('c', 'minority', 'maybe'),
+      vote('a', 'anchor', 'very_interested'), vote('b', 'anchor', 'interested'),
+      vote('a', 'tie', 'interested'), vote('b', 'tie', 'uninterested'),
+      vote('a', 'minority', 'very_interested'), vote('b', 'minority', 'neutral'), vote('c', 'minority', 'neutral'),
     ], 3);
     expect(signals.tallies.anchor?.weightedScore).toBe(4);
     expect(signals.anchorCandidatePlaceIds).toContain('anchor');
@@ -64,7 +64,7 @@ describe('Taste Deck v2 aggregation', () => {
   });
 
   it('completes after ten reactions across four categories or all candidates', () => {
-    const votes = Array.from({ length: 10 }, (_, index) => vote('a', `p${index}`, 'maybe', `c${index % 4}`));
+    const votes = Array.from({ length: 10 }, (_, index) => vote('a', `p${index}`, 'neutral', `c${index % 4}`));
     expect(isActivityPreferenceSessionComplete(votes, 30)).toBe(true);
     expect(isActivityPreferenceSessionComplete(votes.slice(0, 9), 9)).toBe(true);
   });
@@ -72,6 +72,16 @@ describe('Taste Deck v2 aggregation', () => {
   it('normalizes the legacy negative choice', () => {
     const result = buildActivityPreferenceSignals([vote('a', 'p', 'not_interested')], 1);
     expect(result.excludedPlaceIds).toEqual(['p']);
-    expect(result.tallies.p?.notForThisTrip).toBe(1);
+    expect(result.tallies.p?.uninterested).toBe(1);
+  });
+
+  it('distinguishes strong negative and strong positive signals', () => {
+    const result = buildActivityPreferenceSignals([
+      vote('a', 'strong-positive', 'very_interested'),
+      vote('a', 'strong-negative', 'very_uninterested'),
+    ], 1);
+    expect(result.tallies['strong-positive']?.weightedScore).toBe(3);
+    expect(result.tallies['strong-negative']?.weightedScore).toBe(-3);
+    expect(result.excludedPlaceIds).toContain('strong-negative');
   });
 });

@@ -6,6 +6,7 @@ import {
   type ApiAttributedImage,
 } from './travel-api';
 import { isExactViatorProductUrl } from '@gayi/shared';
+import { cleanExperienceText, compactExperienceSummary } from './experience-content';
 export { isExactViatorProductUrl } from '@gayi/shared';
 
 export interface MobileExperience {
@@ -13,6 +14,7 @@ export interface MobileExperience {
   destinationSlug: string;
   title: string;
   summary: string;
+  description?: string;
   imageUrls: string[];
   imageAttributions?: Array<{ text: string; url?: string } | undefined>;
   durationHours?: number;
@@ -102,6 +104,7 @@ function editorial(destinationSlug: string, limit: number): MobileExperience[] {
       destinationSlug: e.destinationSlug,
       title: e.title,
       summary: e.summary,
+      description: e.summary,
       imageUrls: e.imageUrls ?? [],
       imageAttributions: (e.imageUrls ?? []).map(() => ({ text: 'Photo via Unsplash' })),
       durationHours: e.durationHours,
@@ -159,12 +162,15 @@ async function enrichExperienceImages(
 
 function mapApiExperience(item: ApiExperience, destinationSlug: string): MobileExperience {
   const productUrl = isExactViatorProductUrl(item.productUrl) ? item.productUrl : undefined;
+  const fallbackDescription = `Bookable experience in ${slugToName(destinationSlug)} via Viator.`;
+  const description = cleanExperienceText(item.description) ?? fallbackDescription;
   return {
     id: item.productCode,
     productCode: item.productCode,
     destinationSlug,
     title: item.title,
-    summary: item.description ?? `Bookable experience in ${slugToName(destinationSlug)} via Viator.`,
+    summary: compactExperienceSummary(description, fallbackDescription),
+    description,
     imageUrls: item.images.map((image) => image.url).slice(0, 5),
     durationHours:
       item.durationMinutes !== undefined ? Math.round((item.durationMinutes / 60) * 10) / 10 : undefined,
@@ -191,6 +197,39 @@ function mapApiExperience(item: ApiExperience, destinationSlug: string): MobileE
     logistics: item.logistics,
     cancellationPolicy: item.cancellationPolicy,
   };
+}
+
+export function experienceRouteSeed(experience: MobileExperience): string {
+  const description = cleanExperienceText(experience.description ?? experience.summary);
+  const seed: MobileExperience = {
+    id: experience.id,
+    destinationSlug: experience.destinationSlug,
+    title: experience.title,
+    summary: compactExperienceSummary(experience.summary, experience.title),
+    ...(description ? { description: description.slice(0, 1_200) } : {}),
+    imageUrls: experience.imageUrls.slice(0, 3),
+    ...(experience.imageAttributions ? { imageAttributions: experience.imageAttributions.slice(0, 3) } : {}),
+    ...(experience.durationHours !== undefined ? { durationHours: experience.durationHours } : {}),
+    ...(experience.durationMinutes !== undefined ? { durationMinutes: experience.durationMinutes } : {}),
+    ...(experience.priceFrom !== undefined ? { priceFrom: experience.priceFrom } : {}),
+    ...(experience.currency ? { currency: experience.currency } : {}),
+    tags: experience.tags.slice(0, 4),
+    ...(experience.lat !== undefined ? { lat: experience.lat } : {}),
+    ...(experience.lng !== undefined ? { lng: experience.lng } : {}),
+    provider: experience.provider,
+    ...(experience.affiliateUrl ? { affiliateUrl: experience.affiliateUrl } : {}),
+    ...(experience.productCode ? { productCode: experience.productCode } : {}),
+    ...(experience.productUrl ? { productUrl: experience.productUrl } : {}),
+    ...(experience.rating !== undefined ? { rating: experience.rating } : {}),
+    ...(experience.reviewCount !== undefined ? { reviewCount: experience.reviewCount } : {}),
+    ...(experience.category ? { category: experience.category } : {}),
+    ...(experience.address ? { address: experience.address } : {}),
+    ...(experience.locationName ? { locationName: experience.locationName } : {}),
+    ...(experience.confirmationType ? { confirmationType: experience.confirmationType } : {}),
+    ...(experience.freeCancellation !== undefined ? { freeCancellation: experience.freeCancellation } : {}),
+    bookingMode: experience.bookingMode,
+  };
+  return JSON.stringify(seed);
 }
 
 /**

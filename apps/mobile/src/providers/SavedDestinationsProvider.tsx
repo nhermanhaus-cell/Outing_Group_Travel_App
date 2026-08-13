@@ -30,7 +30,7 @@ interface SavedDestinationsContextValue {
 const SavedDestinationsContext = createContext<SavedDestinationsContextValue | null>(null);
 
 export function SavedDestinationsProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, accountDataRevision } = useAuth();
   const { observePreference } = useAnalytics();
   const [slugs, setSlugs] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +47,7 @@ export function SavedDestinationsProvider({ children }: { children: React.ReactN
       setLoading(false);
     });
     return () => { active = false; };
-  }, []);
+  }, [accountDataRevision]);
 
   useEffect(() => {
     if (!user || !supabase || loading) return;

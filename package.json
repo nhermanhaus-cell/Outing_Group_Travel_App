@@ -22,6 +22,8 @@
     "catalog:validate": "node scripts/validate-destination-catalog.mjs",
     "catalog:validate:publish": "node scripts/validate-destination-catalog.mjs --publish",
     "catalog:hydrate": "node --env-file-if-exists=.env scripts/hydrate-destination-catalog.mjs",
+    "catalog:research": "node --env-file-if-exists=.env scripts/research-destination-expansion.mjs",
+    "catalog:verify-sources": "node scripts/verify-destination-research-sources.mjs",
     "seed:photos": "node scripts/attach-place-photos.mjs",
     "seed:insights": "node scripts/collect-editorial-insights.mjs && node scripts/seed-sync.mjs",
     "seed:airports": "node scripts/sync-airports.mjs"

@@ -10,7 +10,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../src/theme/ThemeProvider';
-import { useAuth, useDestinations } from '../../src/providers/AppProviders';
+import { useAuth, useDestinations, useTravelProfile } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -22,8 +22,10 @@ import { getDestinationContextRating, getDestinationRating } from '../../src/lib
 import travelAdvisories from '../../assets/public/travel-advisories.json';
 import travelBlogInsights from '../../assets/editorial/travel-blog-insights.json';
 import {
+  experienceRouteSeed,
   loadDestinationExperiences,
 } from '../../src/lib/experiences';
+import { ExperienceSummaryCard } from '../../components/experiences/experience-summary-card';
 import { lookupPlaceByName } from '../../src/lib/googlePlaces';
 import {
   loadNearbyParks,
@@ -43,6 +45,7 @@ import { featureFlags } from '../../src/lib/featureFlags';
 import { loadAssistantInsights } from '../../src/lib/assistant-api';
 import { DecisionBriefCard } from '../../components/assistant/DecisionBriefCard';
 import { buildDestinationPulse } from '../../src/lib/communityPulse';
+import { buildDestinationOverview } from '../../src/lib/destinationOverview';
 
 type TabKey = 'overview' | 'lgbtq' | 'places' | 'events';
 
@@ -78,7 +81,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <Text
       variant="labelSm"
-      style={{ color: colors.textTertiary, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: spacing.xl, marginBottom: spacing.sm }}
+      style={{ color: colors.textTertiary, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: spacing.lg, marginBottom: spacing.sm }}
     >
       {children}
     </Text>
@@ -119,6 +122,8 @@ type EditorialPlace = {
   imageUrl?: string;
   imageUrls?: string[];
   imageAttribution?: string;
+  accessibilityNotes?: string;
+  websiteUri?: string;
 };
 
 function DestinationPlaceCard({ place, destinationName, center, index }: { place: EditorialPlace; destinationName: string; center: { lat: number; lng: number }; index: number }) {
@@ -217,7 +222,13 @@ function DestinationPlaceCard({ place, destinationName, center, index }: { place
         <Text variant="bodySm" style={{ color: colors.textSecondary }}>{place.summary}</Text>
         {google?.address || place.address ? <Text variant="caption" style={{ color: colors.textTertiary }}>{google?.address ?? place.address}</Text> : null}
         {place.lgbtqRelevance ? <Text variant="caption" style={{ color: colors.accent }}>✦ {place.lgbtqRelevance}</Text> : null}
+        {place.accessibilityNotes ? <Text variant="caption" style={{ color: colors.textSecondary }}>Accessibility: {place.accessibilityNotes}</Text> : null}
         {place.estimatedCostUsd ? <Text variant="caption" style={{ color: colors.textTertiary }}>~${place.estimatedCostUsd}/person</Text> : null}
+        {place.websiteUri ? (
+          <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(place.websiteUri!)}>
+            <Text variant="caption" style={{ color: colors.accent }}>Official site ↗</Text>
+          </Pressable>
+        ) : null}
         <Button
           size="sm"
           variant="secondary"
@@ -249,6 +260,7 @@ export default function DestinationDetailScreen() {
   const { colors, spacing, radius } = useTheme();
   const { isSaved, toggleSaved } = useSavedDestinations();
   const { user } = useAuth();
+  const { profile } = useTravelProfile();
   const { slug, quizAnswers } = useLocalSearchParams<{ slug: string; quizAnswers?: string }>();
   const { getBySlug, getScoringBySlug } = useDestinations();
   const router = useRouter();
@@ -258,6 +270,11 @@ export default function DestinationDetailScreen() {
 
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
   const destination = useMemo(() => getBySlug(slug ?? ''), [slug, getBySlug]);
+  const destinationOverview = useMemo(
+    () => destination ? buildDestinationOverview(destination, profile.defaultInterests) : undefined,
+    [destination, profile.defaultInterests],
+  );
+  const practical = (destination as unknown as { practical?: { gettingAround?: string; typicalStay?: string; costContext?: string } } | undefined)?.practical;
   const scoringDestination = useMemo(() => getScoringBySlug(slug ?? ''), [slug, getScoringBySlug]);
   const destinationExperiencesQuery = useQuery({
     queryKey: ['destination-experiences-v4', destination?.slug, destination?.interests ?? []],
@@ -280,7 +297,6 @@ export default function DestinationDetailScreen() {
     retry: 1,
   });
   const destinationExperiences = destinationExperiencesQuery.data?.experiences ?? [];
-  const experienceSource = destinationExperiencesQuery.data?.source ?? 'editorial_fallback';
   const personalizedInsight = useQuery({
     queryKey: ['assistant-insights', 'destination', destination?.slug, user?.id],
     queryFn: ({ signal }) => loadAssistantInsights({
@@ -454,7 +470,7 @@ export default function DestinationDetailScreen() {
         <View style={{ position: 'relative' }}>
           <DestinationHeroImage
             destination={destination}
-            style={{ width: '100%', height: 380 }}
+            style={{ width: '100%', height: 330 }}
           />
           <View style={{ position: 'absolute', top: insets.top + spacing.sm, left: spacing.base, right: spacing.base, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Pressable onPress={() => router.back()} style={{ backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: radius.full, padding: spacing.sm }}>
@@ -468,7 +484,7 @@ export default function DestinationDetailScreen() {
               <OutingIcon name="bookmark" size={20} color={colors.white} filled={isSaved(destination.slug)} />
             </Pressable>
           </View>
-          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(15,13,10,0.55)', paddingHorizontal: spacing['2xl'], paddingVertical: spacing.xl }}>
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(15,13,10,0.55)', paddingHorizontal: spacing.lg, paddingVertical: spacing.base }}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.sm }}>
               {destinationRating ? <Badge label={`${destinationRating.label} · ${destinationRating.score}`} variant={destinationRating.variant} /> : null}
               {contextRating ? <Badge label={contextRating.label} variant={contextRating.variant} /> : null}
@@ -492,6 +508,13 @@ export default function DestinationDetailScreen() {
             </Pressable>
           ))}
         </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing.base, paddingVertical: spacing.md, gap: spacing.sm }}>
+          <QuickFact label="Best time" value={(destination.bestMonths ?? []).slice(0, 3).map((month) => MONTH_NAMES[month]).join(', ') || 'Year-round'} />
+          <QuickFact label="Trip shape" value={practical?.typicalStay ?? 'Flexible stay'} />
+          <QuickFact label="Currency" value={destination.currency} />
+          {destination.priceBands?.mid?.perPersonPerDayUsd ? <QuickFact label="Typical day" value={`$${destination.priceBands.mid.perPersonPerDayUsd.low}–${destination.priceBands.mid.perPersonPerDayUsd.high}`} /> : null}
+        </ScrollView>
 
         <View style={{ paddingHorizontal: spacing.base }}>
           {user && featureFlags.assistantV1 ? (
@@ -554,9 +577,21 @@ export default function DestinationDetailScreen() {
                 </View>
               ) : null}
               <SectionTitle>About</SectionTitle>
-              <Text variant="bodyLg" style={{ color: colors.textSecondary, lineHeight: 26 }}>
-                {destination.editorialSummary}
+              <Text variant="bodyMd" style={{ color: colors.textSecondary, lineHeight: 23 }}>
+                {destinationOverview?.overview ?? destination.editorialSummary}
               </Text>
+              {practical?.gettingAround || practical?.typicalStay || practical?.costContext ? (
+                <View style={{ marginTop: spacing.md, paddingVertical: spacing.sm, gap: spacing.sm, borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.borderSubtle }}>
+                  {practical.gettingAround ? <Text variant="bodySm" style={{ color: colors.textSecondary }}><Text variant="labelMd">Getting around · </Text>{practical.gettingAround}</Text> : null}
+                  {practical.costContext ? <Text variant="bodySm" style={{ color: colors.textSecondary }}><Text variant="labelMd">Cost context · </Text>{practical.costContext}</Text> : null}
+                </View>
+              ) : null}
+              <View style={{ marginTop: spacing.md, padding: spacing.base, borderRadius: radius.xl, backgroundColor: colors.poolLight, gap: spacing.xs }}>
+                <Text variant="labelSm" style={{ color: colors.pool }}>WHY IT MIGHT BE COOL FOR YOU</Text>
+                <Text variant="bodySm" style={{ color: colors.textSecondary, lineHeight: 21 }}>
+                  {destinationOverview?.personalizedReason}
+                </Text>
+              </View>
               {!featureFlags.decisionBriefsV1 && fitRecommendation ? (
                 <View style={{ marginTop: spacing.md, padding: spacing.base, borderRadius: radius.xl, backgroundColor: colors.poolLight, gap: spacing.sm }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md }}>
@@ -699,65 +734,24 @@ export default function DestinationDetailScreen() {
                 </Card>
               ) : destinationExperiences.length > 0 ? (
                 <>
-                  {destinationExperiences.map((experience, index) => (
-                    <Card key={experience.id} elevated padded style={{ marginBottom: spacing.sm }}>
-                      <View style={{ gap: spacing.sm }}>
-                        <PhotoCarousel
-                          urls={experience.imageUrls}
-                          height={150}
-                          attributions={experience.imageAttributions}
-                          attribution={
-                            experience.provider === 'viator' ? undefined : 'Photo via Unsplash'
-                          }
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -spacing.base }} contentContainerStyle={{ paddingHorizontal: spacing.base, gap: spacing.md }}>
+                    {destinationExperiences.map((experience) => (
+                      <View key={experience.id} style={{ width: 224 }}>
+                        <ExperienceSummaryCard
+                          experience={experience}
+                          variant="rail"
+                          onPress={() => router.push({
+                            pathname: '/experiences/[productCode]',
+                            params: {
+                              productCode: experience.productCode ?? experience.id,
+                              destinationSlug: destination.slug,
+                              seed: experienceRouteSeed(experience),
+                            },
+                          })}
                         />
-                        <Text variant="h4">{experience.title}</Text>
-                        <Text variant="bodySm" style={{ color: colors.textSecondary }}>
-                          {experience.summary}
-                        </Text>
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
-                          {experienceSource === 'viator_live' || experience.provider === 'viator' ? (
-                            <Badge label="Viator" variant="warning" />
-                          ) : null}
-                          {experience.rating ? <Badge label={`${experience.rating.toFixed(1)} ★`} variant="success" /> : null}
-                          {experience.priceFrom !== undefined ? (
-                            <Badge label={`From ${experience.currency ?? ''} ${Math.round(experience.priceFrom)}`} variant="accent" />
-                          ) : null}
-                          {experience.freeCancellation ? <Badge label="Free cancellation" variant="success" /> : null}
-                          {experience.tags?.slice(0, 4).map((tag) => (
-                            <Badge key={tag} label={tag} variant="default" />
-                          ))}
-                        </View>
-                        {typeof experience.affiliateUrl === 'string' ? (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onPress={() => {
-                              const affiliateUrl = experience.affiliateUrl;
-                              if (affiliateUrl) {
-                                track(ANALYTICS_EVENTS.AFFILIATE_CLICKED, {
-                                  provider: experience.provider,
-                                  productCategory: 'experience',
-                                  rank: index + 1,
-                                  ...(priceBand(experience.priceFrom) ? { priceBand: priceBand(experience.priceFrom) } : {}),
-                                });
-                                observePreference({
-                                  subjectType: 'activity_category',
-                                  subjectKey: experience.tags?.[0] ?? 'experience',
-                                  value: 0.4,
-                                  weight: 1,
-                                  source: 'affiliate_handoff',
-                                  observedAt: new Date().toISOString(),
-                                });
-                                void Linking.openURL(affiliateUrl);
-                              }
-                            }}
-                          >
-                            Open experience
-                          </Button>
-                        ) : null}
                       </View>
-                    </Card>
-                  ))}
+                    ))}
+                  </ScrollView>
                   {hasExternalExperienceBookings ? (
                     <Text variant="caption" style={{ color: colors.textTertiary, marginBottom: spacing.sm }}>
                       Partner bookings open on Viator. Outing may earn a commission.
@@ -852,8 +846,10 @@ export default function DestinationDetailScreen() {
                     Attribution for editorial further reading and public datasets. Outing never claims a destination is universally safe.
                   </Text>
                   {(destination.sources as Array<{ type: string; label: string; url: string }>).map((s, i) => (
-                    <View
+                    <Pressable
                       key={`${s.type}-${i}`}
+                      accessibilityRole="link"
+                      onPress={() => void Linking.openURL(s.url)}
                       style={{
                         paddingVertical: spacing.sm,
                         borderBottomWidth: 1,
@@ -863,8 +859,8 @@ export default function DestinationDetailScreen() {
                     >
                       <Text variant="labelMd">{s.label}</Text>
                       <Text variant="caption" style={{ color: colors.textTertiary }}>{s.type.replace('_', ' ')}</Text>
-                      <Text variant="caption" style={{ color: colors.accent }}>{s.url}</Text>
-                    </View>
+                      <Text variant="caption" style={{ color: colors.accent }}>Open source ↗</Text>
+                    </Pressable>
                   ))}
                 </>
               )}
@@ -1050,7 +1046,7 @@ export default function DestinationDetailScreen() {
               {(destination.events ?? []).length === 0 ? (
                 <Text variant="bodyMd" style={{ color: colors.textTertiary }}>No events listed.</Text>
               ) : (
-                (destination.events ?? []).map((e: { id: string; title: string; startDate: string; endDate: string; category: string; summary: string; estimatedCostUsd?: number }) => (
+                (destination.events ?? []).map((e: { id: string; title: string; startDate: string; endDate: string; category: string; summary: string; estimatedCostUsd?: number; sourceUrl?: string; scheduleStatus?: string }) => (
                   <Card key={e.id} elevated padded style={{ marginBottom: spacing.sm }}>
                     <View style={{ gap: spacing.xs }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1061,12 +1057,13 @@ export default function DestinationDetailScreen() {
                         {e.startDate}{e.endDate !== e.startDate ? ` – ${e.endDate}` : ''}
                       </Text>
                       <Text variant="bodySm" style={{ color: colors.textSecondary }}>{e.summary}</Text>
+                      {e.sourceUrl ? <Button size="sm" variant="secondary" onPress={() => void Linking.openURL(e.sourceUrl!)}>Check official event site</Button> : null}
                     </View>
                   </Card>
                 ))
               )}
               <Text variant="caption" style={{ color: colors.textTertiary, marginTop: spacing.md }}>
-                Sample calendar data. Verify dates before travel.
+                Annual event timing is a planning aid. Confirm exact dates with the organizer before booking travel.
               </Text>
             </View>
           )}
@@ -1107,6 +1104,16 @@ export default function DestinationDetailScreen() {
           Plan a trip to {destination.name}
         </Button>
       </View>
+    </View>
+  );
+}
+
+function QuickFact({ label, value }: { label: string; value: string }) {
+  const { colors, spacing, radius } = useTheme();
+  return (
+    <View style={{ minWidth: 126, maxWidth: 190, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.lg, backgroundColor: colors.backgroundSecondary, gap: 2 }}>
+      <Text variant="caption" style={{ color: colors.textTertiary }}>{label}</Text>
+      <Text variant="labelMd" numberOfLines={2}>{value}</Text>
     </View>
   );
 }

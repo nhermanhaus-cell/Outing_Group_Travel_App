@@ -92,7 +92,7 @@ export async function saveNotificationPreferences(value: NotificationPreferences
   }
 }
 
-async function cancelItineraryReminders(): Promise<void> {
+export async function cancelItineraryReminders(): Promise<void> {
   const raw = await AsyncStorage.getItem(REMINDER_IDS_KEY);
   const ids = raw ? JSON.parse(raw) as string[] : [];
   await Promise.all(ids.map((id) => Notifications.cancelScheduledNotificationAsync(id).catch(() => undefined)));

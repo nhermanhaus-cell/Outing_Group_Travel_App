@@ -29,8 +29,9 @@ import {
   parseTravelSearchIntent,
   travelSearchChips,
 } from '../../src/lib/smartSearch';
-import { loadDestinationExperiences } from '../../src/lib/experiences';
+import { experienceRouteSeed, loadDestinationExperiences } from '../../src/lib/experiences';
 import { OutingIcon } from '../../components/ui/OutingIcon';
+import { CONTENT_DENSITY, destinationTileWidth } from '../../src/lib/content-density';
 
 function nextMonth() {
   const date = new Date();
@@ -252,11 +253,45 @@ export default function DiscoverScreen() {
             </Pressable>
           ) : null}
         </View>
-        <Text variant="bodyLg" style={{ color: colors.textSecondary }}>Places picked for the way you like to travel.</Text>
+        <Text variant="bodyMd" style={{ color: colors.textSecondary }}>Places picked for the way you like to travel.</Text>
+        <View style={{ paddingTop: spacing.md, gap: spacing.sm }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.base, minHeight: 54, borderRadius: radius.full, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+            <OutingIcon name="discover" size={20} color={colors.textPrimary} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Where, when, or what kind of trip?"
+              placeholderTextColor={colors.textTertiary}
+              style={{ flex: 1, color: colors.textPrimary, fontSize: 15, paddingVertical: spacing.sm }}
+            />
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+            {featureFlags.outingFullExperienceV1 && !query.trim() ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => nearbySlugs.length ? setNearbySlugs([]) : void findNearby()}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full, backgroundColor: nearbySlugs.length ? colors.poolLight : colors.surface, borderWidth: 1, borderColor: nearbySlugs.length ? colors.pool : colors.border }}
+              >
+                <OutingIcon name="pin" color={colors.pool} size={16} />
+                <Text variant="labelSm" style={{ color: colors.pool }}>{nearbyLoading ? 'Finding…' : nearbySlugs.length ? 'Show all' : 'Near me'}</Text>
+              </Pressable>
+            ) : null}
+            {featureFlags.smartCompareV1 && savedSlugs.length >= 2 ? (
+              <Pressable onPress={() => router.push({ pathname: '/compare', params: { slugs: savedSlugs.slice(0, 4).join(',') } })} style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface }}>
+                <Text variant="labelSm">Compare saved</Text>
+              </Pressable>
+            ) : null}
+          </View>
+          {chips.length ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.xs }}>
+              {chips.map((chip) => <View key={chip} style={{ paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: radius.full, backgroundColor: colors.poolLight }}><Text variant="labelSm" style={{ color: colors.pool }}>{chip}</Text></View>)}
+            </ScrollView>
+          ) : null}
+        </View>
       </View>
 
       {destinationDeals.length > 0 ? (
-        <View style={{ paddingTop: spacing.xl, gap: spacing.sm }}>
+        <View style={{ paddingTop: spacing.lg, gap: spacing.sm }}>
           <View style={{ paddingHorizontal: spacing.base, gap: spacing.xxs }}>
             <Text variant="h2">Unexpectedly affordable ideas</Text>
             <Text variant="bodySm" style={{ color: colors.textSecondary }}>Indicative one-way fares from {primaryAirport?.iata} for next month.</Text>
@@ -268,17 +303,17 @@ export default function DiscoverScreen() {
                 onPress={() => {
                   router.push(`/destinations/${destination.slug}`);
                 }}
-                style={{ width: 250, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.backgroundSecondary }}
+                style={{ width: CONTENT_DENSITY.horizontalCardWidth, gap: spacing.sm }}
               >
                 <DestinationHeroImage
                   destination={destination}
-                  style={{ width: '100%', height: 150 }}
+                  style={{ width: '100%', height: 128, borderRadius: radius.xl }}
                 />
-                <View style={{ padding: spacing.md, gap: spacing.xs }}>
+                <View style={{ gap: spacing.xxs }}>
                   <Text variant="h4">{destination.name}</Text>
-                  <Text variant="h3">from {new Intl.NumberFormat(undefined, { style: 'currency', currency: deal.currency, maximumFractionDigits: 0 }).format(deal.price)}</Text>
+                  <Text variant="labelLg">from {new Intl.NumberFormat(undefined, { style: 'currency', currency: deal.currency, maximumFractionDigits: 0 }).format(deal.price)}</Text>
                   {deal.savingsPercent && deal.savingsPercent > 0 ? <Text variant="labelSm" style={{ color: colors.accent }}>{deal.savingsPercent}% below our recent median</Text> : null}
-                  <Text variant="caption" style={{ color: colors.textTertiary }}>{deal.direct ? 'Direct flight' : 'Stops may apply'} · recently observed via Skyscanner</Text>
+                  <Text variant="caption" numberOfLines={1} style={{ color: colors.textTertiary }}>{deal.direct ? 'Direct' : 'Stops may apply'} · observed fare</Text>
                 </View>
               </Pressable>
             ))}
@@ -287,7 +322,7 @@ export default function DiscoverScreen() {
         </View>
       ) : null}
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} decelerationRate="fast" snapToInterval={Math.min(width * 0.84, 380) + spacing.md} contentContainerStyle={{ padding: spacing.base, gap: spacing.md }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} decelerationRate="fast" snapToInterval={Math.min(width * 0.76, 320) + spacing.md} contentContainerStyle={{ paddingHorizontal: spacing.base, paddingTop: spacing.lg, paddingBottom: spacing.sm, gap: spacing.md }}>
         {collections.map((collection) => {
           const destination = catalog.find((item) => collection.destinationSlugs.includes(item.slug));
           return (
@@ -300,18 +335,17 @@ export default function DiscoverScreen() {
                 });
                 router.push(`/collections/${collection.id}`);
               }}
-              style={{ width: Math.min(width * 0.84, 380), height: 470, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: colors.backgroundSecondary }}
+              style={{ width: Math.min(width * 0.76, 320), height: 310, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: colors.backgroundSecondary }}
             >
               <DestinationHeroImage
                 destination={destination}
                 style={{ position: 'absolute', inset: 0 }}
               />
               <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(13,10,14,0.38)' }} />
-              <View style={{ marginTop: 'auto', padding: spacing.xl, gap: spacing.sm }}>
+              <View style={{ marginTop: 'auto', padding: spacing.lg, gap: spacing.xs }}>
                 <Text variant="captionBold" style={{ color: '#fff', textTransform: 'uppercase', letterSpacing: 1.3 }}>{collection.kicker}</Text>
                 <Text variant="displaySm" style={{ color: '#fff' }}>{collection.title}</Text>
-                <Text variant="bodyMd" numberOfLines={3} style={{ color: 'rgba(255,255,255,0.9)' }}>{collection.whyVisit}</Text>
-                <Text variant="labelMd" style={{ color: '#fff' }}>Open collection →</Text>
+                <Text variant="bodySm" numberOfLines={2} style={{ color: 'rgba(255,255,255,0.9)' }}>{collection.whyVisit}</Text>
               </View>
             </Pressable>
           );
@@ -321,39 +355,9 @@ export default function DiscoverScreen() {
       <View style={{ paddingHorizontal: spacing.base, gap: spacing.base, paddingBottom: insets.bottom + spacing['4xl'] }}>
         <View style={{ gap: spacing.sm }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
-            <Text variant="h2">Find your fit</Text>
-            {featureFlags.smartCompareV1 && savedSlugs.length >= 2 ? (
-              <Pressable onPress={() => router.push({ pathname: '/compare', params: { slugs: savedSlugs.slice(0, 4).join(',') } })}>
-                <Text variant="labelMd" style={{ color: colors.accent }}>Compare saved</Text>
-              </Pressable>
-            ) : null}
+            <Text variant="h2">{query.trim() ? 'Matches' : nearbySlugs.length ? 'Closest ideas' : 'All destinations'}</Text>
+            <Text variant="caption" style={{ color: colors.textTertiary }}>{visibleResults.length} places</Text>
           </View>
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Try “warm, affordable beach trip in March”"
-            placeholderTextColor={colors.textTertiary}
-            style={{ backgroundColor: colors.backgroundSecondary, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, color: colors.textPrimary, fontSize: 15 }}
-          />
-          {featureFlags.outingFullExperienceV1 && !query.trim() ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => nearbySlugs.length ? setNearbySlugs([]) : void findNearby()}
-              style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full, backgroundColor: nearbySlugs.length ? colors.poolLight : colors.surface, borderWidth: 1, borderColor: nearbySlugs.length ? colors.pool : colors.border }}
-            >
-              <OutingIcon name="pin" color={colors.pool} size={16} />
-              <Text variant="labelSm" style={{ color: colors.pool }}>{nearbyLoading ? 'Finding nearby ideas…' : nearbySlugs.length ? 'Show all destinations' : 'Ideas near me'}</Text>
-            </Pressable>
-          ) : null}
-          {chips.length ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
-              {chips.map((chip) => (
-                <View key={chip} style={{ paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: radius.full, backgroundColor: colors.poolLight }}>
-                  <Text variant="labelSm" style={{ color: colors.pool }}>{chip}</Text>
-                </View>
-              ))}
-            </View>
-          ) : null}
         </View>
         {assistantSearch.isFetching && !searchDecision ? (
           <Text variant="bodySm" style={{ color: colors.textSecondary }}>Outing is checking your preferences against the catalog…</Text>
@@ -406,17 +410,17 @@ export default function DiscoverScreen() {
                     params: {
                       productCode: experience.productCode ?? experience.id,
                       destinationSlug: experienceDestination.slug,
-                      seed: JSON.stringify(experience),
+                      seed: experienceRouteSeed(experience),
                     },
                   })}
-                  style={{ width: 260, overflow: 'hidden', borderRadius: radius.lg, backgroundColor: colors.backgroundSecondary }}
+                  style={{ width: CONTENT_DENSITY.horizontalCardWidth, gap: spacing.sm }}
                 >
                   {experience.imageUrls[0] ? (
-                    <Image source={{ uri: experience.imageUrls[0] }} style={{ width: '100%', height: 150 }} contentFit="cover" transition={180} />
+                    <Image source={{ uri: experience.imageUrls[0] }} style={{ width: '100%', height: CONTENT_DENSITY.horizontalCardImageHeight, borderRadius: radius.xl }} contentFit="cover" transition={180} />
                   ) : (
                     <View style={{ height: 150, backgroundColor: colors.plum }} />
                   )}
-                  <View style={{ padding: spacing.md, gap: spacing.xs }}>
+                  <View style={{ gap: spacing.xxs }}>
                     <Text variant="h4" numberOfLines={2}>{experience.title}</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
                       {experience.rating ? <Text variant="captionBold">{experience.rating.toFixed(1)} ★</Text> : null}
@@ -425,9 +429,6 @@ export default function DiscoverScreen() {
                       ) : null}
                       {experience.freeCancellation ? <Text variant="caption" style={{ color: colors.pool }}>Free cancellation</Text> : null}
                     </View>
-                    <Text variant="caption" numberOfLines={2} style={{ color: colors.textTertiary }}>
-                      {experience.summary}
-                    </Text>
                   </View>
                 </Pressable>
               ))}
@@ -437,7 +438,13 @@ export default function DiscoverScreen() {
             </Text>
           </View>
         ) : null}
-        {visibleResults.map((destination) => <DestinationCard key={destination.slug} destination={destination} />)}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: CONTENT_DENSITY.compactCardGap }}>
+          {visibleResults.map((destination) => (
+            <View key={destination.slug} style={{ width: destinationTileWidth(width) }}>
+              <DestinationCard destination={destination} variant="tile" />
+            </View>
+          ))}
+        </View>
         <UnknownDestinationResults
           query={query}
           enabled={featureFlags.globalDiscoveryV1 && !conversationalSearch && query.trim().length >= 2 && visibleResults.length === 0}

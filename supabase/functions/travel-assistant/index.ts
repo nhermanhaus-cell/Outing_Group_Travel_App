@@ -19,7 +19,7 @@ type Json = Record<string, unknown>;
 type UntypedSupabaseClient = ReturnType<typeof createClient<any>>;
 type Source = {
   id: string;
-  provider: 'outing' | 'google_places' | 'ticketmaster' | 'open_meteo' | 'skyscanner' | 'viator' | 'mistral_web';
+  provider: 'outing' | 'google_places' | 'ticketmaster' | 'open_meteo' | 'skyscanner' | 'scrappa' | 'viator' | 'mistral_web';
   label: string;
   url?: string;
   retrievedAt: string;
@@ -114,8 +114,15 @@ const toolSchemas = {
   get_fare_windows: z.object({
     originIata: z.string().regex(/^[A-Za-z]{3}$/),
     destinationIata: z.string().regex(/^[A-Za-z]{3}$/).optional(),
+    departureDate: z.string().date().optional(),
+    returnDate: z.string().date().optional(),
+    adults: z.number().int().min(1).max(9).default(1),
     departureMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(),
     returnMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+  }).superRefine((value, ctx) => {
+    if ((value.departureDate && !value.returnDate) || (!value.departureDate && value.returnDate)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Exact fare searches require both departureDate and returnDate.' });
+    }
   }),
   search_experiences: z.object({
     destination: z.string().min(1).max(160),
@@ -182,7 +189,7 @@ const modelTools = Object.entries(toolSchemas).map(([name, schema]) => ({
       search_places: 'Find current restaurants and places using Google Places.',
       search_events: 'Find current events from Ticketmaster.',
       get_weather_window: 'Get current seven-day weather from Open-Meteo.',
-      get_fare_windows: 'Get indicative fare windows and observed price context from Skyscanner.',
+      get_fare_windows: 'Get exact-date Scrappa-backed Google Flights price ranges when origin, destination, departure date, and return date are known; otherwise get indicative monthly fare context.',
       search_experiences: 'Find destination-matched Viator experiences using the traveler’s interests, dates, pace, budget ceiling, ratings, and cancellation preference.',
       analyze_viator_options: 'Pull and compare two to four Viator experiences with provider-backed price, duration, reviews, cancellation, logistics, and schedule evidence. Use this when the user asks which experience is best or wants options analyzed.',
       get_trip_context: 'Get a redacted view of the current trip.',
@@ -1077,8 +1084,19 @@ Deno.serve(async (request) => {
       output = await travelApi(authorization, 'weatherForecast', location, request.signal);
       sources.push(source('open_meteo', `Open-Meteo forecast for ${value.destination}`, 'https://open-meteo.com/'));
     } else if (name === 'get_fare_windows') {
-      output = await travelApi(authorization, 'skyscannerIndicative', args as Json, request.signal);
-      sources.push(source('skyscanner', 'Skyscanner indicative fares'));
+      const value = args as z.infer<typeof toolSchemas.get_fare_windows>;
+      if (value.destinationIata && value.departureDate && value.returnDate) {
+        output = await travelApi(authorization, 'scrappaRoundTrip', value, request.signal);
+        const estimate = (output as Json).estimate as Json | null;
+        sources.push(source(
+          'scrappa',
+          'Scrappa-backed Google Flights round-trip search',
+          estimate && typeof estimate.googleFlightsUrl === 'string' ? estimate.googleFlightsUrl : 'https://www.google.com/travel/flights',
+        ));
+      } else {
+        output = await travelApi(authorization, 'skyscannerIndicative', value, request.signal);
+        sources.push(source('skyscanner', 'Skyscanner indicative fares'));
+      }
     } else if (name === 'search_experiences') {
       const value = args as z.infer<typeof toolSchemas.search_experiences>;
       const mergedInterests = [...new Set([

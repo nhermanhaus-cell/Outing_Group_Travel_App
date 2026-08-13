@@ -37,11 +37,17 @@ export interface PlannerTraveler {
 
 export interface TripPlanFlightPriceContext {
   currentPrice?: number;
+  lowPrice?: number;
+  highPrice?: number;
   baselinePrice?: number;
   currency?: string;
   savingsPercent?: number;
   observationCount?: number;
   observedAt?: string;
+  source?: 'scrappa_google_flights' | 'skyscanner_indicative';
+  trackingUrl?: string;
+  message?: string;
+  returnSelectionRequired?: boolean;
 }
 
 export interface TripPlanInput extends ItineraryInput {
@@ -62,10 +68,11 @@ export interface ActivityPreferenceSignals {
   excludedPlaceIds: string[];
   scoreAdjustments: Record<string, number>;
   tallies: Record<string, {
-    mustDo: number;
+    veryInterested: number;
     interested: number;
-    maybe: number;
-    notForThisTrip: number;
+    neutral: number;
+    uninterested: number;
+    veryUninterested: number;
     weightedScore: number;
   }>;
   anchorCandidatePlaceIds: string[];
@@ -75,16 +82,20 @@ export interface ActivityPreferenceSignals {
 }
 
 const PREFERENCE_WEIGHTS = {
-  must_do: 3,
+  very_interested: 3,
   interested: 1,
-  maybe: 0,
-  not_for_this_trip: -1,
+  neutral: 0,
+  uninterested: -1,
+  very_uninterested: -3,
 } as const;
 
 export function normalizeActivityPreferenceChoice(
   choice: ActivityPreferenceVote['choice'],
 ): keyof typeof PREFERENCE_WEIGHTS {
-  return choice === 'not_interested' ? 'not_for_this_trip' : choice;
+  if (choice === 'must_do') return 'very_interested';
+  if (choice === 'maybe') return 'neutral';
+  if (choice === 'not_for_this_trip' || choice === 'not_interested') return 'uninterested';
+  return choice;
 }
 
 export function isActivityPreferenceSessionComplete(
@@ -118,17 +129,19 @@ export function buildActivityPreferenceSignals(
   }
   for (const vote of latestByMemberAndPlace.values()) {
     const tally = tallies[vote.placeId] ?? {
-      mustDo: 0,
+      veryInterested: 0,
       interested: 0,
-      maybe: 0,
-      notForThisTrip: 0,
+      neutral: 0,
+      uninterested: 0,
+      veryUninterested: 0,
       weightedScore: 0,
     };
     const choice = normalizeActivityPreferenceChoice(vote.choice);
-    if (choice === 'must_do') tally.mustDo += 1;
+    if (choice === 'very_interested') tally.veryInterested += 1;
     if (choice === 'interested') tally.interested += 1;
-    if (choice === 'maybe') tally.maybe += 1;
-    if (choice === 'not_for_this_trip') tally.notForThisTrip += 1;
+    if (choice === 'neutral') tally.neutral += 1;
+    if (choice === 'uninterested') tally.uninterested += 1;
+    if (choice === 'very_uninterested') tally.veryUninterested += 1;
     tally.weightedScore += PREFERENCE_WEIGHTS[choice];
     tallies[vote.placeId] = tally;
   }
@@ -141,18 +154,18 @@ export function buildActivityPreferenceSignals(
   const minorityFavoriteMemberIdsByPlace: Record<string, string[]> = {};
   const majority = Math.floor(Math.max(1, eligibleMemberCount) / 2) + 1;
   for (const [placeId, tally] of Object.entries(tallies)) {
-    const positive = tally.mustDo + tally.interested;
-    const negative = tally.notForThisTrip;
+    const positive = tally.veryInterested + tally.interested;
+    const negative = tally.uninterested + tally.veryUninterested;
     scoreAdjustments[placeId] = Math.max(-45, Math.min(90, tally.weightedScore * 24));
     const soloRejected = eligibleMemberCount <= 1 && negative > 0 && positive === 0;
     const groupRejected = negative >= majority && negative > positive;
     if (soloRejected || groupRejected) excludedPlaceIds.push(placeId);
     if (positive >= majority && tally.weightedScore > 0) anchorCandidatePlaceIds.push(placeId);
-    else if (positive === negative && positive > 0) pollPlaceIds.push(placeId);
-    else if (tally.mustDo > 0 && positive < majority) {
+    else if (tally.weightedScore === 0 && positive > 0 && negative > 0) pollPlaceIds.push(placeId);
+    else if (tally.veryInterested > 0 && positive < majority) {
       minorityFavoritePlaceIds.push(placeId);
       minorityFavoriteMemberIdsByPlace[placeId] = [...latestByMemberAndPlace.values()]
-        .filter((vote) => vote.placeId === placeId && normalizeActivityPreferenceChoice(vote.choice) === 'must_do')
+        .filter((vote) => vote.placeId === placeId && normalizeActivityPreferenceChoice(vote.choice) === 'very_interested')
         .map((vote) => vote.memberId);
     }
   }
@@ -493,6 +506,25 @@ function buildFlightPriceGuidance(input: TripPlanInput): FlightPriceGuidance | u
   const context = input.flightPriceContext;
   const observationCount = context?.observationCount ?? 0;
   if (
+    context?.source === 'scrappa_google_flights'
+    && context.lowPrice !== undefined
+    && context.highPrice !== undefined
+  ) {
+    return {
+      status: 'indicative',
+      currentPrice: context.currentPrice ?? context.lowPrice,
+      priceRange: { low: context.lowPrice, high: context.highPrice },
+      ...(context.currency !== undefined && { currency: context.currency }),
+      observationCount,
+      ...(context.observedAt !== undefined && { observedAt: context.observedAt }),
+      message: context.message ?? 'Starting prices observed from a round-trip Google Flights search. Confirm the return selection before booking.',
+      trackingUrl: context.trackingUrl ?? trackingUrl,
+      confidence: context.returnSelectionRequired ? 0.55 : 0.72,
+      source: 'scrappa_google_flights',
+      ...(context.returnSelectionRequired !== undefined && { returnSelectionRequired: context.returnSelectionRequired }),
+    };
+  }
+  if (
     context?.currentPrice !== undefined &&
     context.baselinePrice !== undefined &&
     observationCount >= MIN_PRICE_OBSERVATIONS &&
@@ -509,6 +541,7 @@ function buildFlightPriceGuidance(input: TripPlanInput): FlightPriceGuidance | u
       message: 'This indicative fare is below recent comparable observations. Prices can still change.',
       trackingUrl,
       confidence: Math.min(0.8, 0.45 + observationCount * 0.03),
+      source: context.source ?? 'skyscanner_indicative',
     };
   }
   if (context?.currentPrice !== undefined && observationCount >= MIN_PRICE_OBSERVATIONS) {
@@ -523,6 +556,7 @@ function buildFlightPriceGuidance(input: TripPlanInput): FlightPriceGuidance | u
       message: 'This is an indicative recently observed fare, not a live bookable quote.',
       trackingUrl,
       confidence: 0.55,
+      source: context.source ?? 'skyscanner_indicative',
     };
   }
   return {
@@ -534,6 +568,7 @@ function buildFlightPriceGuidance(input: TripPlanInput): FlightPriceGuidance | u
     message: 'There is not enough comparable history to recommend when to book. Track this route for changes.',
     trackingUrl,
     confidence: 0.25,
+    source: context?.source ?? 'skyscanner_indicative',
   };
 }
 

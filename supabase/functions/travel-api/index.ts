@@ -12,6 +12,10 @@ import {
   type ResolvedViatorDestination,
   type ViatorDestinationTaxonomyItem,
 } from '../_shared/viator-destinations.ts';
+import {
+  normalizeScrappaRoundTrip,
+  type ScrappaRoundTripRequest,
+} from '../_shared/scrappa-flights.ts';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -21,6 +25,7 @@ const GOOGLE_GEOCODE_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
 const VIATOR_BASE = 'https://api.viator.com/partner';
 const BOOKING_BASE = 'https://demandapi.booking.com/3.2';
 const SKYSCANNER_BASE = 'https://partners.api.skyscanner.net/apiservices/v3';
+const SCRAPPA_BASE = 'https://scrappa.co/api/flights';
 const COMMONS_API = 'https://commons.wikimedia.org/w/api.php';
 const PEXELS_API = 'https://api.pexels.com/v1/search';
 const OPEN_METEO_API = 'https://api.open-meteo.com/v1/forecast';
@@ -70,7 +75,17 @@ function number(value: unknown): number | undefined {
 
 function stripHtml(value: unknown): string | undefined {
   const text = string(value);
-  return text?.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"').trim() || undefined;
+  return text
+    ?.replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&quot;/gi, '"')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n\s*\n+/g, '\n')
+    .trim() || undefined;
 }
 
 function googleHeaders(fieldMask: string): Record<string, string> {
@@ -100,6 +115,10 @@ function bookingHeaders(): Record<string, string> {
 
 function skyscannerHeaders(): Record<string, string> {
   return { 'x-api-key': env('SKYSCANNER_API_KEY'), 'Content-Type': 'application/json' };
+}
+
+function scrappaHeaders(): Record<string, string> {
+  return { 'X-API-KEY': env('SCRAPPA_API_KEY'), Accept: 'application/json' };
 }
 
 function pexelsHeaders(): Record<string, string> {
@@ -302,7 +321,7 @@ function normalizeViatorProduct(value: unknown): JsonRecord | null {
   return {
     productCode,
     title,
-    description: string(product.description) ?? string(product.summary),
+    description: stripHtml(product.description) ?? stripHtml(product.summary),
     productUrl: string(product.productUrl),
     images,
     rating: reviews ? number(reviews.combinedAverageRating) : undefined,
@@ -1340,6 +1359,47 @@ async function skyscannerIndicative(body: JsonRecord): Promise<Response> {
   return json({ deals, observedAt, indicative: true, source: 'skyscanner_indicative' });
 }
 
+async function scrappaRoundTrip(body: JsonRecord): Promise<Response> {
+  const originIata = string(body.originIata)?.toUpperCase();
+  const destinationIata = string(body.destinationIata)?.toUpperCase();
+  const departureDate = string(body.departureDate);
+  const returnDate = string(body.returnDate);
+  const adults = Math.min(9, Math.max(1, Math.round(number(body.adults) ?? 1)));
+  if (!originIata?.match(/^[A-Z]{3}$/) || !destinationIata?.match(/^[A-Z]{3}$/)) {
+    return json({ error: 'Valid originIata and destinationIata are required' }, 400);
+  }
+  if (!departureDate?.match(/^\d{4}-\d{2}-\d{2}$/) || !returnDate?.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return json({ error: 'departureDate and returnDate must use YYYY-MM-DD' }, 400);
+  }
+  if (departureDate >= returnDate) return json({ error: 'returnDate must be after departureDate' }, 400);
+
+  const input: ScrappaRoundTripRequest = { originIata, destinationIata, departureDate, returnDate, adults };
+  const cacheKey = await providerCacheKey('scrappa-round-trip-v1', input);
+  const cached = await readProviderCache(cacheKey);
+  if (cached) return json(cached);
+
+  const url = new URL(`${SCRAPPA_BASE}/round-trip`);
+  url.searchParams.set('origin', originIata);
+  url.searchParams.set('destination', destinationIata);
+  url.searchParams.set('departure_date', departureDate);
+  url.searchParams.set('return_date', returnDate);
+  url.searchParams.set('adults', String(adults));
+  url.searchParams.set('cabin_class', 'economy');
+  url.searchParams.set('sort_by', 'top_flights');
+  // Do not send currency: Scrappa rejected otherwise-valid searches when it
+  // was present. The normalized response uses the provider-returned currency.
+  const providerPayload = await providerJson(url.toString(), {
+    method: 'GET',
+    headers: scrappaHeaders(),
+  }, 20_000);
+  const normalized = normalizeScrappaRoundTrip(providerPayload, input);
+  if (!normalized) {
+    return json({ estimate: null, unavailableReason: 'No priced flight options were returned for these dates.' });
+  }
+  await writeProviderCache(cacheKey, 'scrappa_google_flights', normalized, 30 * 60_000);
+  return json(normalized);
+}
+
 async function enforceRateLimit(request: Request, operation: string) {
   const authorization = request.headers.get('Authorization');
   if (!authorization) throw new Error('Authentication required');
@@ -1350,13 +1410,14 @@ async function enforceRateLimit(request: Request, operation: string) {
   const provider = operation.startsWith('viator') ? 'viator'
     : operation.startsWith('booking') ? 'booking'
     : operation.startsWith('skyscanner') ? 'skyscanner'
+    : operation.startsWith('scrappa') ? 'scrappa'
     : operation.startsWith('ticketmaster') ? 'ticketmaster'
     : operation.startsWith('nps') ? 'nps'
     : operation.startsWith('locationImage') ? 'pexels'
     : operation.startsWith('commons') ? 'commons'
     : operation.startsWith('weather') ? 'weather'
     : 'google';
-  const limits: Record<string, number> = { google: 90, viator: 45, booking: 30, skyscanner: 20, ticketmaster: 45, nps: 45, pexels: 30, commons: 60, weather: 60 };
+  const limits: Record<string, number> = { google: 90, viator: 45, booking: 30, skyscanner: 20, scrappa: 12, ticketmaster: 45, nps: 45, pexels: 30, commons: 60, weather: 60 };
   const response = await fetch(`${supabaseUrl}/rest/v1/rpc/check_provider_rate_limit`, {
     method: 'POST',
     headers: { apikey: anonKey, Authorization: authorization, 'Content-Type': 'application/json' },
@@ -1392,6 +1453,7 @@ Deno.serve(async (request) => {
       case 'npsNearby': response = await npsNearby(body); break;
       case 'bookingStays': response = await bookingStays(body); break;
       case 'skyscannerIndicative': response = await skyscannerIndicative(body); break;
+      case 'scrappaRoundTrip': response = await scrappaRoundTrip(body); break;
       default: return json({ error: 'Unknown operation' }, 400);
     }
     console.log(JSON.stringify({ event: 'travel_provider_request', operation, status: response.status, latencyMs: Date.now() - startedAt }));

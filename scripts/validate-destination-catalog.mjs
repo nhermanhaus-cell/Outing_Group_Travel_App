@@ -44,6 +44,14 @@ for (const destination of destinations) {
   if ((destination.neighborhoods ?? []).length < 2) fail(slug, 'requires at least two neighborhoods');
   if ((destination.places ?? []).length < 6) fail(slug, 'requires at least six places');
   if ((destination.events ?? []).length < 2) fail(slug, 'requires at least two events');
+  if (destination.catalogWave !== 'original') {
+    if (destination.editorialResearch?.status !== 'requires_human_review') fail(slug, 'requires structured editorial research');
+    if (String(destination.editorialSummary ?? '').split(/\s+/).filter(Boolean).length < 80) fail(slug, 'editorial overview requires at least 80 words');
+    if ((destination.neighborhoods ?? []).some((item) => String(item.summary ?? '').split(/\s+/).filter(Boolean).length < 25)) fail(slug, 'neighborhood summaries require at least 25 words');
+    if ((destination.places ?? []).some((item) => String(item.summary ?? '').split(/\s+/).filter(Boolean).length < 25)) fail(slug, 'place summaries require at least 25 words');
+    if (!destination.practical?.gettingAround || !destination.practical?.typicalStay || !destination.practical?.costContext) fail(slug, 'requires practical trip guidance');
+    if ((destination.sources ?? []).length < 7) fail(slug, 'requires at least seven research and reference sources');
+  }
   const pulse = destination.communityPulseComponents ?? {};
   for (const field of ['sourcedCommunityPlaces', 'sourcedCommunityEvents', 'authoritativeCommunitySources']) {
     if (!Number.isInteger(pulse[field]) || pulse[field] < 0) fail(slug, `invalid Community Pulse ${field}`);

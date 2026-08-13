@@ -16,7 +16,7 @@ import { useDestinations } from '../../src/providers/AppProviders';
 import { canDeleteTrip } from '../../src/lib/tripPermissions';
 
 export default function TripsScreen() {
-  const { colors, spacing, radius, shadows } = useTheme();
+  const { colors, spacing, radius } = useTheme();
   const { user } = useAuth();
   const { trips, updateTrip, deleteTrip } = useTrips();
   const router = useRouter();
@@ -84,19 +84,19 @@ export default function TripsScreen() {
         <View
           style={{
             margin: spacing.base,
-            padding: spacing.lg,
+            padding: spacing.base,
             backgroundColor: colors.backgroundSecondary,
             borderRadius: radius.lg,
             borderWidth: 1,
             borderColor: colors.border,
-            gap: spacing.md,
+            gap: spacing.sm,
           }}
         >
           <Text variant="h3">Trips save on this phone</Text>
-          <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+          <Text variant="bodySm" style={{ color: colors.textSecondary }}>
             You can plan without an account. Sign in whenever you want to sync across devices or invite collaborators.
           </Text>
-          <Button onPress={() => router.push('/auth/login')}>Sign in</Button>
+          <Button size="sm" onPress={() => router.push('/auth/login')}>Sign in</Button>
         </View>
       ) : null}
 
@@ -170,25 +170,26 @@ function TripCard({ trip, deleting, onRename, onDelete }: {
         borderWidth: 1,
         borderColor: colors.cardBorder,
         overflow: 'hidden',
-        gap: spacing.sm,
+        minHeight: 124,
+        flexDirection: 'row',
         opacity: pressed ? 0.85 : 1,
         ...shadows.sm,
       })}
     >
       {destination ? (
-        <DestinationHeroImage destination={destination} style={{ width: '100%', height: 150 }} />
+        <DestinationHeroImage destination={destination} style={{ width: 118, alignSelf: 'stretch' }} />
       ) : (
-        <View style={{ height: 92, backgroundColor: colors.plumLight, alignItems: 'center', justifyContent: 'center' }}>
-          <RouteLine color={colors.plum} width={210} />
+        <View style={{ width: 100, backgroundColor: colors.plumLight, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          <RouteLine color={colors.plum} width={150} />
         </View>
       )}
-      <View style={{ padding: spacing.base, gap: spacing.sm }}>
+      <View style={{ flex: 1, padding: spacing.md, gap: spacing.xs, justifyContent: 'center' }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <Text variant="h3" style={{ flex: 1 }}>{trip.name}</Text>
+        <Text variant="h3" numberOfLines={1} style={{ flex: 1 }}>{trip.name}</Text>
         {deleting ? <ActivityIndicator size="small" color={colors.accent} /> : null}
       </View>
       {trip.destinationName ? (
-        <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+        <Text variant="bodySm" numberOfLines={1} style={{ color: colors.textSecondary }}>
           {trip.destinationName}
         </Text>
       ) : null}
@@ -200,7 +201,7 @@ function TripCard({ trip, deleting, onRename, onDelete }: {
           </Text>
         ) : null}
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.xs, borderTopWidth: 1, borderTopColor: colors.borderSubtle }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.xs }}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Rename ${trip.name}`}
@@ -208,7 +209,7 @@ function TripCard({ trip, deleting, onRename, onDelete }: {
           onPress={(event) => { event.stopPropagation(); onRename(); }}
           style={{ paddingVertical: spacing.xs, paddingRight: spacing.sm }}
         >
-          <Text variant="labelMd" style={{ color: colors.accent }}>Rename</Text>
+          <Text variant="captionBold" style={{ color: colors.textSecondary }}>Rename</Text>
         </Pressable>
         {onDelete ? (
           <Pressable
@@ -219,12 +220,12 @@ function TripCard({ trip, deleting, onRename, onDelete }: {
             onPress={(event) => { event.stopPropagation(); onDelete(); }}
             style={{ paddingVertical: spacing.xs, paddingHorizontal: spacing.sm }}
           >
-            <Text variant="labelMd" style={{ color: colors.error }}>{deleting ? 'Deleting…' : 'Delete'}</Text>
+            <Text variant="captionBold" style={{ color: colors.error }}>{deleting ? 'Deleting…' : 'Delete'}</Text>
           </Pressable>
         ) : (
           <Text variant="caption" style={{ color: colors.textTertiary }}>Only an organizer can delete this group trip</Text>
         )}
-        <Text variant="labelMd" style={{ color: colors.accent, marginLeft: 'auto' }}>Open trip →</Text>
+        <OutingIcon name="arrow" size={16} color={colors.accent} />
       </View>
       </View>
     </Pressable>
@@ -262,10 +263,10 @@ function NextTripIdeas() {
   ];
 
   return (
-    <View style={{ marginTop: spacing['2xl'], paddingTop: spacing.xl, borderTopWidth: 1, borderTopColor: colors.border, gap: spacing.md }}>
+    <View style={{ marginTop: spacing.xl, paddingTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border, gap: spacing.sm }}>
       <View style={{ gap: spacing.xs }}>
-        <Text variant="displaySm">Where to next?</Text>
-        <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+        <Text variant="h2">Where to next?</Text>
+        <Text variant="bodySm" style={{ color: colors.textSecondary }}>
           You don’t need a destination yet. Start with what you want the trip to feel like.
         </Text>
       </View>
@@ -275,7 +276,7 @@ function NextTripIdeas() {
           accessibilityRole="button"
           onPress={idea.onPress}
           style={({ pressed }) => ({
-            padding: spacing.base,
+            padding: spacing.md,
             borderRadius: radius.xl,
             backgroundColor: colors.backgroundSecondary,
             borderWidth: 1,
@@ -286,13 +287,13 @@ function NextTripIdeas() {
             opacity: pressed ? 0.78 : 1,
           })}
         >
-          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
             <OutingIcon name={idea.icon} size={21} color={colors.accent} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text variant="labelSm" style={{ color: colors.accent }}>{idea.eyebrow}</Text>
             <Text variant="h4">{idea.title}</Text>
-            <Text variant="bodySm" style={{ color: colors.textSecondary }}>{idea.summary}</Text>
+            <Text variant="caption" numberOfLines={2} style={{ color: colors.textSecondary }}>{idea.summary}</Text>
           </View>
           <Text style={{ color: colors.accent, fontSize: 20 }}>→</Text>
         </Pressable>

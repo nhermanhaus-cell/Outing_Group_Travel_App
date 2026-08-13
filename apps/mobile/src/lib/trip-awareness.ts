@@ -342,3 +342,19 @@ export async function deleteAllVisitHistory(): Promise<void> {
   await AsyncStorage.removeItem(VISIT_QUEUE_KEY);
   await AsyncStorage.removeItem(VISITED_STOPS_KEY);
 }
+
+export async function clearAllTripAwarenessLocalData(): Promise<void> {
+  if (await Location.hasStartedGeofencingAsync(OUTING_GEOFENCE_TASK)) {
+    await Location.stopGeofencingAsync(OUTING_GEOFENCE_TASK);
+  }
+  if (await Location.hasStartedLocationUpdatesAsync(OUTING_LOCATION_TASK)) {
+    await Location.stopLocationUpdatesAsync(OUTING_LOCATION_TASK);
+  }
+  await AsyncStorage.multiRemove([
+    MONITORED_STOPS_KEY,
+    GEOFENCE_STATE_KEY,
+    VISIT_QUEUE_KEY,
+    SETTINGS_KEY,
+    VISITED_STOPS_KEY,
+  ]);
+}

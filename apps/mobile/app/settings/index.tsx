@@ -284,10 +284,17 @@ export default function SettingsScreen() {
               >
                 <Text variant="labelMd">Account deletion</Text>
                 <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-                  To request account deletion, contact support. All local trip data will be removed from this device when you sign out.
+                  Permanently delete your account, trips you organize, preferences, saved places, conversations, and private activity. Outing will show everything affected before you confirm.
                 </Text>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onPress={() => router.push('/account-deletion' as Href)}
+                >
+                  Delete account
+                </Button>
               </View>
-              <Button variant="danger" onPress={signOut}>Sign out</Button>
+              <Button variant="secondary" onPress={signOut}>Sign out</Button>
             </>
           ) : (
             <Button onPress={() => router.push('/auth/login')}>Sign in</Button>

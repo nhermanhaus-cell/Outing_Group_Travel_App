@@ -309,11 +309,15 @@ export interface Place {
 }
 
 export type ActivityPreferenceChoice =
-  | 'must_do'
+  | 'very_interested'
   | 'interested'
+  | 'neutral'
+  | 'uninterested'
+  | 'very_uninterested'
+  /** Legacy values accepted for backward-compatible decoding. */
+  | 'must_do'
   | 'maybe'
   | 'not_for_this_trip'
-  /** Accepted for one compatibility window and normalized on write. */
   | 'not_interested';
 
 export interface ActivityPreferenceVote {

@@ -99,6 +99,28 @@ export interface ApiLiveEvent { id: string; name: string; url: string; startDate
 export interface ApiPark { id: string; name: string; description?: string; designation?: string; states?: string; url: string; imageUrl?: string; imageAttribution?: string; lat?: number; lng?: number; source: 'nps' }
 export interface ApiBookingStay { id: string; name: string; url: string; imageUrls: string[]; reviewScore?: number; reviewCount?: number; price?: number; currency?: string; address?: string; travelProud?: boolean; source: 'booking_com' }
 export interface ApiFlightDeal { id: string; originIata?: string; destinationIata?: string; destinationName: string; destinationCountry?: string; departureDate?: string; returnDate?: string; price: number; currency: string; direct: boolean; observedAt: string; baselinePrice?: number; savingsPercent?: number; observationCount?: number; source: 'skyscanner_indicative' }
+export interface ApiScrappaFlightOption { price: number; currency: string; airlineName?: string; durationMinutes?: number; stops?: number; emissionsDifferencePercent?: number }
+export interface ApiRoundTripFlightEstimate {
+  originIata: string;
+  destinationIata: string;
+  departureDate: string;
+  returnDate: string;
+  adults: number;
+  currency: string;
+  lowPrice: number;
+  typicalPrice: number;
+  highPrice: number;
+  optionCount: number;
+  nonstopOptionCount: number;
+  observedAt: string;
+  source: 'scrappa_google_flights';
+  pricingScope: 'round_trip_search';
+  returnSelectionRequired: boolean;
+  priceIsPerTraveler: true;
+  googleFlightsUrl: string;
+  message: string;
+  options: ApiScrappaFlightOption[];
+}
 
 export async function invokeTravelApi<T>(
   operation: string,
@@ -145,6 +167,9 @@ export const loadBookingStays = (input: { airportIata: string; checkin: string; 
 
 export const loadIndicativeFlightDeals = (input: { originIata: string; destinationIata?: string; currency?: string; market?: string; locale?: string; departureMonth?: string; returnMonth?: string; limit?: number }) =>
   invokeTravelApi<{ deals: ApiFlightDeal[]; observedAt: string; indicative: true }>('skyscannerIndicative', input);
+
+export const loadRoundTripFlightEstimate = (input: { originIata: string; destinationIata: string; departureDate: string; returnDate: string; adults: number }, signal?: AbortSignal) =>
+  invokeTravelApi<{ estimate: ApiRoundTripFlightEstimate | null; unavailableReason?: string }>('scrappaRoundTrip', input, signal);
 
 export function validateTravelApiResponse<T>(operation: string, data: unknown): T {
   try { return validateTravelApiContract<T>(operation, data); }

@@ -14,6 +14,7 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { ANALYTICS_EVENTS } from '@gayi/shared';
 import { useAnalytics } from '../../src/analytics/analytics-provider';
 import { posthog } from '../../src/config/posthog';
+import { cleanExperienceText, experienceDetailLines } from '../../src/lib/experience-content';
 
 function priceBand(value?: number): string | undefined {
   if (value == null) return undefined;
@@ -34,7 +35,7 @@ export default function ExperienceDetailScreen() {
   const params = useLocalSearchParams<{ productCode: string; destinationSlug?: string; seed?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, radius, shadows } = useTheme();
   const { track, observePreference } = useAnalytics();
   const requestStartedAtRef = useRef(Date.now());
   const requestTrackedRef = useRef(false);
@@ -51,6 +52,15 @@ export default function ExperienceDetailScreen() {
     retry: 2,
   });
   const experience = details.data ?? seed;
+  const description = cleanExperienceText(experience?.description ?? experience?.summary);
+  const itineraryLines = detailLinesDistinctFromDescription(experience?.itinerary, description);
+  const logisticsLines = detailLinesDistinctFromDescription(experience?.logistics, description);
+  const inclusionLines = detailLinesDistinctFromDescription(experience?.inclusions, description);
+  const exclusionLines = detailLinesDistinctFromDescription(experience?.exclusions, description);
+  const cancellationLines = detailLinesDistinctFromDescription(experience?.cancellationPolicy, description);
+  if (experience?.freeCancellation && cancellationLines.length === 0) {
+    cancellationLines.push('Free cancellation is available. Confirm the exact cutoff and refund terms on Viator before booking.');
+  }
 
   useEffect(() => {
     if (requestTrackedRef.current || (!details.isSuccess && !details.isError)) return;
@@ -74,79 +84,103 @@ export default function ExperienceDetailScreen() {
       ...(priceBand(experience.priceFrom) ? { priceBand: priceBand(experience.priceFrom) } : {}),
     });
   }, [experience, track]);
+
+  const openBooking = () => {
+    if (!experience?.productUrl) return;
+    const eventProperties = {
+      provider: experience.provider,
+      productCategory: 'experience',
+      ...(priceBand(experience.priceFrom) ? { priceBand: priceBand(experience.priceFrom) } : {}),
+    };
+    track(ANALYTICS_EVENTS.AFFILIATE_CLICKED, eventProperties);
+    track(ANALYTICS_EVENTS.BOOKING_HANDOFF, eventProperties);
+    posthog.capture('booking_handoff', {
+      provider: experience.provider,
+      product_category: 'experience',
+      ...(priceBand(experience.priceFrom) ? { price_band: priceBand(experience.priceFrom) } : {}),
+      title: experience.title,
+    });
+    observePreference({
+      subjectType: 'activity_category',
+      subjectKey: experience.tags?.[0] ?? 'experience',
+      value: 0.4,
+      weight: 1,
+      source: 'affiliate_handoff',
+      observedAt: new Date().toISOString(),
+    });
+    void Linking.openURL(experience.productUrl);
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={{ paddingTop: insets.top + spacing.sm, paddingHorizontal: spacing.base, paddingBottom: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-        <Pressable onPress={() => router.back()}><Text style={{ fontSize: 22, color: colors.textSecondary }}>←</Text></Pressable>
-        <Text variant="h3" numberOfLines={1} style={{ flex: 1 }}>Experience details</Text>
+      <View style={{ position: 'absolute', zIndex: 4, top: insets.top + spacing.sm, left: spacing.base }}>
+        <Pressable accessibilityLabel="Go back" onPress={() => router.back()} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', ...shadows.sm }}><Text style={{ fontSize: 21, color: colors.textPrimary }}>←</Text></Pressable>
       </View>
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: spacing.base, gap: spacing.lg, paddingBottom: insets.bottom + 120 }}>
-        {!experience ? <><Skeleton height={220} /><Skeleton height={32} /><Skeleton height={100} /></> : (
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 132 }}>
+        {!experience ? <View style={{ padding: spacing.base, paddingTop: insets.top + 70, gap: spacing.lg }}><Skeleton height={260} /><Skeleton height={32} /><Skeleton height={100} /></View> : (
           <>
-            <PhotoCarousel urls={experience.imageUrls} height={240} attribution={experience.provider === 'viator' ? 'Images and product information provided by Viator' : 'Outing editorial'} />
+            <PhotoCarousel urls={experience.imageUrls} height={310} attribution={experience.provider === 'viator' ? 'Images and product information provided by Viator' : 'Outing editorial'} />
+            <View style={{ padding: spacing.base, gap: spacing.lg }}>
             <View style={{ gap: spacing.sm }}>
               <Text variant="displaySm">{experience.title}</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
-                {experience.provider === 'viator' ? <Badge label="Viator" variant="warning" /> : <Badge label="Editorial idea" />}
-                {experience.rating ? <Badge label={`${experience.rating.toFixed(1)} ★ · ${experience.reviewCount ?? 0} reviews`} variant="success" /> : null}
-                {experience.durationMinutes ? <Badge label={`${Math.round(experience.durationMinutes / 60 * 10) / 10} hours`} /> : null}
-                {experience.priceFrom ? <Badge label={`From ${experience.currency ?? ''} ${experience.priceFrom}`} variant="accent" /> : null}
-                {experience.freeCancellation ? <Badge label="Free cancellation" variant="success" /> : null}
-                {experience.confirmationType === 'INSTANT' ? <Badge label="Instant confirmation" variant="info" /> : null}
+              <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm }}>
+                {experience.rating ? <Text variant="labelMd">★ {experience.rating.toFixed(1)} · {experience.reviewCount ?? 0} reviews</Text> : null}
+                {experience.durationMinutes ? <Text variant="bodySm" style={{ color: colors.textSecondary }}>{Math.round(experience.durationMinutes / 60 * 10) / 10} hours</Text> : null}
+                {experience.confirmationType === 'INSTANT' ? <Text variant="bodySm" style={{ color: colors.textSecondary }}>Instant confirmation</Text> : null}
               </View>
-              <Text variant="bodyLg" style={{ color: colors.textSecondary }}>{experience.summary}</Text>
+              {description ? <Text selectable variant="bodyMd" style={{ color: colors.textSecondary, lineHeight: 23 }}>{description}</Text> : null}
               {experience.address ? <Text variant="bodySm" style={{ color: colors.textTertiary }}>Starts near {experience.address}</Text> : null}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+                {experience.freeCancellation ? <Badge label="Free cancellation" variant="success" /> : null}
+                <Badge label={experience.provider === 'viator' ? 'Offered by Viator' : 'Outing editorial'} variant={experience.provider === 'viator' ? 'warning' : 'default'} />
+              </View>
             </View>
-            <DetailBlock title="What to expect" value={experience.itinerary} />
-            <DetailBlock title="Meeting and pickup" value={experience.logistics} />
-            <DetailBlock title="What’s included" value={experience.inclusions} />
-            <DetailBlock title="What’s not included" value={experience.exclusions} />
-            <DetailBlock title="Cancellation" value={experience.cancellationPolicy} />
+            <DetailBlock title="What to expect" lines={itineraryLines} />
+            <DetailBlock title="Meeting and pickup" lines={logisticsLines} />
+            <DetailBlock title="What’s included" lines={inclusionLines} />
+            <DetailBlock title="What’s not included" lines={exclusionLines} />
+            <DetailBlock title="Cancellation" lines={cancellationLines} />
             {experience.availabilitySummary?.length ? <Card><View style={{ gap: spacing.xs }}><Text variant="labelLg">Availability</Text>{experience.availabilitySummary.map((line) => <Text key={line} variant="bodyMd" style={{ color: colors.textSecondary }}>{line}</Text>)}</View></Card> : null}
-            {details.isError ? <Text variant="caption" style={{ color: colors.textTertiary }}>Live details are temporarily unavailable; showing the saved summary.</Text> : null}
-            <Button
-              size="lg"
-              fullWidth
-              disabled={!experience.productUrl}
-              onPress={() => {
-                if (!experience.productUrl) return;
-                const eventProperties = {
-                  provider: experience.provider,
-                  productCategory: 'experience',
-                  ...(priceBand(experience.priceFrom) ? { priceBand: priceBand(experience.priceFrom) } : {}),
-                };
-                track(ANALYTICS_EVENTS.AFFILIATE_CLICKED, eventProperties);
-                track(ANALYTICS_EVENTS.BOOKING_HANDOFF, eventProperties);
-                posthog.capture('booking_handoff', {
-                  provider: experience.provider,
-                  product_category: 'experience',
-                  ...(priceBand(experience.priceFrom) ? { price_band: priceBand(experience.priceFrom) } : {}),
-                  title: experience.title,
-                });
-                observePreference({
-                  subjectType: 'activity_category',
-                  subjectKey: experience.tags?.[0] ?? 'experience',
-                  value: 0.4,
-                  weight: 1,
-                  source: 'affiliate_handoff',
-                  observedAt: new Date().toISOString(),
-                });
-                void Linking.openURL(experience.productUrl);
-              }}
-            >
-              {experience.productUrl ? 'Book on Viator' : 'Booking link unavailable'}
-            </Button>
+            {details.isError || (details.isSuccess && !details.data) ? <Text variant="caption" style={{ color: colors.textTertiary }}>Live details are temporarily unavailable; showing the saved description.</Text> : null}
             <Text variant="caption" style={{ color: colors.textTertiary }}>Checkout opens only the exact product page returned by Viator. Outing may earn a commission.</Text>
+            </View>
           </>
         )}
       </ScrollView>
+      {experience ? (
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: spacing.base, paddingTop: spacing.md, paddingBottom: insets.bottom + spacing.sm, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: spacing.md, ...shadows.md }}>
+          <View style={{ flex: 1, gap: 1 }}>
+            <Text variant="caption" style={{ color: colors.textSecondary }}>{experience.freeCancellation ? 'Free cancellation' : 'Check live terms'}</Text>
+            <Text variant="h3">{experience.priceFrom ? `From ${experience.currency ?? ''} ${experience.priceFrom}` : 'See live price'}</Text>
+          </View>
+          <Button size="lg" disabled={!experience.productUrl} onPress={openBooking}>{experience.productUrl ? 'Check availability' : 'Unavailable'}</Button>
+        </View>
+      ) : null}
     </View>
   );
 }
 
-function DetailBlock({ title, value }: { title: string; value: unknown }) {
+function detailLinesDistinctFromDescription(value: unknown, description?: string): string[] {
+  const normalizedDescription = description?.toLocaleLowerCase();
+  return experienceDetailLines(value).filter((line) => {
+    const normalizedLine = line.toLocaleLowerCase();
+    return !normalizedDescription
+      || (normalizedLine !== normalizedDescription && !normalizedDescription.includes(normalizedLine));
+  });
+}
+
+function DetailBlock({ title, lines }: { title: string; lines: string[] }) {
   const { colors, spacing } = useTheme();
-  if (value == null || (Array.isArray(value) && value.length === 0)) return null;
-  const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2).replace(/[{}\[\]"]/g, '').replace(/,/g, ' · ');
-  return <Card><View style={{ gap: spacing.xs }}><Text variant="labelLg">{title}</Text><Text variant="bodyMd" style={{ color: colors.textSecondary }}>{text}</Text></View></Card>;
+  if (lines.length === 0) return null;
+  return (
+    <View style={{ paddingTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.borderSubtle, gap: spacing.sm }}>
+      <Text variant="h3">{title}</Text>
+      {lines.map((line, index) => (
+        <View key={`${line}-${index}`} style={{ flexDirection: 'row', gap: spacing.sm }}>
+          {lines.length > 1 ? <Text variant="bodyMd" style={{ color: colors.accent }}>•</Text> : null}
+          <Text selectable variant="bodyMd" style={{ color: colors.textSecondary, flex: 1, lineHeight: 22 }}>{line}</Text>
+        </View>
+      ))}
+    </View>
+  );
 }

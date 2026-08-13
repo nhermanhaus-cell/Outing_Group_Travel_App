@@ -20,6 +20,7 @@ export const assistantSourceSchema = z.object({
     'ticketmaster',
     'open_meteo',
     'skyscanner',
+    'scrappa',
     'viator',
     'mistral_web',
   ]),

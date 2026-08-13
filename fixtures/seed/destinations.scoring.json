@@ -1314,7 +1314,7 @@
     ],
     "legalStatus": "marriage_equality",
     "safetyScore": 88,
-    "communityScore": 52,
+    "communityScore": 64,
     "nightlifeScore": 84,
     "bestMonths": [
       5,
@@ -1686,7 +1686,7 @@
     ],
     "legalStatus": "marriage_equality",
     "safetyScore": 68,
-    "communityScore": 36,
+    "communityScore": 48,
     "nightlifeScore": 84,
     "bestMonths": [
       1,
@@ -1760,7 +1760,7 @@
     ],
     "legalStatus": "marriage_equality",
     "safetyScore": 76,
-    "communityScore": 44,
+    "communityScore": 56,
     "nightlifeScore": 89,
     "bestMonths": [
       3,
@@ -1912,7 +1912,7 @@
     ],
     "legalStatus": "marriage_equality",
     "safetyScore": 66,
-    "communityScore": 44,
+    "communityScore": 56,
     "nightlifeScore": 93,
     "bestMonths": [
       4,
@@ -1986,7 +1986,7 @@
     ],
     "legalStatus": "marriage_equality",
     "safetyScore": 72,
-    "communityScore": 44,
+    "communityScore": 56,
     "nightlifeScore": 88,
     "bestMonths": [
       1,
@@ -2134,7 +2134,7 @@
     ],
     "legalStatus": "marriage_equality",
     "safetyScore": 84,
-    "communityScore": 44,
+    "communityScore": 56,
     "nightlifeScore": 88,
     "bestMonths": [
       4,
@@ -2206,7 +2206,7 @@
     ],
     "legalStatus": "marriage_equality",
     "safetyScore": 72,
-    "communityScore": 44,
+    "communityScore": 56,
     "nightlifeScore": 92,
     "bestMonths": [
       5,
@@ -2501,7 +2501,7 @@
     ],
     "legalStatus": "marriage_equality",
     "safetyScore": 92,
-    "communityScore": 44,
+    "communityScore": 56,
     "nightlifeScore": 78,
     "bestMonths": [
       5,
@@ -2575,7 +2575,7 @@
     ],
     "legalStatus": "marriage_equality",
     "safetyScore": 95,
-    "communityScore": 44,
+    "communityScore": 56,
     "nightlifeScore": 70,
     "bestMonths": [
       5,
@@ -3022,7 +3022,7 @@
     ],
     "legalStatus": "marriage_equality",
     "safetyScore": 62,
-    "communityScore": 36,
+    "communityScore": 48,
     "nightlifeScore": 82,
     "bestMonths": [
       1,
@@ -4053,7 +4053,7 @@
     ],
     "legalStatus": "heavily_criminalized",
     "safetyScore": 20,
-    "communityScore": 24,
+    "communityScore": 48,
     "nightlifeScore": 84,
     "bestMonths": [
       1,
@@ -4344,7 +4344,7 @@
     ],
     "legalStatus": "marriage_equality",
     "safetyScore": 82,
-    "communityScore": 44,
+    "communityScore": 56,
     "nightlifeScore": 72,
     "bestMonths": [
       1,

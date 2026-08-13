@@ -106,4 +106,19 @@ describe('travel API contracts', () => {
     }).deals).toHaveLength(1);
     expect(() => validateTravelApiContract('skyscannerIndicative', { deals: [], observedAt: 'now', indicative: false })).toThrow(/malformed/i);
   });
+
+  it('validates normalized Scrappa round-trip estimates without provider tokens', () => {
+    const value = validateTravelApiContract<{ estimate: { lowPrice: number } }>('scrappaRoundTrip', {
+      estimate: {
+        originIata: 'SFO', destinationIata: 'LAX', departureDate: '2026-09-15', returnDate: '2026-09-22', adults: 1,
+        currency: 'USD', lowPrice: 56, typicalPrice: 147, highPrice: 147, optionCount: 30, nonstopOptionCount: 30,
+        observedAt: '2026-08-12T12:00:00.000Z', source: 'scrappa_google_flights', pricingScope: 'round_trip_search',
+        returnSelectionRequired: true, priceIsPerTraveler: true,
+        googleFlightsUrl: 'https://www.google.com/travel/flights?q=SFO%20LAX',
+        message: 'Select a return flight to confirm the final fare.',
+        options: [{ price: 56, currency: 'USD', airlineName: 'Frontier', stops: 0 }],
+      },
+    });
+    expect(value.estimate.lowPrice).toBe(56);
+  });
 });

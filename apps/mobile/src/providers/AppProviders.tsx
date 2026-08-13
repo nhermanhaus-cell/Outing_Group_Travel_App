@@ -11,9 +11,11 @@ import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-quer
 import * as Linking from 'expo-linking';
 import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 import { posthog } from '../config/posthog';
 import {
   createLegacyTripPlan,
+  normalizeActivityPreferenceChoice,
   type ItineraryItem,
   type TripPlan,
   type TripPlanFeedback,
@@ -22,6 +24,10 @@ import { ThemeProvider } from '../theme/ThemeProvider';
 import { supabase } from '../lib/supabase';
 import { featureFlags } from '../lib/featureFlags';
 import { loadAssistantInsights } from '../lib/assistant-api';
+import {
+  clearLocalAccountData,
+  requestRemoteAccountDeletion,
+} from '../lib/account-deletion';
 import {
   AnalyticsProvider,
   useAnalytics,
@@ -48,20 +54,24 @@ export interface User {
   email: string;
   displayName?: string;
   avatarUrl?: string;
+  providers?: string[];
 }
 
 export interface AuthActionResult {
   error?: string;
   cancelled?: boolean;
+  appleManualRevokeRequired?: boolean;
 }
 
 export interface AuthContext {
   user: User | null;
   loading: boolean;
+  accountDataRevision: number;
   signInWithMagicLink: (email: string, returnTo?: string) => Promise<AuthActionResult>;
   signInWithApple: () => Promise<AuthActionResult>;
   signInWithGoogle: () => Promise<AuthActionResult>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<AuthActionResult>;
 }
 
 void WebBrowser.maybeCompleteAuthSession();
@@ -236,6 +246,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   const { resetIdentity: resetAnalyticsIdentity } = useAnalytics();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accountDataRevision, setAccountDataRevision] = useState(0);
   const prevUserIdRef = useRef<string | null>(null);
   const initialLoadDoneRef = useRef(false);
 
@@ -431,9 +442,60 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, [resetAnalyticsIdentity]);
 
+  const deleteAccount = useCallback(async (): Promise<AuthActionResult> => {
+    if (!user) return { error: 'Sign in before deleting your account.' };
+    let remoteResult: AuthActionResult;
+    try {
+      let appleAuthorizationCode: string | undefined;
+      if (user.providers?.includes('apple') && Platform.OS === 'ios') {
+        try {
+          const AppleAuth = await import('expo-apple-authentication');
+          const credential = await AppleAuth.signInAsync({ requestedScopes: [] });
+          appleAuthorizationCode = credential.authorizationCode ?? undefined;
+        } catch (error) {
+          if ((error as { code?: string }).code === 'ERR_REQUEST_CANCELED') return { cancelled: true };
+        }
+      }
+      remoteResult = supabase
+        ? await requestRemoteAccountDeletion({ appleAuthorizationCode })
+        : { appleManualRevokeRequired: false };
+    } catch (error) {
+      return {
+        error: error instanceof Error
+          ? error.message
+          : 'Outing could not delete your account. Try again.',
+      };
+    }
+    await resetAnalyticsIdentity().catch(() => undefined);
+    if (supabase) await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+    await clearLocalAccountData().catch(() => undefined);
+    queryClient.clear();
+    setUser(null);
+    setAccountDataRevision((value) => value + 1);
+    return remoteResult;
+  }, [resetAnalyticsIdentity, user]);
+
   const value = useMemo(
-    () => ({ user, loading, signInWithMagicLink, signInWithApple, signInWithGoogle, signOut }),
-    [user, loading, signInWithMagicLink, signInWithApple, signInWithGoogle, signOut],
+    () => ({
+      user,
+      loading,
+      accountDataRevision,
+      signInWithMagicLink,
+      signInWithApple,
+      signInWithGoogle,
+      signOut,
+      deleteAccount,
+    }),
+    [
+      user,
+      loading,
+      accountDataRevision,
+      signInWithMagicLink,
+      signInWithApple,
+      signInWithGoogle,
+      signOut,
+      deleteAccount,
+    ],
   );
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
@@ -443,6 +505,8 @@ function userFromSupabase(value: {
   id: string;
   email?: string;
   user_metadata?: Record<string, unknown>;
+  app_metadata?: Record<string, unknown>;
+  identities?: Array<{ provider?: string }>;
 }): User {
   const metadata = value.user_metadata ?? {};
   const displayName =
@@ -452,11 +516,19 @@ function userFromSupabase(value: {
         ? metadata['full_name']
         : undefined;
   const avatarUrl = typeof metadata['avatar_url'] === 'string' ? metadata['avatar_url'] : undefined;
+  const appProviders = Array.isArray(value.app_metadata?.['providers'])
+    ? value.app_metadata.providers.filter((provider): provider is string => typeof provider === 'string')
+    : [];
+  const providers = [...new Set([
+    ...appProviders,
+    ...(value.identities ?? []).flatMap((identity) => identity.provider ? [identity.provider] : []),
+  ])];
   return {
     id: value.id,
     email: value.email ?? '',
     ...(displayName ? { displayName } : {}),
     ...(avatarUrl ? { avatarUrl } : {}),
+    ...(providers.length ? { providers } : {}),
   };
 }
 
@@ -559,6 +631,10 @@ function TravelProfileProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
+      if (!cancelled) {
+        setLoading(true);
+        setProfile(DEFAULT_TRAVEL_PROFILE);
+      }
       const local = await storeGet(PROFILE_KEY);
       if (local) {
         try {
@@ -581,7 +657,7 @@ function TravelProfileProvider({ children }: { children: React.ReactNode }) {
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [auth?.user?.id]);
+  }, [auth?.accountDataRevision, auth?.user?.id]);
 
   const updateProfile = useCallback(async (updates: Partial<UserTravelProfile>) => {
     const next: UserTravelProfile = {
@@ -642,11 +718,11 @@ function migrateLegacyTrip(trip: LocalTrip): LocalTrip {
     ...trip,
     activityPreferences: preferences?.map((vote) => ({
       ...vote,
-      choice: vote.choice === 'not_interested' ? 'not_for_this_trip' : vote.choice,
+      choice: normalizeActivityPreferenceChoice(vote.choice),
     })),
     activityPreferencesV2: preferences?.map((vote) => ({
       ...vote,
-      choice: vote.choice === 'not_interested' ? 'not_for_this_trip' : vote.choice,
+      choice: normalizeActivityPreferenceChoice(vote.choice),
     })),
   };
   if (normalized.tripPlan || !normalized.itineraryItems?.length) return normalized;
@@ -673,9 +749,9 @@ function tripPayload(trip: Omit<LocalTrip, 'tripId' | 'createdAt'> | LocalTrip):
       activityPreferencesV2: normalized,
       activityPreferences: normalized.map((vote) => ({
         ...vote,
-        choice: vote.choice === 'not_for_this_trip' || vote.choice === 'not_interested'
-          ? 'not_interested'
-          : 'interested',
+        choice: ['very_interested', 'interested', 'must_do'].includes(vote.choice)
+          ? 'interested'
+          : 'not_interested',
       })),
     } : {}),
   };
@@ -756,9 +832,9 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           setTrips(stored);
           void storeSet(TRIPS_KEY, JSON.stringify(stored));
         } catch { /* ignore */ }
-      }
+      } else setTrips([]);
     });
-  }, []);
+  }, [auth?.accountDataRevision]);
 
   useEffect(() => {
     if (!tripClient || !auth?.user) return;

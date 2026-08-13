@@ -306,6 +306,7 @@ export interface TripPlanBookingAction {
 export interface FlightPriceGuidance {
   status: 'below_recent_observations' | 'indicative' | 'insufficient_history';
   currentPrice?: number;
+  priceRange?: { low: number; high: number };
   baselinePrice?: number;
   currency?: string;
   savingsPercent?: number;
@@ -314,6 +315,8 @@ export interface FlightPriceGuidance {
   message: string;
   trackingUrl?: string;
   confidence: number;
+  source?: 'scrappa_google_flights' | 'skyscanner_indicative';
+  returnSelectionRequired?: boolean;
 }
 
 export interface TripPlan {
