@@ -1,0 +1,4409 @@
+[
+  {
+    "slug": "san-francisco",
+    "name": "San Francisco",
+    "country": "United States",
+    "countryCode": "US",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "SFO",
+      "OAK"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 88,
+    "communityScore": 64,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 14.3,
+      "2": 15.6,
+      "3": 15.8,
+      "4": 17.8,
+      "5": 19.7,
+      "6": 21.8,
+      "7": 21.8,
+      "8": 22.9,
+      "9": 23.6,
+      "10": 22.2,
+      "11": 17.6,
+      "12": 14.3
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "art",
+      "pride",
+      "hiking",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "San Francisco Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Folsom Street Fair",
+        "month": 9,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 120,
+      "mid": 220,
+      "luxury": 450
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 10
+    }
+  },
+  {
+    "slug": "palm-springs",
+    "name": "Palm Springs",
+    "country": "United States",
+    "countryCode": "US",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "PSP"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 90,
+    "communityScore": 52,
+    "nightlifeScore": 85,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 19.1,
+      "2": 21.3,
+      "3": 23.4,
+      "4": 29,
+      "5": 32.1,
+      "6": 38.5,
+      "7": 41.4,
+      "8": 40.5,
+      "9": 36.6,
+      "10": 31.3,
+      "11": 24.6,
+      "12": 20.2
+    },
+    "interests": [
+      "wellness",
+      "shopping",
+      "lgbtq_venues",
+      "culture",
+      "nightlife"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Palm Springs Pride",
+        "month": 11,
+        "type": "pride"
+      },
+      {
+        "name": "White Party Palm Springs",
+        "month": 4,
+        "type": "party"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 100,
+      "mid": 200,
+      "luxury": 400
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 5
+    }
+  },
+  {
+    "slug": "puerto-vallarta",
+    "name": "Puerto Vallarta",
+    "country": "Mexico",
+    "countryCode": "MX",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "PVR"
+    ],
+    "legalStatus": "civil_union",
+    "safetyScore": 82,
+    "communityScore": 36,
+    "nightlifeScore": 86,
+    "bestMonths": [
+      11,
+      12,
+      1,
+      2,
+      3,
+      4
+    ],
+    "avgTempCByMonth": {
+      "1": 27,
+      "2": 27.6,
+      "3": 28.3,
+      "4": 29.3,
+      "5": 30.7,
+      "6": 30.1,
+      "7": 30.5,
+      "8": 30.2,
+      "9": 29.8,
+      "10": 29.8,
+      "11": 29.2,
+      "12": 27.9
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "food",
+      "lgbtq_venues"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Vallarta Pride",
+        "month": 5,
+        "type": "pride"
+      },
+      {
+        "name": "BeefDip Bear Week",
+        "month": 1,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 60,
+      "mid": 140,
+      "luxury": 280
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 4,
+      "max": 7
+    }
+  },
+  {
+    "slug": "mexico-city",
+    "name": "Mexico City",
+    "country": "Mexico",
+    "countryCode": "MX",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "MEX"
+    ],
+    "legalStatus": "civil_union",
+    "safetyScore": 75,
+    "communityScore": 56,
+    "nightlifeScore": 82,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 20.6,
+      "2": 23.1,
+      "3": 25.3,
+      "4": 26.2,
+      "5": 26.4,
+      "6": 23.6,
+      "7": 21.9,
+      "8": 21.6,
+      "9": 21,
+      "10": 20.6,
+      "11": 20.9,
+      "12": 20.3
+    },
+    "interests": [
+      "food",
+      "art",
+      "history",
+      "nightlife",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Marcha del Orgullo LGBT de la Ciudad de México",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Festival Mix México",
+        "month": 9,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 50,
+      "mid": 120,
+      "luxury": 250
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "new-york-city",
+    "name": "New York City",
+    "country": "United States",
+    "countryCode": "US",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "JFK",
+      "LGA",
+      "EWR"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 85,
+    "communityScore": 72,
+    "nightlifeScore": 88,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 4.4,
+      "2": 6.5,
+      "3": 10.5,
+      "4": 15.8,
+      "5": 20.9,
+      "6": 26.3,
+      "7": 29.5,
+      "8": 28,
+      "9": 24.4,
+      "10": 19,
+      "11": 12.1,
+      "12": 6.4
+    },
+    "interests": [
+      "nightlife",
+      "art",
+      "food",
+      "pride",
+      "shopping",
+      "culture",
+      "music"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "NYC Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Bushwig",
+        "month": 9,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 130,
+      "mid": 250,
+      "luxury": 500
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 4,
+      "max": 8
+    }
+  },
+  {
+    "slug": "miami",
+    "name": "Miami",
+    "country": "United States",
+    "countryCode": "US",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "elevated",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "MIA",
+      "FLL"
+    ],
+    "legalStatus": "civil_union",
+    "safetyScore": 80,
+    "communityScore": 52,
+    "nightlifeScore": 87,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 23.6,
+      "2": 25,
+      "3": 26,
+      "4": 27.2,
+      "5": 28.6,
+      "6": 29.3,
+      "7": 30.2,
+      "8": 30.2,
+      "9": 29.6,
+      "10": 28,
+      "11": 26.3,
+      "12": 24.8
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "shopping",
+      "music",
+      "food",
+      "art"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Miami Beach Pride",
+        "month": 4,
+        "type": "pride"
+      },
+      {
+        "name": "Winter Party Festival",
+        "month": 3,
+        "type": "party"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 110,
+      "mid": 220,
+      "luxury": 450
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "provincetown",
+    "name": "Provincetown",
+    "country": "United States",
+    "countryCode": "US",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "PVC",
+      "BOS"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 95,
+    "communityScore": 44,
+    "nightlifeScore": 62,
+    "bestMonths": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 4.2,
+      "2": 4.4,
+      "3": 5.7,
+      "4": 8.7,
+      "5": 12.9,
+      "6": 18.1,
+      "7": 22.2,
+      "8": 22.1,
+      "9": 19.6,
+      "10": 15.8,
+      "11": 10.9,
+      "12": 6.6
+    },
+    "interests": [
+      "beach",
+      "lgbtq_venues",
+      "art",
+      "wellness",
+      "pride"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Provincetown Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Bear Week",
+        "month": 7,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 140,
+      "mid": 250,
+      "luxury": 450
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 2,
+      "max": 5
+    }
+  },
+  {
+    "slug": "montreal",
+    "name": "Montréal",
+    "country": "Canada",
+    "countryCode": "CA",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "YUL"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 90,
+    "communityScore": 52,
+    "nightlifeScore": 84,
+    "bestMonths": [
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": -4,
+      "2": -1.9,
+      "3": 3.4,
+      "4": 11,
+      "5": 19.1,
+      "6": 23.9,
+      "7": 26.5,
+      "8": 25.2,
+      "9": 21.4,
+      "10": 14.6,
+      "11": 5.6,
+      "12": -0.7
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "music",
+      "art",
+      "pride",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Fierté Montréal",
+        "month": 8,
+        "type": "pride"
+      },
+      {
+        "name": "Montréal Black & Blue",
+        "month": 10,
+        "type": "party"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 90,
+      "mid": 180,
+      "luxury": 350
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 5
+    }
+  },
+  {
+    "slug": "london",
+    "name": "London",
+    "country": "United Kingdom",
+    "countryCode": "GB",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "LHR",
+      "LGW"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 80,
+    "communityScore": 72,
+    "nightlifeScore": 84,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 7.3,
+      "2": 8.9,
+      "3": 10.8,
+      "4": 13.6,
+      "5": 17.5,
+      "6": 20.8,
+      "7": 22.5,
+      "8": 22.2,
+      "9": 19.5,
+      "10": 15.3,
+      "11": 10.7,
+      "12": 8.7
+    },
+    "interests": [
+      "nightlife",
+      "art",
+      "history",
+      "food",
+      "shopping",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Pride in London",
+        "month": 7,
+        "type": "pride"
+      },
+      {
+        "name": "Mighty Hoopla",
+        "month": 5,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 110,
+      "mid": 220,
+      "luxury": 450
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "berlin",
+    "name": "Berlin",
+    "country": "Germany",
+    "countryCode": "DE",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "BER"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 88,
+    "communityScore": 72,
+    "nightlifeScore": 91,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 3.9,
+      "2": 6.2,
+      "3": 9.5,
+      "4": 14.2,
+      "5": 19.1,
+      "6": 24.5,
+      "7": 24.4,
+      "8": 24.9,
+      "9": 20.9,
+      "10": 14.7,
+      "11": 8.3,
+      "12": 5.1
+    },
+    "interests": [
+      "nightlife",
+      "art",
+      "lgbtq_venues",
+      "history",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Berlin CSD",
+        "month": 7,
+        "type": "pride"
+      },
+      {
+        "name": "Folsom Europe",
+        "month": 9,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 70,
+      "mid": 150,
+      "luxury": 300
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "madrid",
+    "name": "Madrid",
+    "country": "Spain",
+    "countryCode": "ES",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "MAD"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 86,
+    "communityScore": 64,
+    "nightlifeScore": 88,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 10.1,
+      "2": 13.2,
+      "3": 15.1,
+      "4": 18.5,
+      "5": 23.6,
+      "6": 29.4,
+      "7": 33.8,
+      "8": 33.3,
+      "9": 26.7,
+      "10": 21.5,
+      "11": 14,
+      "12": 11.1
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "pride",
+      "art",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Orgullo Madrid",
+        "month": 7,
+        "type": "pride"
+      },
+      {
+        "name": "LesGaiCineMad",
+        "month": 11,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 70,
+      "mid": 150,
+      "luxury": 300
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 5
+    }
+  },
+  {
+    "slug": "barcelona",
+    "name": "Barcelona",
+    "country": "Spain",
+    "countryCode": "ES",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "BCN"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 85,
+    "communityScore": 52,
+    "nightlifeScore": 87,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 13.1,
+      "2": 14.5,
+      "3": 15.7,
+      "4": 17.6,
+      "5": 21.2,
+      "6": 26.1,
+      "7": 28.7,
+      "8": 28.8,
+      "9": 24.9,
+      "10": 21.5,
+      "11": 16.8,
+      "12": 14.3
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "culture",
+      "food",
+      "art",
+      "music"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Pride Barcelona",
+        "month": 7,
+        "type": "pride"
+      },
+      {
+        "name": "Circuit Festival",
+        "month": 8,
+        "type": "party"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 80,
+      "mid": 170,
+      "luxury": 350
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 5
+    }
+  },
+  {
+    "slug": "lisbon",
+    "name": "Lisbon",
+    "country": "Portugal",
+    "countryCode": "PT",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "LIS"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 82,
+    "communityScore": 64,
+    "nightlifeScore": 80,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 14.1,
+      "2": 15.1,
+      "3": 16.1,
+      "4": 18.3,
+      "5": 21.2,
+      "6": 23.4,
+      "7": 26,
+      "8": 26.7,
+      "9": 24.7,
+      "10": 22.1,
+      "11": 17.3,
+      "12": 15
+    },
+    "interests": [
+      "food",
+      "nightlife",
+      "culture",
+      "lgbtq_venues",
+      "hiking"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Arraial Lisboa Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Lisboa",
+        "month": 9,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 65,
+      "mid": 140,
+      "luxury": 280
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 5
+    }
+  },
+  {
+    "slug": "amsterdam",
+    "name": "Amsterdam",
+    "country": "Netherlands",
+    "countryCode": "NL",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "AMS"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 92,
+    "communityScore": 52,
+    "nightlifeScore": 83,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 6.5,
+      "2": 7.6,
+      "3": 9.8,
+      "4": 12.8,
+      "5": 16.9,
+      "6": 20.2,
+      "7": 21.2,
+      "8": 21.7,
+      "9": 19.2,
+      "10": 15,
+      "11": 10,
+      "12": 7.6
+    },
+    "interests": [
+      "nightlife",
+      "art",
+      "pride",
+      "history",
+      "lgbtq_venues",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Amsterdam Pride",
+        "month": 8,
+        "type": "pride"
+      },
+      {
+        "name": "Milkshake Festival",
+        "month": 7,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 100,
+      "mid": 200,
+      "luxury": 400
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 5
+    }
+  },
+  {
+    "slug": "tokyo",
+    "name": "Tokyo",
+    "country": "Japan",
+    "countryCode": "JP",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "AS",
+    "nearestAirportCodes": [
+      "HND",
+      "NRT"
+    ],
+    "legalStatus": "limited_protections",
+    "safetyScore": 60,
+    "communityScore": 64,
+    "nightlifeScore": 79,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 8.8,
+      "2": 10,
+      "3": 13.8,
+      "4": 18,
+      "5": 22.3,
+      "6": 25.4,
+      "7": 29.2,
+      "8": 30.7,
+      "9": 26.9,
+      "10": 20.9,
+      "11": 16,
+      "12": 11.1
+    },
+    "interests": [
+      "food",
+      "nightlife",
+      "art",
+      "shopping",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Tokyo Rainbow Pride",
+        "month": 4,
+        "type": "pride"
+      },
+      {
+        "name": "Rainbow Reel Tokyo",
+        "month": 7,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 80,
+      "mid": 180,
+      "luxury": 400
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 4,
+      "max": 7
+    }
+  },
+  {
+    "slug": "guerneville",
+    "name": "Guerneville",
+    "country": "United States",
+    "countryCode": "US",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "SFO",
+      "STS"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 88,
+    "communityScore": 52,
+    "nightlifeScore": 68,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 14.7,
+      "2": 16,
+      "3": 16.2,
+      "4": 19.4,
+      "5": 22.6,
+      "6": 26.6,
+      "7": 28.1,
+      "8": 28.1,
+      "9": 27,
+      "10": 23.6,
+      "11": 18.2,
+      "12": 14.9
+    },
+    "interests": [
+      "hiking",
+      "nightlife",
+      "pride",
+      "food",
+      "wellness"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Russian River Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Lazy Bear Week",
+        "month": 8,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 110,
+      "mid": 220,
+      "luxury": 420
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 2,
+      "max": 4
+    }
+  },
+  {
+    "slug": "los-angeles",
+    "name": "Los Angeles",
+    "country": "United States",
+    "countryCode": "US",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "LAX",
+      "BUR",
+      "SNA"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 86,
+    "communityScore": 64,
+    "nightlifeScore": 86,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 19.4,
+      "2": 20.5,
+      "3": 20.8,
+      "4": 24.5,
+      "5": 25.1,
+      "6": 29.4,
+      "7": 32.7,
+      "8": 33.4,
+      "9": 31.7,
+      "10": 29,
+      "11": 24.5,
+      "12": 20.3
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "shopping",
+      "culture",
+      "music",
+      "beach"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "LA Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "OUTLOUD Music Festival",
+        "month": 6,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 120,
+      "mid": 230,
+      "luxury": 480
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "las-vegas",
+    "name": "Las Vegas",
+    "country": "United States",
+    "countryCode": "US",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "LAS"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 78,
+    "communityScore": 64,
+    "nightlifeScore": 89,
+    "bestMonths": [
+      3,
+      4,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 13.8,
+      "2": 17.1,
+      "3": 20.8,
+      "4": 27.1,
+      "5": 31.1,
+      "6": 37.8,
+      "7": 40.2,
+      "8": 38.7,
+      "9": 34.5,
+      "10": 27.7,
+      "11": 19.8,
+      "12": 14.8
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "music",
+      "shopping",
+      "pride"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Las Vegas Pride",
+        "month": 10,
+        "type": "pride"
+      },
+      {
+        "name": "Queen of the Desert",
+        "month": 5,
+        "type": "party"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Check individual venues and transport providers for current accessibility details."
+    },
+    "costPerDay": {
+      "budget": 90,
+      "mid": 180,
+      "luxury": 380
+    },
+    "lastUpdated": "2026-07-17",
+    "typicalStayDays": {
+      "min": 2,
+      "max": 4
+    }
+  },
+  {
+    "slug": "toronto",
+    "name": "Toronto",
+    "country": "Canada",
+    "countryCode": "CA",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "YYZ",
+      "YTZ"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 88,
+    "communityScore": 64,
+    "nightlifeScore": 84,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 0.1,
+      "2": 1.5,
+      "3": 5.3,
+      "4": 10.2,
+      "5": 16.6,
+      "6": 22.7,
+      "7": 26.2,
+      "8": 25.4,
+      "9": 22.1,
+      "10": 15.5,
+      "11": 8,
+      "12": 2.7
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "art",
+      "culture",
+      "pride",
+      "shopping",
+      "history"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Pride Toronto",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Inside Out Film Festival",
+        "month": 5,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 95,
+      "mid": 205,
+      "luxury": 430
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "vancouver",
+    "name": "Vancouver",
+    "country": "Canada",
+    "countryCode": "CA",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "YVR"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 89,
+    "communityScore": 64,
+    "nightlifeScore": 76,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 6.3,
+      "2": 6.4,
+      "3": 9.7,
+      "4": 13.3,
+      "5": 18.1,
+      "6": 20.4,
+      "7": 24,
+      "8": 24.6,
+      "9": 20.4,
+      "10": 14.2,
+      "11": 9.3,
+      "12": 6
+    },
+    "interests": [
+      "hiking",
+      "adventure",
+      "food",
+      "nightlife",
+      "pride",
+      "art",
+      "culture",
+      "wellness"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Vancouver Pride",
+        "month": 8,
+        "type": "pride"
+      },
+      {
+        "name": "Vancouver Queer Film Festival",
+        "month": 9,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 105,
+      "mid": 220,
+      "luxury": 460
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "chicago",
+    "name": "Chicago",
+    "country": "United States",
+    "countryCode": "US",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "ORD",
+      "MDW"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 78,
+    "communityScore": 52,
+    "nightlifeScore": 88,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": -0.1,
+      "2": 1.9,
+      "3": 6.3,
+      "4": 11,
+      "5": 16.5,
+      "6": 23.1,
+      "7": 25.7,
+      "8": 25.4,
+      "9": 22.7,
+      "10": 16.1,
+      "11": 8.5,
+      "12": 3
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "culture",
+      "history",
+      "art",
+      "pride",
+      "music"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Chicago Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Northalsted Market Days",
+        "month": 8,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 95,
+      "mid": 200,
+      "luxury": 430
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "washington-dc",
+    "name": "Washington, DC",
+    "country": "United States",
+    "countryCode": "US",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "DCA",
+      "IAD",
+      "BWI"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 78,
+    "communityScore": 64,
+    "nightlifeScore": 80,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 6.5,
+      "2": 9.9,
+      "3": 14.1,
+      "4": 19.5,
+      "5": 23.5,
+      "6": 28.8,
+      "7": 31.5,
+      "8": 29.6,
+      "9": 26.4,
+      "10": 20.8,
+      "11": 14,
+      "12": 8.6
+    },
+    "interests": [
+      "history",
+      "art",
+      "culture",
+      "pride",
+      "food",
+      "nightlife"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Capital Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "DC Black Pride",
+        "month": 5,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 105,
+      "mid": 220,
+      "luxury": 470
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "seattle",
+    "name": "Seattle",
+    "country": "United States",
+    "countryCode": "US",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "SEA"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 82,
+    "communityScore": 64,
+    "nightlifeScore": 78,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 7.7,
+      "2": 7.8,
+      "3": 11.2,
+      "4": 14.4,
+      "5": 18.7,
+      "6": 21.7,
+      "7": 25.6,
+      "8": 26.2,
+      "9": 21.9,
+      "10": 15.4,
+      "11": 10.4,
+      "12": 7.3
+    },
+    "interests": [
+      "food",
+      "music",
+      "hiking",
+      "adventure",
+      "art",
+      "culture",
+      "nightlife",
+      "pride"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Seattle Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Trans Pride Seattle",
+        "month": 6,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 105,
+      "mid": 215,
+      "luxury": 450
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "fort-lauderdale",
+    "name": "Fort Lauderdale",
+    "country": "United States",
+    "countryCode": "US",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "elevated",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "FLL",
+      "MIA"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 68,
+    "communityScore": 48,
+    "nightlifeScore": 84,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 23.5,
+      "2": 25,
+      "3": 25.9,
+      "4": 27.2,
+      "5": 28.7,
+      "6": 29.5,
+      "7": 30.4,
+      "8": 30.5,
+      "9": 29.8,
+      "10": 28.1,
+      "11": 26.2,
+      "12": 24.8
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "lgbtq_venues",
+      "food",
+      "shopping",
+      "wellness"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Stonewall Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "OUTshine Film Festival",
+        "month": 10,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 100,
+      "mid": 220,
+      "luxury": 480
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "buenos-aires",
+    "name": "Buenos Aires",
+    "country": "Argentina",
+    "countryCode": "AR",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "SA",
+    "nearestAirportCodes": [
+      "EZE",
+      "AEP"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 76,
+    "communityScore": 56,
+    "nightlifeScore": 89,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 28.7,
+      "2": 27.8,
+      "3": 25.1,
+      "4": 21.4,
+      "5": 17.2,
+      "6": 14.6,
+      "7": 13.9,
+      "8": 15.9,
+      "9": 18.1,
+      "10": 21.1,
+      "11": 24.6,
+      "12": 27.3
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "art",
+      "culture",
+      "history",
+      "pride",
+      "music"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Marcha del Orgullo",
+        "month": 11,
+        "type": "pride"
+      },
+      {
+        "name": "Asterisco Film Festival",
+        "month": 10,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 55,
+      "mid": 125,
+      "luxury": 290
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "rio-de-janeiro",
+    "name": "Rio de Janeiro",
+    "country": "Brazil",
+    "countryCode": "BR",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "SA",
+    "nearestAirportCodes": [
+      "GIG",
+      "SDU"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 65,
+    "communityScore": 36,
+    "nightlifeScore": 88,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 31.2,
+      "2": 31.2,
+      "3": 30.4,
+      "4": 28,
+      "5": 26.3,
+      "6": 25.7,
+      "7": 25.4,
+      "8": 26,
+      "9": 28.4,
+      "10": 28.3,
+      "11": 28.1,
+      "12": 30.1
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "music",
+      "pride",
+      "hiking",
+      "adventure",
+      "art",
+      "culture"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Rio Pride",
+        "month": 11,
+        "type": "pride"
+      },
+      {
+        "name": "Rio Carnival",
+        "month": 2,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 65,
+      "mid": 145,
+      "luxury": 330
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "sao-paulo",
+    "name": "São Paulo",
+    "country": "Brazil",
+    "countryCode": "BR",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "SA",
+    "nearestAirportCodes": [
+      "GRU",
+      "CGH"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 66,
+    "communityScore": 56,
+    "nightlifeScore": 93,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 26.6,
+      "2": 26.6,
+      "3": 26.3,
+      "4": 24.6,
+      "5": 22.9,
+      "6": 21.9,
+      "7": 21.9,
+      "8": 22.7,
+      "9": 25.4,
+      "10": 25,
+      "11": 24.8,
+      "12": 26.3
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "art",
+      "culture",
+      "pride",
+      "shopping",
+      "music"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "São Paulo Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "MixBrasil Festival",
+        "month": 11,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 60,
+      "mid": 140,
+      "luxury": 330
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "guadalajara",
+    "name": "Guadalajara",
+    "country": "Mexico",
+    "countryCode": "MX",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "GDL"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 72,
+    "communityScore": 56,
+    "nightlifeScore": 88,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 25,
+      "2": 27.3,
+      "3": 30.4,
+      "4": 32.3,
+      "5": 33.4,
+      "6": 30.5,
+      "7": 26.9,
+      "8": 26.5,
+      "9": 26.2,
+      "10": 26.1,
+      "11": 26.1,
+      "12": 24.6
+    },
+    "interests": [
+      "nightlife",
+      "food",
+      "art",
+      "culture",
+      "history",
+      "pride"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Guadalajara Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "FICG Diversity Program",
+        "month": 6,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 55,
+      "mid": 125,
+      "luxury": 280
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "san-juan",
+    "name": "San Juan",
+    "country": "Puerto Rico",
+    "countryCode": "PR",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "NA",
+    "nearestAirportCodes": [
+      "SJU"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 72,
+    "communityScore": 56,
+    "nightlifeScore": 82,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 28.5,
+      "2": 28.6,
+      "3": 29.3,
+      "4": 30.1,
+      "5": 30.8,
+      "6": 31.7,
+      "7": 31.8,
+      "8": 31.8,
+      "9": 31.4,
+      "10": 30.6,
+      "11": 29.3,
+      "12": 28.6
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "history",
+      "food",
+      "pride",
+      "music"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "San Juan Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Puerto Rico Queer Filmfest",
+        "month": 11,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 85,
+      "mid": 185,
+      "luxury": 390
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "paris",
+    "name": "Paris",
+    "country": "France",
+    "countryCode": "FR",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "CDG",
+      "ORY"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 84,
+    "communityScore": 56,
+    "nightlifeScore": 88,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 7.3,
+      "2": 9.7,
+      "3": 12.4,
+      "4": 15.7,
+      "5": 19.3,
+      "6": 23.5,
+      "7": 25.2,
+      "8": 25.4,
+      "9": 22,
+      "10": 17.2,
+      "11": 11.2,
+      "12": 8.5
+    },
+    "interests": [
+      "art",
+      "culture",
+      "food",
+      "history",
+      "nightlife",
+      "shopping"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Marche des Fiertés",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Chéries-Chéris Film Festival",
+        "month": 11,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 110,
+      "mid": 245,
+      "luxury": 540
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "mykonos",
+    "name": "Mykonos",
+    "country": "Greece",
+    "countryCode": "GR",
+    "destinationType": "island",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "JMK"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 72,
+    "communityScore": 56,
+    "nightlifeScore": 92,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 13.7,
+      "2": 14.1,
+      "3": 15.2,
+      "4": 17.5,
+      "5": 20.3,
+      "6": 24.4,
+      "7": 26.5,
+      "8": 26.5,
+      "9": 24.7,
+      "10": 21.3,
+      "11": 18.5,
+      "12": 15.3
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "lgbtq_venues",
+      "shopping",
+      "wellness",
+      "food"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "XLSIOR Mykonos",
+        "month": 8,
+        "type": "festival"
+      },
+      {
+        "name": "Mykonos Pride",
+        "month": 8,
+        "type": "pride"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 120,
+      "mid": 285,
+      "luxury": 650
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 4,
+      "max": 8
+    }
+  },
+  {
+    "slug": "sitges",
+    "name": "Sitges",
+    "country": "Spain",
+    "countryCode": "ES",
+    "destinationType": "resort_area",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "BCN"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 90,
+    "communityScore": 36,
+    "nightlifeScore": 86,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 13.6,
+      "2": 15,
+      "3": 16.1,
+      "4": 17.9,
+      "5": 21.5,
+      "6": 26.1,
+      "7": 28.9,
+      "8": 29,
+      "9": 25.3,
+      "10": 22,
+      "11": 17.4,
+      "12": 14.9
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "pride",
+      "food",
+      "art",
+      "culture",
+      "wellness"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Sitges Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Sitges Carnival",
+        "month": 2,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 85,
+      "mid": 185,
+      "luxury": 390
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 4,
+      "max": 8
+    }
+  },
+  {
+    "slug": "valencia",
+    "name": "Valencia",
+    "country": "Spain",
+    "countryCode": "ES",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "VLC"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 88,
+    "communityScore": 44,
+    "nightlifeScore": 82,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 15.8,
+      "2": 17.1,
+      "3": 18.7,
+      "4": 20.7,
+      "5": 24.6,
+      "6": 28.9,
+      "7": 31.7,
+      "8": 31.6,
+      "9": 27.6,
+      "10": 24,
+      "11": 19.3,
+      "12": 16.6
+    },
+    "interests": [
+      "food",
+      "beach",
+      "culture",
+      "history",
+      "art",
+      "pride",
+      "nightlife"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Valencia Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Fallas",
+        "month": 3,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 70,
+      "mid": 155,
+      "luxury": 330
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "seville",
+    "name": "Seville",
+    "country": "Spain",
+    "countryCode": "ES",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "SVQ"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 86,
+    "communityScore": 36,
+    "nightlifeScore": 80,
+    "bestMonths": [
+      2,
+      3,
+      4,
+      5,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 16,
+      "2": 18.5,
+      "3": 20.1,
+      "4": 22.9,
+      "5": 27.5,
+      "6": 32,
+      "7": 35.8,
+      "8": 36.1,
+      "9": 31.3,
+      "10": 26.8,
+      "11": 19.7,
+      "12": 16.9
+    },
+    "interests": [
+      "history",
+      "food",
+      "culture",
+      "nightlife",
+      "pride",
+      "music"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Orgullo de Andalucía",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Feria de Abril",
+        "month": 4,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 65,
+      "mid": 145,
+      "luxury": 320
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "copenhagen",
+    "name": "Copenhagen",
+    "country": "Denmark",
+    "countryCode": "DK",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "CPH"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 92,
+    "communityScore": 56,
+    "nightlifeScore": 78,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 3.8,
+      "2": 4.7,
+      "3": 7.1,
+      "4": 11.1,
+      "5": 16.3,
+      "6": 20.5,
+      "7": 21,
+      "8": 20.9,
+      "9": 18,
+      "10": 12.8,
+      "11": 7.9,
+      "12": 5.2
+    },
+    "interests": [
+      "food",
+      "culture",
+      "history",
+      "art",
+      "pride",
+      "shopping",
+      "wellness"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Copenhagen Pride",
+        "month": 8,
+        "type": "pride"
+      },
+      {
+        "name": "MIX Copenhagen",
+        "month": 10,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 120,
+      "mid": 250,
+      "luxury": 500
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "reykjavik",
+    "name": "Reykjavík",
+    "country": "Iceland",
+    "countryCode": "IS",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "KEF",
+      "RKV"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 95,
+    "communityScore": 56,
+    "nightlifeScore": 70,
+    "bestMonths": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 0.6,
+      "2": 1.9,
+      "3": 3.4,
+      "4": 7.1,
+      "5": 10.1,
+      "6": 12.6,
+      "7": 14.7,
+      "8": 14,
+      "9": 10.8,
+      "10": 6.8,
+      "11": 3.3,
+      "12": 1.2
+    },
+    "interests": [
+      "hiking",
+      "adventure",
+      "wellness",
+      "pride",
+      "art",
+      "culture",
+      "food",
+      "nightlife"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Reykjavík Pride",
+        "month": 8,
+        "type": "pride"
+      },
+      {
+        "name": "Rainbow Reykjavík",
+        "month": 2,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 135,
+      "mid": 275,
+      "luxury": 540
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "valletta",
+    "name": "Valletta",
+    "country": "Malta",
+    "countryCode": "MT",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "MLA"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 88,
+    "communityScore": 44,
+    "nightlifeScore": 72,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      9,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 15.1,
+      "2": 15.2,
+      "3": 16,
+      "4": 17.5,
+      "5": 20.5,
+      "6": 25,
+      "7": 27.8,
+      "8": 28.4,
+      "9": 26.6,
+      "10": 23.4,
+      "11": 20.2,
+      "12": 16.9
+    },
+    "interests": [
+      "history",
+      "culture",
+      "beach",
+      "pride",
+      "food",
+      "nightlife"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Malta Pride",
+        "month": 9,
+        "type": "pride"
+      },
+      {
+        "name": "Malta International Arts Festival",
+        "month": 6,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 75,
+      "mid": 165,
+      "luxury": 350
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "sydney",
+    "name": "Sydney",
+    "country": "Australia",
+    "countryCode": "AU",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "OC",
+    "nearestAirportCodes": [
+      "SYD"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 88,
+    "communityScore": 48,
+    "nightlifeScore": 88,
+    "bestMonths": [
+      2,
+      3,
+      4,
+      9,
+      10,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 25.8,
+      "2": 25.4,
+      "3": 24,
+      "4": 21.8,
+      "5": 18.8,
+      "6": 16.1,
+      "7": 16.2,
+      "8": 17.1,
+      "9": 19.7,
+      "10": 21.5,
+      "11": 23,
+      "12": 24.9
+    },
+    "interests": [
+      "beach",
+      "nightlife",
+      "pride",
+      "art",
+      "culture",
+      "food",
+      "hiking",
+      "adventure"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Sydney Gay and Lesbian Mardi Gras",
+        "month": 3,
+        "type": "pride"
+      },
+      {
+        "name": "Queer Screen Film Fest",
+        "month": 8,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 115,
+      "mid": 245,
+      "luxury": 500
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "melbourne",
+    "name": "Melbourne",
+    "country": "Australia",
+    "countryCode": "AU",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "OC",
+    "nearestAirportCodes": [
+      "MEL",
+      "AVV"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 89,
+    "communityScore": 56,
+    "nightlifeScore": 86,
+    "bestMonths": [
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 26.4,
+      "2": 25.4,
+      "3": 24.1,
+      "4": 20.1,
+      "5": 16.2,
+      "6": 13.3,
+      "7": 13,
+      "8": 14.2,
+      "9": 16.3,
+      "10": 18.8,
+      "11": 21.2,
+      "12": 23.9
+    },
+    "interests": [
+      "food",
+      "art",
+      "culture",
+      "nightlife",
+      "pride",
+      "music",
+      "shopping"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Midsumma Festival",
+        "month": 1,
+        "type": "pride"
+      },
+      {
+        "name": "Melbourne Queer Film Festival",
+        "month": 3,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 105,
+      "mid": 225,
+      "luxury": 470
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "bangkok",
+    "name": "Bangkok",
+    "country": "Thailand",
+    "countryCode": "TH",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "AS",
+    "nearestAirportCodes": [
+      "BKK",
+      "DMK"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 75,
+    "communityScore": 36,
+    "nightlifeScore": 92,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 30.9,
+      "2": 32.1,
+      "3": 33.7,
+      "4": 34.6,
+      "5": 33.6,
+      "6": 32.4,
+      "7": 31.6,
+      "8": 31.8,
+      "9": 31.1,
+      "10": 30.7,
+      "11": 30.7,
+      "12": 30.5
+    },
+    "interests": [
+      "food",
+      "nightlife",
+      "shopping",
+      "art",
+      "culture",
+      "pride",
+      "wellness"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Bangkok Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Songkran",
+        "month": 4,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 45,
+      "mid": 105,
+      "luxury": 260
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "taipei",
+    "name": "Taipei",
+    "country": "Taiwan",
+    "countryCode": "TW",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "AS",
+    "nearestAirportCodes": [
+      "TPE",
+      "TSA"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 80,
+    "communityScore": 56,
+    "nightlifeScore": 82,
+    "bestMonths": [
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 18.3,
+      "2": 19,
+      "3": 21.7,
+      "4": 25,
+      "5": 27.8,
+      "6": 30.5,
+      "7": 31.9,
+      "8": 31.4,
+      "9": 29.8,
+      "10": 26.4,
+      "11": 23.4,
+      "12": 19.6
+    },
+    "interests": [
+      "food",
+      "nightlife",
+      "pride",
+      "shopping",
+      "art",
+      "culture",
+      "hiking"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Taiwan LGBT Pride",
+        "month": 10,
+        "type": "pride"
+      },
+      {
+        "name": "Taiwan International Queer Film Festival",
+        "month": 8,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 55,
+      "mid": 125,
+      "luxury": 290
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "cape-town",
+    "name": "Cape Town",
+    "country": "South Africa",
+    "countryCode": "ZA",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "AF",
+    "nearestAirportCodes": [
+      "CPT"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 62,
+    "communityScore": 48,
+    "nightlifeScore": 82,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 26.2,
+      "2": 26.1,
+      "3": 24.2,
+      "4": 22.3,
+      "5": 19.7,
+      "6": 17.5,
+      "7": 16.4,
+      "8": 16.5,
+      "9": 18.1,
+      "10": 21.3,
+      "11": 23,
+      "12": 24.3
+    },
+    "interests": [
+      "hiking",
+      "adventure",
+      "beach",
+      "food",
+      "nightlife",
+      "pride",
+      "wellness"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Cape Town Pride",
+        "month": 3,
+        "type": "pride"
+      },
+      {
+        "name": "MCQP",
+        "month": 12,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 65,
+      "mid": 145,
+      "luxury": 340
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "rome",
+    "name": "Rome",
+    "country": "Italy",
+    "countryCode": "IT",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "FCO",
+      "CIA"
+    ],
+    "legalStatus": "civil_union",
+    "safetyScore": 65,
+    "communityScore": 44,
+    "nightlifeScore": 78,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 12,
+      "2": 13.7,
+      "3": 15.5,
+      "4": 18.6,
+      "5": 22.2,
+      "6": 28.3,
+      "7": 31.6,
+      "8": 31.4,
+      "9": 26.2,
+      "10": 21.8,
+      "11": 16.7,
+      "12": 13.3
+    },
+    "interests": [
+      "history",
+      "culture",
+      "food",
+      "art",
+      "nightlife"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Roma Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Rome Film Fest",
+        "month": 10,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 85,
+      "mid": 190,
+      "luxury": 430
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "milan",
+    "name": "Milan",
+    "country": "Italy",
+    "countryCode": "IT",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "MXP",
+      "LIN",
+      "BGY"
+    ],
+    "legalStatus": "civil_union",
+    "safetyScore": 68,
+    "communityScore": 44,
+    "nightlifeScore": 82,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 7.7,
+      "2": 10.6,
+      "3": 13.9,
+      "4": 18,
+      "5": 21.4,
+      "6": 27.4,
+      "7": 28.9,
+      "8": 28.8,
+      "9": 23.5,
+      "10": 18.5,
+      "11": 11.9,
+      "12": 8
+    },
+    "interests": [
+      "shopping",
+      "culture",
+      "history",
+      "art",
+      "food",
+      "nightlife"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Milano Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Milano Design Week",
+        "month": 4,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 95,
+      "mid": 210,
+      "luxury": 480
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "florence",
+    "name": "Florence",
+    "country": "Italy",
+    "countryCode": "IT",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "FLR",
+      "PSA"
+    ],
+    "legalStatus": "civil_union",
+    "safetyScore": 67,
+    "communityScore": 56,
+    "nightlifeScore": 66,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 9.8,
+      "2": 12.2,
+      "3": 14.7,
+      "4": 18.4,
+      "5": 21.7,
+      "6": 27.8,
+      "7": 31,
+      "8": 31,
+      "9": 25.5,
+      "10": 20.5,
+      "11": 14.5,
+      "12": 11.2
+    },
+    "interests": [
+      "art",
+      "culture",
+      "history",
+      "food",
+      "shopping"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Toscana Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Florence Queer Festival",
+        "month": 10,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 90,
+      "mid": 195,
+      "luxury": 430
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "venice",
+    "name": "Venice",
+    "country": "Italy",
+    "countryCode": "IT",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "VCE"
+    ],
+    "legalStatus": "civil_union",
+    "safetyScore": 65,
+    "communityScore": 44,
+    "nightlifeScore": 58,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 7.6,
+      "2": 9.8,
+      "3": 13,
+      "4": 16.7,
+      "5": 20.6,
+      "6": 26,
+      "7": 27.9,
+      "8": 28,
+      "9": 23.6,
+      "10": 18.7,
+      "11": 13,
+      "12": 8.9
+    },
+    "interests": [
+      "art",
+      "culture",
+      "history",
+      "food"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Veneto Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Venice Biennale",
+        "month": 5,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 110,
+      "mid": 240,
+      "luxury": 550
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "edinburgh",
+    "name": "Edinburgh",
+    "country": "United Kingdom",
+    "countryCode": "GB",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "EDI"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 80,
+    "communityScore": 44,
+    "nightlifeScore": 76,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 5.9,
+      "2": 6.9,
+      "3": 8.5,
+      "4": 10.7,
+      "5": 14.5,
+      "6": 16.7,
+      "7": 18.1,
+      "8": 17.7,
+      "9": 15.7,
+      "10": 12.2,
+      "11": 8.5,
+      "12": 6.9
+    },
+    "interests": [
+      "history",
+      "art",
+      "culture",
+      "pride",
+      "nightlife",
+      "hiking"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Pride Edinburgh",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Edinburgh Festival Fringe",
+        "month": 8,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 90,
+      "mid": 195,
+      "luxury": 420
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "vienna",
+    "name": "Vienna",
+    "country": "Austria",
+    "countryCode": "AT",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "VIE"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 86,
+    "communityScore": 44,
+    "nightlifeScore": 78,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      9,
+      10,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 4.3,
+      "2": 7.8,
+      "3": 11.5,
+      "4": 16,
+      "5": 19.7,
+      "6": 25.7,
+      "7": 27.2,
+      "8": 27.1,
+      "9": 22,
+      "10": 16.3,
+      "11": 9.2,
+      "12": 5.4
+    },
+    "interests": [
+      "art",
+      "culture",
+      "history",
+      "food",
+      "pride",
+      "music"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Vienna Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Viennale",
+        "month": 10,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 90,
+      "mid": 195,
+      "luxury": 430
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "seoul",
+    "name": "Seoul",
+    "country": "South Korea",
+    "countryCode": "KR",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "elevated",
+    "continentCode": "AS",
+    "nearestAirportCodes": [
+      "ICN",
+      "GMP"
+    ],
+    "legalStatus": "no_recognition",
+    "safetyScore": 58,
+    "communityScore": 56,
+    "nightlifeScore": 88,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 2.2,
+      "2": 4.7,
+      "3": 11.7,
+      "4": 17.5,
+      "5": 22.4,
+      "6": 27,
+      "7": 29.1,
+      "8": 29.5,
+      "9": 25.5,
+      "10": 18.8,
+      "11": 11.3,
+      "12": 3.3
+    },
+    "interests": [
+      "food",
+      "nightlife",
+      "shopping",
+      "art",
+      "culture",
+      "history",
+      "music"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Seoul Queer Culture Festival",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Seoul International Pride Film Festival",
+        "month": 11,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 60,
+      "mid": 135,
+      "luxury": 310
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "singapore",
+    "name": "Singapore",
+    "country": "Singapore",
+    "countryCode": "SG",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "elevated",
+    "continentCode": "AS",
+    "nearestAirportCodes": [
+      "SIN"
+    ],
+    "legalStatus": "limited_protections",
+    "safetyScore": 62,
+    "communityScore": 44,
+    "nightlifeScore": 78,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      6,
+      7,
+      8
+    ],
+    "avgTempCByMonth": {
+      "1": 28.2,
+      "2": 28.8,
+      "3": 29.3,
+      "4": 29.3,
+      "5": 29.3,
+      "6": 28.8,
+      "7": 28.8,
+      "8": 28.6,
+      "9": 28.7,
+      "10": 28.9,
+      "11": 28.6,
+      "12": 28.4
+    },
+    "interests": [
+      "food",
+      "culture",
+      "history",
+      "shopping",
+      "art",
+      "nightlife",
+      "wellness"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Pink Dot SG",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Singapore Art Week",
+        "month": 1,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 80,
+      "mid": 180,
+      "luxury": 420
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "hong-kong",
+    "name": "Hong Kong",
+    "country": "Hong Kong SAR",
+    "countryCode": "HK",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "elevated",
+    "continentCode": "AS",
+    "nearestAirportCodes": [
+      "HKG"
+    ],
+    "legalStatus": "limited_protections",
+    "safetyScore": 64,
+    "communityScore": 56,
+    "nightlifeScore": 82,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      10,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 19.1,
+      "2": 20,
+      "3": 22.9,
+      "4": 25.9,
+      "5": 28.2,
+      "6": 29.7,
+      "7": 30.6,
+      "8": 30.1,
+      "9": 29.8,
+      "10": 27.4,
+      "11": 24.2,
+      "12": 20.3
+    },
+    "interests": [
+      "food",
+      "shopping",
+      "hiking",
+      "nightlife",
+      "art",
+      "culture",
+      "history"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Hong Kong Pride",
+        "month": 11,
+        "type": "pride"
+      },
+      {
+        "name": "Hong Kong Lesbian and Gay Film Festival",
+        "month": 9,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 85,
+      "mid": 190,
+      "luxury": 430
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "kyoto",
+    "name": "Kyoto",
+    "country": "Japan",
+    "countryCode": "JP",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "AS",
+    "nearestAirportCodes": [
+      "KIX",
+      "ITM"
+    ],
+    "legalStatus": "limited_protections",
+    "safetyScore": 70,
+    "communityScore": 44,
+    "nightlifeScore": 60,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 7.9,
+      "2": 8.9,
+      "3": 13.5,
+      "4": 18.6,
+      "5": 22.9,
+      "6": 26.3,
+      "7": 30.3,
+      "8": 31.6,
+      "9": 27.9,
+      "10": 21.5,
+      "11": 16,
+      "12": 10.3
+    },
+    "interests": [
+      "history",
+      "culture",
+      "food",
+      "art",
+      "wellness",
+      "hiking"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Kyoto Rainbow Pride",
+        "month": 4,
+        "type": "pride"
+      },
+      {
+        "name": "Gion Matsuri",
+        "month": 7,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 80,
+      "mid": 175,
+      "luxury": 390
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "osaka",
+    "name": "Osaka",
+    "country": "Japan",
+    "countryCode": "JP",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "AS",
+    "nearestAirportCodes": [
+      "KIX",
+      "ITM"
+    ],
+    "legalStatus": "limited_protections",
+    "safetyScore": 70,
+    "communityScore": 36,
+    "nightlifeScore": 82,
+    "bestMonths": [
+      3,
+      4,
+      5,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 8.6,
+      "2": 9.5,
+      "3": 14,
+      "4": 19,
+      "5": 23.2,
+      "6": 26.6,
+      "7": 30.5,
+      "8": 32.2,
+      "9": 28.6,
+      "10": 22.2,
+      "11": 16.6,
+      "12": 11
+    },
+    "interests": [
+      "food",
+      "nightlife",
+      "shopping",
+      "history",
+      "art",
+      "culture",
+      "pride"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Rainbow Festa Osaka",
+        "month": 10,
+        "type": "pride"
+      },
+      {
+        "name": "Tenjin Matsuri",
+        "month": 7,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 70,
+      "mid": 155,
+      "luxury": 350
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "bali",
+    "name": "Bali",
+    "country": "Indonesia",
+    "countryCode": "ID",
+    "destinationType": "island",
+    "travelerAdvisoryLevel": "elevated",
+    "continentCode": "AS",
+    "nearestAirportCodes": [
+      "DPS"
+    ],
+    "legalStatus": "no_recognition",
+    "safetyScore": 48,
+    "communityScore": 32,
+    "nightlifeScore": 82,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "avgTempCByMonth": {
+      "1": 20.7,
+      "2": 20.7,
+      "3": 21.2,
+      "4": 21.2,
+      "5": 21.3,
+      "6": 20.8,
+      "7": 20.6,
+      "8": 21.4,
+      "9": 22.3,
+      "10": 23,
+      "11": 22,
+      "12": 21.1
+    },
+    "interests": [
+      "beach",
+      "wellness",
+      "nightlife",
+      "food",
+      "art",
+      "culture",
+      "adventure"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Ubud Writers & Readers Festival",
+        "month": 10,
+        "type": "festival"
+      },
+      {
+        "name": "Bali Arts Festival",
+        "month": 6,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 45,
+      "mid": 115,
+      "luxury": 310
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 4,
+      "max": 8
+    }
+  },
+  {
+    "slug": "queenstown",
+    "name": "Queenstown",
+    "country": "New Zealand",
+    "countryCode": "NZ",
+    "destinationType": "resort_area",
+    "travelerAdvisoryLevel": "standard",
+    "continentCode": "OC",
+    "nearestAirportCodes": [
+      "ZQN"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 90,
+    "communityScore": 44,
+    "nightlifeScore": 66,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      6,
+      7,
+      8,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 20.2,
+      "2": 19.7,
+      "3": 17.6,
+      "4": 13.8,
+      "5": 10.2,
+      "6": 6,
+      "7": 4.8,
+      "8": 5.9,
+      "9": 8.2,
+      "10": 12,
+      "11": 16.2,
+      "12": 18.4
+    },
+    "interests": [
+      "adventure",
+      "hiking",
+      "wellness",
+      "food",
+      "pride",
+      "sports"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Winter Pride",
+        "month": 8,
+        "type": "pride"
+      },
+      {
+        "name": "Queenstown Winter Festival",
+        "month": 6,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 105,
+      "mid": 230,
+      "luxury": 500
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 4,
+      "max": 8
+    }
+  },
+  {
+    "slug": "dubai",
+    "name": "Dubai",
+    "country": "United Arab Emirates",
+    "countryCode": "AE",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "severe",
+    "continentCode": "AS",
+    "nearestAirportCodes": [
+      "DXB",
+      "DWC"
+    ],
+    "legalStatus": "heavily_criminalized",
+    "safetyScore": 20,
+    "communityScore": 48,
+    "nightlifeScore": 84,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      11,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 24.7,
+      "2": 26,
+      "3": 29.5,
+      "4": 34.1,
+      "5": 38.2,
+      "6": 41.1,
+      "7": 42,
+      "8": 42.1,
+      "9": 40.2,
+      "10": 36.3,
+      "11": 31.3,
+      "12": 27
+    },
+    "interests": [
+      "culture",
+      "history",
+      "shopping",
+      "food",
+      "wellness",
+      "beach",
+      "adventure"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Dubai Art Season",
+        "month": 3,
+        "type": "festival"
+      },
+      {
+        "name": "Dubai Shopping Festival",
+        "month": 1,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 100,
+      "mid": 240,
+      "luxury": 600
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "istanbul",
+    "name": "Istanbul",
+    "country": "Türkiye",
+    "countryCode": "TR",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "elevated",
+    "continentCode": "EU",
+    "nearestAirportCodes": [
+      "IST",
+      "SAW"
+    ],
+    "legalStatus": "no_recognition",
+    "safetyScore": 38,
+    "communityScore": 44,
+    "nightlifeScore": 82,
+    "bestMonths": [
+      4,
+      5,
+      6,
+      9,
+      10
+    ],
+    "avgTempCByMonth": {
+      "1": 9,
+      "2": 9.9,
+      "3": 12,
+      "4": 15.9,
+      "5": 20.2,
+      "6": 25.6,
+      "7": 28.3,
+      "8": 28.5,
+      "9": 24.8,
+      "10": 19.6,
+      "11": 15.8,
+      "12": 11.3
+    },
+    "interests": [
+      "history",
+      "food",
+      "culture",
+      "nightlife",
+      "shopping",
+      "art"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Istanbul Pride",
+        "month": 6,
+        "type": "pride"
+      },
+      {
+        "name": "Istanbul Biennial",
+        "month": 9,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 55,
+      "mid": 130,
+      "luxury": 310
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "marrakech",
+    "name": "Marrakech",
+    "country": "Morocco",
+    "countryCode": "MA",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "severe",
+    "continentCode": "AF",
+    "nearestAirportCodes": [
+      "RAK"
+    ],
+    "legalStatus": "criminalized",
+    "safetyScore": 25,
+    "communityScore": 24,
+    "nightlifeScore": 58,
+    "bestMonths": [
+      2,
+      3,
+      4,
+      5,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 19.3,
+      "2": 20.9,
+      "3": 22,
+      "4": 25.1,
+      "5": 29.2,
+      "6": 32.5,
+      "7": 37.2,
+      "8": 37.3,
+      "9": 32.6,
+      "10": 29.1,
+      "11": 23.3,
+      "12": 19.7
+    },
+    "interests": [
+      "food",
+      "history",
+      "culture",
+      "shopping",
+      "wellness",
+      "art"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Marrakech International Film Festival",
+        "month": 11,
+        "type": "festival"
+      },
+      {
+        "name": "Marrakech Popular Arts Festival",
+        "month": 7,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 55,
+      "mid": 135,
+      "luxury": 340
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "cartagena",
+    "name": "Cartagena",
+    "country": "Colombia",
+    "countryCode": "CO",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "SA",
+    "nearestAirportCodes": [
+      "CTG"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 62,
+    "communityScore": 44,
+    "nightlifeScore": 76,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      12
+    ],
+    "avgTempCByMonth": {
+      "1": 32.8,
+      "2": 34.3,
+      "3": 34.4,
+      "4": 32.8,
+      "5": 31.1,
+      "6": 30.3,
+      "7": 30.8,
+      "8": 30.5,
+      "9": 30.1,
+      "10": 29.6,
+      "11": 29.5,
+      "12": 31
+    },
+    "interests": [
+      "history",
+      "beach",
+      "food",
+      "culture",
+      "nightlife",
+      "art"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Cartagena Pride",
+        "month": 7,
+        "type": "pride"
+      },
+      {
+        "name": "Cartagena International Film Festival",
+        "month": 4,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 55,
+      "mid": 135,
+      "luxury": 330
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  },
+  {
+    "slug": "honolulu",
+    "name": "Honolulu",
+    "country": "United States",
+    "countryCode": "US",
+    "destinationType": "city",
+    "travelerAdvisoryLevel": "caution",
+    "continentCode": "OC",
+    "nearestAirportCodes": [
+      "HNL"
+    ],
+    "legalStatus": "marriage_equality",
+    "safetyScore": 82,
+    "communityScore": 56,
+    "nightlifeScore": 72,
+    "bestMonths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      9,
+      10,
+      11
+    ],
+    "avgTempCByMonth": {
+      "1": 25.3,
+      "2": 24.9,
+      "3": 25.2,
+      "4": 25.9,
+      "5": 26.6,
+      "6": 27.5,
+      "7": 27.9,
+      "8": 28.4,
+      "9": 28.5,
+      "10": 28,
+      "11": 26.9,
+      "12": 25.8
+    },
+    "interests": [
+      "beach",
+      "hiking",
+      "food",
+      "history",
+      "pride",
+      "wellness"
+    ],
+    "upcomingEvents": [
+      {
+        "name": "Honolulu Pride",
+        "month": 10,
+        "type": "pride"
+      },
+      {
+        "name": "Honolulu Rainbow Film Festival",
+        "month": 9,
+        "type": "festival"
+      }
+    ],
+    "accessibility": {
+      "wheelchairFriendly": false,
+      "brailleAvailable": false,
+      "notes": "Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking."
+    },
+    "costPerDay": {
+      "budget": 125,
+      "mid": 260,
+      "luxury": 560
+    },
+    "lastUpdated": "2026-08-12",
+    "typicalStayDays": {
+      "min": 3,
+      "max": 6
+    }
+  }
+]

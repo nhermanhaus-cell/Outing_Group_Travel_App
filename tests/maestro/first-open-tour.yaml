@@ -1,0 +1,13 @@
+appId: com.gayi.app
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Find the place that fits."
+- swipe:
+    start: 90%, 50%
+    end: 10%, 50%
+- assertVisible: "Get the group into the plan."
+- tapOn: "Sign in"
+- assertVisible: "Continue with Google"
+- tapOn: "Browse as guest"
+- assertVisible: "Discover"

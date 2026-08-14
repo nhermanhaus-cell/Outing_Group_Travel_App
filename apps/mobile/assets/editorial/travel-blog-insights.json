@@ -1,0 +1,1880 @@
+{
+  "generatedAt": "2026-07-18T01:22:10.465Z",
+  "policy": {
+    "mode": "metadata_only",
+    "articleBodiesStored": false,
+    "publisherImagesStored": false,
+    "recommendationsRequireReview": true,
+    "note": "Links and derived tags are research inputs. Venue facts and photos must be verified with the original source and Google Places before publication."
+  },
+  "sources": [
+    {
+      "id": "nomadic-boys",
+      "name": "Nomadic Boys",
+      "homeUrl": "https://nomadicboys.com/",
+      "robotsUrl": "https://nomadicboys.com/robots.txt"
+    },
+    {
+      "id": "couple-of-men",
+      "name": "Couple of Men",
+      "homeUrl": "https://coupleofmen.com/",
+      "robotsUrl": "https://coupleofmen.com/robots.txt"
+    },
+    {
+      "id": "what-we-gan-did-next",
+      "name": "What We Gan Did Next",
+      "homeUrl": "https://www.whatwegandidnext.com/",
+      "robotsUrl": "https://www.whatwegandidnext.com/robots.txt"
+    },
+    {
+      "id": "out-with-ryan",
+      "name": "Out With Ryan",
+      "homeUrl": "https://www.outwithryan.com/",
+      "robotsUrl": "https://www.outwithryan.com/robots.txt"
+    },
+    {
+      "id": "asian-maple-leaf",
+      "name": "Asian Maple Leaf",
+      "homeUrl": "https://asianmapleleaf.com/",
+      "robotsUrl": "https://asianmapleleaf.com/robots.txt"
+    },
+    {
+      "id": "two-bad-tourists",
+      "name": "Two Bad Tourists",
+      "homeUrl": "https://twobadtourists.com/",
+      "robotsUrl": "https://twobadtourists.com/robots.txt"
+    },
+    {
+      "id": "mr-hudson-explores",
+      "name": "Mr Hudson Explores",
+      "homeUrl": "https://mrhudsonexplores.com/",
+      "robotsUrl": "https://mrhudsonexplores.com/robots.txt"
+    }
+  ],
+  "articles": [
+    {
+      "id": "asian-maple-leaf:48-hours-in-montreal",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "48 Hours in Montreal",
+      "url": "https://asianmapleleaf.com/48-hours-in-montreal/",
+      "destinationSlugs": [
+        "montreal"
+      ],
+      "signals": [
+        "pride"
+      ],
+      "editorialRelevance": 3,
+      "publishedAt": "2017-08-23T20:15:35+00:00",
+      "modifiedAt": "2017-12-02T00:11:02+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:birthday-getaway-in-miami",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "Birthday Getaway in Miami",
+      "url": "https://asianmapleleaf.com/birthday-getaway-in-miami/",
+      "destinationSlugs": [
+        "miami"
+      ],
+      "signals": [],
+      "editorialRelevance": 1,
+      "publishedAt": "2017-08-11T21:43:29+00:00",
+      "modifiedAt": "2017-12-02T00:16:37+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:california-adventure-part-1-huntington-beach-san-francisco",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "California Adventure Part 1",
+      "url": "https://asianmapleleaf.com/california-adventure-part-1-huntington-beach-san-francisco/",
+      "destinationSlugs": [
+        "san-francisco"
+      ],
+      "signals": [
+        "beach"
+      ],
+      "editorialRelevance": 1,
+      "publishedAt": "2019-07-25T16:49:33+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:episode-1-bi-musician-teraj-and-his-boyfriend-go-party-at-miami-pride",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "Episode 1: Bi Musician Teraj and His Boyfriend Go Party at Miami Pride",
+      "url": "https://asianmapleleaf.com/episode-1-bi-musician-teraj-and-his-boyfriend-go-party-at-miami-pride/",
+      "destinationSlugs": [
+        "miami"
+      ],
+      "signals": [
+        "nightlife",
+        "pride"
+      ],
+      "editorialRelevance": 3,
+      "publishedAt": "2022-09-23T05:04:05+00:00",
+      "modifiedAt": "2022-09-26T13:01:10+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:episode-3-bi-musician-teraj-and-his-boyfriend-explore-london",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "Episode 3: Bi Musician Teraj and His Boyfriend Explore London",
+      "url": "https://asianmapleleaf.com/episode-3-bi-musician-teraj-and-his-boyfriend-explore-london/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [
+        "pride"
+      ],
+      "editorialRelevance": 1,
+      "publishedAt": "2022-09-23T05:18:44+00:00",
+      "modifiedAt": "2022-09-26T12:57:04+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:go-to-london-keep-calm-and-drink-tea",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "Go to London, Keep Calm, and Drink Tea",
+      "url": "https://asianmapleleaf.com/go-to-london-keep-calm-and-drink-tea/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "publishedAt": "2017-11-17T15:26:59+00:00",
+      "modifiedAt": "2017-12-01T23:06:00+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:33-pictures-of-london-pride-and-queer-joy",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "London Celebrates 50 Years of Pride",
+      "url": "https://asianmapleleaf.com/33-pictures-of-london-pride-and-queer-joy/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [
+        "pride"
+      ],
+      "editorialRelevance": 2,
+      "publishedAt": "2022-09-20T07:00:17+00:00",
+      "modifiedAt": "2022-09-23T05:22:36+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:londons-big-queer-energy-never-ends",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "London's Big Queer Energy Never Ends",
+      "url": "https://asianmapleleaf.com/londons-big-queer-energy-never-ends/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [
+        "pride"
+      ],
+      "editorialRelevance": 3,
+      "publishedAt": "2022-09-23T05:06:23+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:miami-stay-south-beach",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "Miami – Where to Stay in South Beach",
+      "url": "https://asianmapleleaf.com/miami-stay-south-beach/",
+      "destinationSlugs": [
+        "miami"
+      ],
+      "signals": [
+        "beach",
+        "lodging"
+      ],
+      "editorialRelevance": 4,
+      "publishedAt": "2020-01-29T22:28:57+00:00",
+      "modifiedAt": "2020-11-19T17:33:46+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:city-guides-new-york-city-guide",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "New York City Guide - AsianMapleLeaf",
+      "url": "https://asianmapleleaf.com/city-guides/new-york-city-guide/",
+      "destinationSlugs": [
+        "new-york-city"
+      ],
+      "signals": [
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 5,
+      "modifiedAt": "2022-03-10T15:26:24+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:nyc-staycation-and-food-adventure",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "NYC staycation and food adventure",
+      "url": "https://asianmapleleaf.com/nyc-staycation-and-food-adventure/",
+      "destinationSlugs": [
+        "new-york-city"
+      ],
+      "signals": [
+        "food"
+      ],
+      "editorialRelevance": 2,
+      "publishedAt": "2017-05-01T20:52:20+00:00",
+      "modifiedAt": "2017-12-02T00:37:12+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:pandemic-new-york-city",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "Pandemic in New York City",
+      "url": "https://asianmapleleaf.com/pandemic-new-york-city/",
+      "destinationSlugs": [
+        "new-york-city"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "publishedAt": "2020-03-24T17:54:41+00:00",
+      "modifiedAt": "2020-03-24T18:19:36+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:ultimate-montreal-pride-guide",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "The Ultimate Montreal Pride Guide",
+      "url": "https://asianmapleleaf.com/ultimate-montreal-pride-guide/",
+      "destinationSlugs": [
+        "montreal"
+      ],
+      "signals": [
+        "pride"
+      ],
+      "editorialRelevance": 4,
+      "publishedAt": "2018-07-18T18:05:25+00:00",
+      "modifiedAt": "2018-07-18T18:26:18+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:top-10-nyc-rooftop-bars",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "Top 10 NYC Rooftop Bars",
+      "url": "https://asianmapleleaf.com/top-10-nyc-rooftop-bars/",
+      "destinationSlugs": [
+        "new-york-city"
+      ],
+      "signals": [
+        "nightlife",
+        "outdoors"
+      ],
+      "editorialRelevance": 3,
+      "publishedAt": "2018-08-01T15:03:05+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:top-10-things-nyc-holiday-season",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "Top 10 Things to do in NYC During the Holiday Season",
+      "url": "https://asianmapleleaf.com/top-10-things-nyc-holiday-season/",
+      "destinationSlugs": [
+        "new-york-city"
+      ],
+      "signals": [],
+      "editorialRelevance": 2,
+      "publishedAt": "2019-12-04T21:09:04+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:top-glamping-experiences-new-york-state",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "Top Glamping Experiences in New York State",
+      "url": "https://asianmapleleaf.com/top-glamping-experiences-new-york-state/",
+      "destinationSlugs": [
+        "new-york-city"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "publishedAt": "2020-11-16T16:59:45+00:00",
+      "modifiedAt": "2020-11-18T04:26:29+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:two-days-barcelona",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "Two days in Barcelona",
+      "url": "https://asianmapleleaf.com/two-days-barcelona/",
+      "destinationSlugs": [
+        "barcelona"
+      ],
+      "signals": [],
+      "editorialRelevance": 1,
+      "publishedAt": "2017-12-29T16:58:18+00:00",
+      "modifiedAt": "2017-12-29T17:31:45+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:valentines-day-nyc-go",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "Valentine’s Day in NYC – Where should you go?",
+      "url": "https://asianmapleleaf.com/valentines-day-nyc-go/",
+      "destinationSlugs": [
+        "new-york-city"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "publishedAt": "2020-01-17T16:59:13+00:00",
+      "modifiedAt": "2020-01-17T15:19:10+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "asian-maple-leaf:weekend-escape-montreal-en-lumiere",
+      "sourceId": "asian-maple-leaf",
+      "sourceName": "Asian Maple Leaf",
+      "title": "Weekend Escape: Montreal En Lumiere",
+      "url": "https://asianmapleleaf.com/weekend-escape-montreal-en-lumiere/",
+      "destinationSlugs": [
+        "new-york-city",
+        "montreal"
+      ],
+      "signals": [
+        "culture"
+      ],
+      "editorialRelevance": 3,
+      "publishedAt": "2018-02-28T17:46:09+00:00",
+      "modifiedAt": "2018-02-28T20:01:08+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:3678-gay-couple-city-weekend-amsterdam",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "A Gay City Weekend in Amsterdam, the Dutch Capital City",
+      "url": "https://coupleofmen.com/3678-gay-couple-city-weekend-amsterdam/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [
+        "history"
+      ],
+      "editorialRelevance": 5,
+      "publishedAt": "2020-01-22T13:40:33+00:00",
+      "modifiedAt": "2026-04-22T10:07:23+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:5282-gay-couple-biking-trips-amsterdam-forest",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "A Gay Couple Biking Tour to Amsterdam Forest",
+      "url": "https://coupleofmen.com/5282-gay-couple-biking-trips-amsterdam-forest/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [],
+      "editorialRelevance": 3,
+      "publishedAt": "2017-03-16T23:29:59+00:00",
+      "modifiedAt": "2023-06-02T14:56:28+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:3681-gay-couple-rental-canal-boat-tour-amsterdam",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Amsterdam Canal Tour",
+      "url": "https://coupleofmen.com/3681-gay-couple-rental-canal-boat-tour-amsterdam/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [],
+      "editorialRelevance": 1,
+      "publishedAt": "2018-05-21T20:04:53+00:00",
+      "modifiedAt": "2021-06-16T10:58:04+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:4108-turn-lights-amsterdam-light-festival-highlights",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Amsterdam Light Festival Highlights: Our best Photos of the years 2014 to 2017",
+      "url": "https://coupleofmen.com/4108-turn-lights-amsterdam-light-festival-highlights/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [],
+      "editorialRelevance": 2,
+      "publishedAt": "2017-12-03T11:25:41+00:00",
+      "modifiedAt": "2017-12-07T16:23:09+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:4856-gay-couple-city-weekend-barcelona-spain",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Barcelona: Our Summer Gay Travel Guide 🌴",
+      "url": "https://coupleofmen.com/4856-gay-couple-city-weekend-barcelona-spain/",
+      "destinationSlugs": [
+        "barcelona"
+      ],
+      "signals": [
+        "beach"
+      ],
+      "editorialRelevance": 8,
+      "publishedAt": "2019-08-03T21:22:55+00:00",
+      "modifiedAt": "2026-04-03T07:14:52+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:3679-best-amsterdam-view-adam-lookout",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Best Amsterdam view at A'DAM LOOKOUT",
+      "url": "https://coupleofmen.com/3679-best-amsterdam-view-adam-lookout/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [],
+      "editorialRelevance": 2,
+      "publishedAt": "2016-11-18T19:33:37+00:00",
+      "modifiedAt": "2018-07-13T17:29:50+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:5141-escape-room-amsterdam-xitroom-the-professor-gay-friendly",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Escape Room in Amsterdam | Review Xitroom",
+      "url": "https://coupleofmen.com/5141-escape-room-amsterdam-xitroom-the-professor-gay-friendly/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "publishedAt": "2017-02-13T00:05:40+00:00",
+      "modifiedAt": "2018-07-13T18:09:53+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:3709-the-willow-los-angeles-hollywood-california-gay-friendly",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Gay-friendly Accommodation The Willow in West Hollywood",
+      "url": "https://coupleofmen.com/3709-the-willow-los-angeles-hollywood-california-gay-friendly/",
+      "destinationSlugs": [
+        "los-angeles"
+      ],
+      "signals": [],
+      "editorialRelevance": 2,
+      "publishedAt": "2018-02-14T23:31:01+00:00",
+      "modifiedAt": "2021-05-26T13:54:36+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:lgbtq-travel-guide-amsterdam",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "LGBTQ+ travel guide to Amsterdam: tips from a local gay couple - Gay Travel Blog",
+      "url": "https://coupleofmen.com/lgbtq-travel-guide-amsterdam/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [
+        "nightlife",
+        "culture",
+        "lodging"
+      ],
+      "editorialRelevance": 11,
+      "modifiedAt": "2026-04-22T10:15:15+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:4952-nakagin-capsule-tower-tokyo-japan",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Nakagin Capsule Tower: Sleeping in Historic Organic Architecture in Tokyo",
+      "url": "https://coupleofmen.com/4952-nakagin-capsule-tower-tokyo-japan/",
+      "destinationSlugs": [
+        "tokyo"
+      ],
+      "signals": [
+        "history"
+      ],
+      "editorialRelevance": 1,
+      "publishedAt": "2024-10-15T12:47:00+00:00",
+      "modifiedAt": "2025-06-25T09:56:01+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:5112-queer-amsterdam-new-lgbtq-drama-series-bnn",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Now on YouTube: All Episodes of LGBTQ Drama \"Queer Amsterdam!\"",
+      "url": "https://coupleofmen.com/5112-queer-amsterdam-new-lgbtq-drama-series-bnn/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [],
+      "editorialRelevance": 4,
+      "publishedAt": "2017-02-08T16:22:18+00:00",
+      "modifiedAt": "2018-07-13T16:55:10+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:3612-strong-photos-gay-euro-pride-amsterdam-2016",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Our Best Photos of Euro Pride Amsterdam 2016",
+      "url": "https://coupleofmen.com/3612-strong-photos-gay-euro-pride-amsterdam-2016/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [
+        "pride"
+      ],
+      "editorialRelevance": 4,
+      "publishedAt": "2017-07-19T08:51:21+00:00",
+      "modifiedAt": "2018-07-10T13:04:32+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:4951-teleferico-del-puerto-port-cable-car-barcelona",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Port Cable Car Barcelona: Our \"flight\" with the Red Gondolas of Teleférico del Puerto",
+      "url": "https://coupleofmen.com/4951-teleferico-del-puerto-port-cable-car-barcelona/",
+      "destinationSlugs": [
+        "barcelona"
+      ],
+      "signals": [],
+      "editorialRelevance": 1,
+      "publishedAt": "2017-02-05T15:20:02+00:00",
+      "modifiedAt": "2021-06-10T16:32:34+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:5225-roof-top-extension-amsterdam",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Prefab roof extension in Amsterdam: A different gay couple journey",
+      "url": "https://coupleofmen.com/5225-roof-top-extension-amsterdam/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [
+        "history"
+      ],
+      "editorialRelevance": 3,
+      "publishedAt": "2026-03-12T14:27:26+00:00",
+      "modifiedAt": "2026-04-09T12:02:30+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:3680-restaurant-soepboer-amsterdam-noord",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Restaurant \"Soepboer\" in Amsterdam Noord",
+      "url": "https://coupleofmen.com/3680-restaurant-soepboer-amsterdam-noord/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [
+        "food"
+      ],
+      "editorialRelevance": 2,
+      "publishedAt": "2016-11-18T20:25:19+00:00",
+      "modifiedAt": "2018-07-18T09:40:40+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:3578-restaurant-cantinetta-wine-pasta-amsterdam-west-gay-friendly",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Restaurant Cantinetta Wine & Pasta Amsterdam",
+      "url": "https://coupleofmen.com/3578-restaurant-cantinetta-wine-pasta-amsterdam-west-gay-friendly/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [
+        "food"
+      ],
+      "editorialRelevance": 2,
+      "publishedAt": "2016-11-19T13:03:40+00:00",
+      "modifiedAt": "2017-07-13T09:04:53+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:5155-dutch-winter-day-amsterdam-netherlands",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Snow in Amsterdam: A Winter Day in Holland's Capital",
+      "url": "https://coupleofmen.com/5155-dutch-winter-day-amsterdam-netherlands/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "publishedAt": "2026-01-04T01:14:00+00:00",
+      "modifiedAt": "2026-01-06T17:46:38+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:5076-surf-house-barcelona-food-drinks-beach-view-gay-friendly",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Surf House Barcelona Food & Drinks with Beach View",
+      "url": "https://coupleofmen.com/5076-surf-house-barcelona-food-drinks-beach-view-gay-friendly/",
+      "destinationSlugs": [
+        "barcelona"
+      ],
+      "signals": [
+        "food",
+        "beach"
+      ],
+      "editorialRelevance": 4,
+      "publishedAt": "2017-02-05T23:01:07+00:00",
+      "modifiedAt": "2018-07-13T16:55:23+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:4602-drag-queens-united-lipdub-amsterdam-christmas-edition",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Watch it! 100 Drag Queens United Lipdub in Amsterdam (Christmas Edition)",
+      "url": "https://coupleofmen.com/4602-drag-queens-united-lipdub-amsterdam-christmas-edition/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "publishedAt": "2016-12-11T17:22:04+00:00",
+      "modifiedAt": "2021-12-07T22:34:57+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "couple-of-men:4919-winter-road-trip-berlin-spree-forest-brandenburg",
+      "sourceId": "couple-of-men",
+      "sourceName": "Couple of Men",
+      "title": "Winter Road Trip from Berlin to Spree Forest in Brandenburg East Germany",
+      "url": "https://coupleofmen.com/4919-winter-road-trip-berlin-spree-forest-brandenburg/",
+      "destinationSlugs": [
+        "berlin"
+      ],
+      "signals": [],
+      "editorialRelevance": 1,
+      "publishedAt": "2016-01-24T22:28:20+00:00",
+      "modifiedAt": "2017-07-13T09:06:40+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:mr-hudson-on-the-best-london-sunsets-10-beautiful-places-to-watch-the-sunset-in-london",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "10 Beautiful Places To Watch the Sunset In London",
+      "url": "https://mrhudsonexplores.com/mr-hudson-on/the-best-london-sunsets-10-beautiful-places-to-watch-the-sunset-in-london/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "modifiedAt": "2022-10-26T15:57:10+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:mr-hudson-on-the-best-weekend-trips-from-san-francisco-for-gay-travellers",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Best Weekend Trips From San Francisco for Gay Travellers",
+      "url": "https://mrhudsonexplores.com/mr-hudson-on/the-best-weekend-trips-from-san-francisco-for-gay-travellers/",
+      "destinationSlugs": [
+        "san-francisco"
+      ],
+      "signals": [],
+      "editorialRelevance": 9,
+      "modifiedAt": "2022-10-24T16:08:44+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:mr-hudson-on-discover-the-10-best-bookstores-in-los-angeles",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Discover the 10 Best Bookstores In Los Angeles",
+      "url": "https://mrhudsonexplores.com/mr-hudson-on/discover-the-10-best-bookstores-in-los-angeles/",
+      "destinationSlugs": [
+        "los-angeles"
+      ],
+      "signals": [
+        "beach"
+      ],
+      "editorialRelevance": 3,
+      "modifiedAt": "2022-10-24T16:29:04+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:mr-hudson-on-foodie-mexico-our-favorite-restaurants-in-mexico-city",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Foodie Mexico: Our Favourite Restaurants In Mexico City",
+      "url": "https://mrhudsonexplores.com/mr-hudson-on/foodie-mexico-our-favorite-restaurants-in-mexico-city/",
+      "destinationSlugs": [
+        "mexico-city"
+      ],
+      "signals": [
+        "food"
+      ],
+      "editorialRelevance": 3,
+      "modifiedAt": "2023-02-22T16:28:45+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:places-to-explore-amsterdam",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Gay Guide To Amsterdam, Travel Safely In Gay-Friendly Areas & Districts",
+      "url": "https://mrhudsonexplores.com/places-to-explore/amsterdam/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [],
+      "editorialRelevance": 6,
+      "modifiedAt": "2026-06-29T09:31:24+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:places-to-explore-barcelona",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Gay Guide To Barcelona, Travel Safely In Gay-Friendly Areas & Districts",
+      "url": "https://mrhudsonexplores.com/places-to-explore/barcelona/",
+      "destinationSlugs": [
+        "barcelona"
+      ],
+      "signals": [
+        "wellness"
+      ],
+      "editorialRelevance": 8,
+      "modifiedAt": "2026-06-25T14:29:12+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:places-to-explore-berlin",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Gay Guide To Berlin, Travel Safely In Gay-Friendly Areas & Districts",
+      "url": "https://mrhudsonexplores.com/places-to-explore/berlin/",
+      "destinationSlugs": [
+        "berlin"
+      ],
+      "signals": [],
+      "editorialRelevance": 6,
+      "modifiedAt": "2026-06-25T13:16:16+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:places-to-explore-madrid",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Gay Guide To Madrid, Travel Safely In Gay-Friendly Areas & Districts",
+      "url": "https://mrhudsonexplores.com/places-to-explore/madrid/",
+      "destinationSlugs": [
+        "madrid"
+      ],
+      "signals": [
+        "wellness"
+      ],
+      "editorialRelevance": 7,
+      "modifiedAt": "2026-06-25T12:33:34+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:places-to-explore-mexico-city",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Gay Guide To Mexico City, Travel Safely In Gay-Friendly Areas & Districts",
+      "url": "https://mrhudsonexplores.com/places-to-explore/mexico-city/",
+      "destinationSlugs": [
+        "mexico-city"
+      ],
+      "signals": [],
+      "editorialRelevance": 6,
+      "modifiedAt": "2026-06-25T09:22:27+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:places-to-explore-miami-travel-guide",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Gay Guide To Miami, Travel Safely In Gay-Friendly Areas & Districts",
+      "url": "https://mrhudsonexplores.com/places-to-explore/miami-travel-guide/",
+      "destinationSlugs": [
+        "miami"
+      ],
+      "signals": [],
+      "editorialRelevance": 6,
+      "modifiedAt": "2026-06-29T11:21:43+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:places-to-explore-tokyo-travel-guide",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Gay Guide To Tokyo, Travel Safely In Gay-Friendly Areas & Districts",
+      "url": "https://mrhudsonexplores.com/places-to-explore/tokyo-travel-guide/",
+      "destinationSlugs": [
+        "tokyo"
+      ],
+      "signals": [
+        "wellness"
+      ],
+      "editorialRelevance": 7,
+      "modifiedAt": "2026-06-25T14:26:33+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:mr-hudson-on-mercado-de-motores-a-joyful-flea-market-in-madrid",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Mercado de Motores - a Joyful Flea Market In Madrid",
+      "url": "https://mrhudsonexplores.com/mr-hudson-on/mercado-de-motores-a-joyful-flea-market-in-madrid/",
+      "destinationSlugs": [
+        "madrid"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "modifiedAt": "2022-10-23T15:53:52+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:mr-hudson-on-the-ultimate-shopping-guide-in-mexico-city",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Mexico City Shopping: the Ultimate Shopping Guide for Mexico City",
+      "url": "https://mrhudsonexplores.com/mr-hudson-on/the-ultimate-shopping-guide-in-mexico-city/",
+      "destinationSlugs": [
+        "mexico-city"
+      ],
+      "signals": [],
+      "editorialRelevance": 2,
+      "modifiedAt": "2024-09-05T17:06:48+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:mr-hudson-on-10-great-day-trips-from-nyc",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Ten Great Day Trips from New York City",
+      "url": "https://mrhudsonexplores.com/mr-hudson-on/10-great-day-trips-from-nyc/",
+      "destinationSlugs": [
+        "new-york-city"
+      ],
+      "signals": [],
+      "editorialRelevance": 1,
+      "modifiedAt": "2022-10-24T14:03:50+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:mr-hudson-on-the-best-day-trips-from-london-by-train",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "The 5 Best Day Trips From London By Train",
+      "url": "https://mrhudsonexplores.com/mr-hudson-on/the-best-day-trips-from-london-by-train/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [],
+      "editorialRelevance": 3,
+      "modifiedAt": "2023-12-07T17:24:48+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:mr-hudson-on-the-top-10-destinations-to-discover-gay-mexico-from-gay-acapulco-to-gay-puerto-vallarta",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "The Top 10 Destinations to Discover Gay Mexico",
+      "url": "https://mrhudsonexplores.com/mr-hudson-on/the-top-10-destinations-to-discover-gay-mexico-from-gay-acapulco-to-gay-puerto-vallarta/",
+      "destinationSlugs": [
+        "puerto-vallarta",
+        "mexico-city"
+      ],
+      "signals": [],
+      "editorialRelevance": 2,
+      "modifiedAt": "2024-09-11T16:03:30+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:mr-hudson-on-the-ultimate-american-east-coast-road-trip-from-nyc-to-key-west-in-10-days",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "The Ultimate American East Coast Road Trip",
+      "url": "https://mrhudsonexplores.com/mr-hudson-on/the-ultimate-american-east-coast-road-trip-from-nyc-to-key-west-in-10-days/",
+      "destinationSlugs": [
+        "new-york-city",
+        "miami"
+      ],
+      "signals": [
+        "beach"
+      ],
+      "editorialRelevance": 2,
+      "modifiedAt": "2023-12-06T17:22:26+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:mr-hudson-on-the-villa-casa-casuarina-the-former-versace-mansion-turned-hotel-in-miami",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "The Villa Casa Casuarina",
+      "url": "https://mrhudsonexplores.com/mr-hudson-on/the-villa-casa-casuarina-the-former-versace-mansion-turned-hotel-in-miami/",
+      "destinationSlugs": [
+        "miami"
+      ],
+      "signals": [
+        "culture",
+        "beach"
+      ],
+      "editorialRelevance": 2,
+      "modifiedAt": "2022-10-23T17:18:48+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:mr-hudson-on-tokyo-shopping-guide-discover-the-best-japanese-clothing-brands",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Tokyo Shopping Guide: the Best Japanese Clothing Brands",
+      "url": "https://mrhudsonexplores.com/mr-hudson-on/tokyo-shopping-guide-discover-the-best-japanese-clothing-brands/",
+      "destinationSlugs": [
+        "tokyo"
+      ],
+      "signals": [
+        "culture"
+      ],
+      "editorialRelevance": 5,
+      "modifiedAt": "2024-09-06T17:15:23+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "mr-hudson-explores:mr-hudson-on-discover-the-best-weekend-trips-from-los-angeles-quick-getaways-from-la",
+      "sourceId": "mr-hudson-explores",
+      "sourceName": "Mr Hudson Explores",
+      "title": "Weekend Trips From Los Angeles (Quick Getaways From LA)",
+      "url": "https://mrhudsonexplores.com/mr-hudson-on/discover-the-best-weekend-trips-from-los-angeles-quick-getaways-from-la/",
+      "destinationSlugs": [
+        "palm-springs",
+        "los-angeles"
+      ],
+      "signals": [
+        "beach"
+      ],
+      "editorialRelevance": 5,
+      "modifiedAt": "2022-10-24T16:28:20+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:gay-hotels-in-amsterdam",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "10 cool gay hotels in Amsterdam from budget to luxury",
+      "url": "https://nomadicboys.com/gay-hotels-in-amsterdam/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [
+        "lodging"
+      ],
+      "editorialRelevance": 4,
+      "publishedAt": "2018-11-19T06:00:58+00:00",
+      "modifiedAt": "2024-07-01T11:46:45+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:sightseeing-highlights-of-london",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "10 sightseeing highlights of London for gay travellers",
+      "url": "https://nomadicboys.com/sightseeing-highlights-of-london/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [],
+      "editorialRelevance": 4,
+      "publishedAt": "2018-02-16T08:00:51+00:00",
+      "modifiedAt": "2025-07-05T15:51:56+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:london-gay-airbnbs",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "6 cute and affordable gay bed and breakfasts in London",
+      "url": "https://nomadicboys.com/london-gay-airbnbs/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [],
+      "editorialRelevance": 2,
+      "publishedAt": "2021-02-10T03:33:00+00:00",
+      "modifiedAt": "2025-07-16T14:34:42+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:best-gay-hotels-miami",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "Best Gay Hotels in Miami",
+      "url": "https://nomadicboys.com/best-gay-hotels-miami/",
+      "destinationSlugs": [
+        "miami"
+      ],
+      "signals": [
+        "lodging"
+      ],
+      "editorialRelevance": 6,
+      "publishedAt": "2020-09-16T06:00:00+00:00",
+      "modifiedAt": "2025-04-09T11:41:37+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:best-gay-tours-in-tokyo",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "Best Gay Tours in Tokyo for LGBTQ travelers",
+      "url": "https://nomadicboys.com/best-gay-tours-in-tokyo/",
+      "destinationSlugs": [
+        "tokyo"
+      ],
+      "signals": [],
+      "editorialRelevance": 9,
+      "publishedAt": "2020-04-03T06:00:00+00:00",
+      "modifiedAt": "2025-01-09T09:46:51+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:best-sex-hotels-in-berlin",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "Best sex hotels in Berlin, for some cheeky romance",
+      "url": "https://nomadicboys.com/best-sex-hotels-in-berlin/",
+      "destinationSlugs": [
+        "berlin"
+      ],
+      "signals": [
+        "lodging"
+      ],
+      "editorialRelevance": 4,
+      "publishedAt": "2019-11-22T16:30:39+00:00",
+      "modifiedAt": "2025-08-20T20:58:10+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:gay-guide-montreal",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "Gay Montreal: Our Ultimate guide to the best bars, clubs, hotels & more",
+      "url": "https://nomadicboys.com/gay-guide-montreal/",
+      "destinationSlugs": [
+        "montreal"
+      ],
+      "signals": [
+        "nightlife",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2020-02-09T23:00:23+00:00",
+      "modifiedAt": "2025-10-13T14:12:30+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:puerto-vallarta-gay-guide",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "Gay Puerto Vallarta Guide: travel tips, hotels, bars, events & more",
+      "url": "https://nomadicboys.com/puerto-vallarta-gay-guide/",
+      "destinationSlugs": [
+        "puerto-vallarta"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 11,
+      "publishedAt": "2019-05-12T08:00:44+00:00",
+      "modifiedAt": "2025-10-13T14:25:11+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:geisha-makeover-tokyo",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "Geisha makeover in Tokyo, a must do for men and women",
+      "url": "https://nomadicboys.com/geisha-makeover-tokyo/",
+      "destinationSlugs": [
+        "tokyo"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "publishedAt": "2016-05-11T11:07:40+00:00",
+      "modifiedAt": "2024-06-18T12:29:58+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:get-from-amsterdam-schiphol-airport-to-the-city-centre",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "How to get from Amsterdam Schiphol Airport to the city centre",
+      "url": "https://nomadicboys.com/get-from-amsterdam-schiphol-airport-to-the-city-centre/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "publishedAt": "2018-08-12T06:00:20+00:00",
+      "modifiedAt": "2024-06-18T11:49:47+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:get-from-berlin-brandenburg-airport-to-city-centre",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "How to get from Berlin Brandenburg airport to city centre",
+      "url": "https://nomadicboys.com/get-from-berlin-brandenburg-airport-to-city-centre/",
+      "destinationSlugs": [
+        "berlin"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "publishedAt": "2020-11-11T10:40:18+00:00",
+      "modifiedAt": "2025-10-06T09:10:33+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:new-york-pride-gay-guide",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "New York Pride: your guide to the best gay parties and events",
+      "url": "https://nomadicboys.com/new-york-pride-gay-guide/",
+      "destinationSlugs": [
+        "new-york-city"
+      ],
+      "signals": [
+        "pride",
+        "lodging"
+      ],
+      "editorialRelevance": 9,
+      "publishedAt": "2019-06-16T18:00:29+00:00",
+      "modifiedAt": "2025-10-13T14:21:51+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:gay-pride-puerto-vallarta",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "Puerto Vallarta Pride: everything you need to know!",
+      "url": "https://nomadicboys.com/gay-pride-puerto-vallarta/",
+      "destinationSlugs": [
+        "puerto-vallarta"
+      ],
+      "signals": [
+        "pride"
+      ],
+      "editorialRelevance": 2,
+      "publishedAt": "2017-07-03T20:55:06+00:00",
+      "modifiedAt": "2024-06-18T12:16:48+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:best-parties-miami-beach-gay-pride",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "The 7 most anticipated events and gay parties during Miami Beach Pride",
+      "url": "https://nomadicboys.com/best-parties-miami-beach-gay-pride/",
+      "destinationSlugs": [
+        "miami"
+      ],
+      "signals": [
+        "beach",
+        "pride"
+      ],
+      "editorialRelevance": 5,
+      "publishedAt": "2020-03-07T16:28:00+00:00",
+      "modifiedAt": "2024-06-17T18:38:15+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:gay-beaches-in-miami",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "The best gay beaches in Miami • How to get there",
+      "url": "https://nomadicboys.com/gay-beaches-in-miami/",
+      "destinationSlugs": [
+        "miami"
+      ],
+      "signals": [
+        "beach"
+      ],
+      "editorialRelevance": 5,
+      "publishedAt": "2020-10-10T16:51:00+00:00",
+      "modifiedAt": "2024-06-17T12:11:41+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:gay-events-in-montreal",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "The best gay events in Montreal, Canada you need to check out!",
+      "url": "https://nomadicboys.com/gay-events-in-montreal/",
+      "destinationSlugs": [
+        "montreal"
+      ],
+      "signals": [],
+      "editorialRelevance": 4,
+      "publishedAt": "2017-10-09T08:00:35+00:00",
+      "modifiedAt": "2025-08-21T14:52:57+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:the-best-gay-tours-in-berlin",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "The best gay tours in Berlin for LGBTQ travelers",
+      "url": "https://nomadicboys.com/the-best-gay-tours-in-berlin/",
+      "destinationSlugs": [
+        "berlin"
+      ],
+      "signals": [],
+      "editorialRelevance": 9,
+      "publishedAt": "2020-03-27T06:00:20+00:00",
+      "modifiedAt": "2025-08-20T20:57:27+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:sex-hotels-in-amsterdam",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "The best sex hotels in Amsterdam, for some cheeky romance!",
+      "url": "https://nomadicboys.com/sex-hotels-in-amsterdam/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [
+        "lodging"
+      ],
+      "editorialRelevance": 4,
+      "publishedAt": "2019-09-15T06:00:08+00:00",
+      "modifiedAt": "2025-07-09T13:31:06+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:gay-bars-in-new-york-city",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "Top Gay Bars in New York City to check out in 2026",
+      "url": "https://nomadicboys.com/gay-bars-in-new-york-city/",
+      "destinationSlugs": [
+        "new-york-city"
+      ],
+      "signals": [
+        "nightlife"
+      ],
+      "editorialRelevance": 4,
+      "publishedAt": "2021-04-07T05:25:00+00:00",
+      "modifiedAt": "2025-11-05T18:17:24+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "nomadic-boys:best-gay-bars-miami",
+      "sourceId": "nomadic-boys",
+      "sourceName": "Nomadic Boys",
+      "title": "Unique and Cool gay bars in Miami",
+      "url": "https://nomadicboys.com/best-gay-bars-miami/",
+      "destinationSlugs": [
+        "miami"
+      ],
+      "signals": [
+        "nightlife"
+      ],
+      "editorialRelevance": 4,
+      "publishedAt": "2020-10-26T06:00:00+00:00",
+      "modifiedAt": "2025-05-21T09:03:43+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "out-with-ryan:free-things-to-do-and-see-in-london-england",
+      "sourceId": "out-with-ryan",
+      "sourceName": "Out With Ryan",
+      "title": "Top 10 (FREE) Attractions To See In LONDON, ENGLAND",
+      "url": "https://www.outwithryan.com/free-things-to-do-and-see-in-london-england/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "publishedAt": "2013-08-14T14:58:51+00:00",
+      "modifiedAt": "2023-03-31T00:29:27+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "out-with-ryan:win-a-trip-to-montreal-pride-toronto-pride-parade-2017",
+      "sourceId": "out-with-ryan",
+      "sourceName": "Out With Ryan",
+      "title": "Toronto-Pride-Parade-2017",
+      "url": "https://www.outwithryan.com/win-a-trip-to-montreal-pride/toronto-pride-parade-2017/",
+      "destinationSlugs": [
+        "montreal"
+      ],
+      "signals": [
+        "pride"
+      ],
+      "editorialRelevance": 2,
+      "publishedAt": "2017-07-07T20:03:31+00:00",
+      "modifiedAt": "2017-07-07T20:03:31+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "out-with-ryan:win-a-trip-to-montreal-pride-toronto-pride-parade-2017-2",
+      "sourceId": "out-with-ryan",
+      "sourceName": "Out With Ryan",
+      "title": "Toronto-Pride-Parade-2017",
+      "url": "https://www.outwithryan.com/win-a-trip-to-montreal-pride/toronto-pride-parade-2017-2/",
+      "destinationSlugs": [
+        "montreal"
+      ],
+      "signals": [
+        "pride"
+      ],
+      "editorialRelevance": 2,
+      "publishedAt": "2017-07-07T20:04:59+00:00",
+      "modifiedAt": "2017-07-07T20:04:59+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "out-with-ryan:win-a-trip-to-montreal-pride-tumblr-nqufrpfqoi1rbl71oo2-540",
+      "sourceId": "out-with-ryan",
+      "sourceName": "Out With Ryan",
+      "title": "tumblr_nqufrpfqoi1rbl71oo2_540",
+      "url": "https://www.outwithryan.com/win-a-trip-to-montreal-pride/tumblr_nqufrpfqoi1rbl71oo2_540/",
+      "destinationSlugs": [
+        "montreal"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "publishedAt": "2017-07-07T21:30:53+00:00",
+      "modifiedAt": "2017-07-07T21:30:53+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "out-with-ryan:win-a-trip-to-montreal-pride",
+      "sourceId": "out-with-ryan",
+      "sourceName": "Out With Ryan",
+      "title": "Win A Trip to Montreal Pride!",
+      "url": "https://www.outwithryan.com/win-a-trip-to-montreal-pride/",
+      "destinationSlugs": [
+        "montreal"
+      ],
+      "signals": [
+        "pride"
+      ],
+      "editorialRelevance": 3,
+      "publishedAt": "2017-07-07T21:33:23+00:00",
+      "modifiedAt": "2019-03-25T01:33:47+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:st-tour-7-days-in-spain-madrid-toledo-segovia",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "7 Days in Spain – Madrid, Toledo & Segovia",
+      "url": "https://twobadtourists.com/st_tour/7-days-in-spain-madrid-toledo-segovia/",
+      "destinationSlugs": [
+        "madrid"
+      ],
+      "signals": [],
+      "editorialRelevance": 1,
+      "publishedAt": "2022-08-19T08:21:04+00:00",
+      "modifiedAt": "2026-06-12T14:24:12+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-amsterdam-a-gay-travel-guide-to-the-progressive-dutch-city",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Amsterdam – the best gay hotels, bars, clubs & more",
+      "url": "https://twobadtourists.com/gay-amsterdam-a-gay-travel-guide-to-the-progressive-dutch-city/",
+      "destinationSlugs": [
+        "amsterdam"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-02-01T07:00:52+00:00",
+      "modifiedAt": "2026-02-01T20:58:32+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-barcelona-a-gay-travel-guide-to-one-of-europes-top-cities",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Barcelona",
+      "url": "https://twobadtourists.com/gay-barcelona-a-gay-travel-guide-to-one-of-europes-top-cities/",
+      "destinationSlugs": [
+        "barcelona"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-07-10T11:06:19+00:00",
+      "modifiedAt": "2026-07-10T17:45:30+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-berlin-a-gay-travel-guide-to-germanys-hippest-city",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Berlin",
+      "url": "https://twobadtourists.com/gay-berlin-a-gay-travel-guide-to-germanys-hippest-city/",
+      "destinationSlugs": [
+        "berlin"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-02-25T12:10:15+00:00",
+      "modifiedAt": "2026-02-25T20:14:11+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-las-vegas-the-best-gay-hotels-bars-clubs-more",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Las Vegas – the best gay hotels, bars, clubs & more",
+      "url": "https://twobadtourists.com/gay-las-vegas-the-best-gay-hotels-bars-clubs-more/",
+      "destinationSlugs": [
+        "las-vegas"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-05-04T12:12:18+00:00",
+      "modifiedAt": "2026-05-04T14:43:21+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-lisbon-a-gay-travel-guide-to-the-city-of-7-hills",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Lisbon",
+      "url": "https://twobadtourists.com/gay-lisbon-a-gay-travel-guide-to-the-city-of-7-hills/",
+      "destinationSlugs": [
+        "lisbon"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-05-31T12:26:37+00:00",
+      "modifiedAt": "2026-05-31T17:38:01+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-london-the-best-gay-hotels-bars-clubs-more",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay London – the best gay hotels, bars, clubs & more",
+      "url": "https://twobadtourists.com/gay-london-the-best-gay-hotels-bars-clubs-more/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [
+        "nightlife",
+        "lodging"
+      ],
+      "editorialRelevance": 9,
+      "publishedAt": "2026-07-10T14:58:15+00:00",
+      "modifiedAt": "2026-07-10T20:06:07+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-los-angeles-a-gay-travel-guide-to-the-city-of-angeles",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Los Angeles – the best gay hotels, bars, clubs & more",
+      "url": "https://twobadtourists.com/gay-los-angeles-a-gay-travel-guide-to-the-city-of-angeles/",
+      "destinationSlugs": [
+        "los-angeles"
+      ],
+      "signals": [
+        "nightlife",
+        "history",
+        "culture",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-02-02T09:11:10+00:00",
+      "modifiedAt": "2026-02-02T18:16:01+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-madrid-a-gay-travel-guide-to-spains-capital-city",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Madrid – the best gay hotels, bars, clubs & more in 2026",
+      "url": "https://twobadtourists.com/gay-madrid-a-gay-travel-guide-to-spains-capital-city/",
+      "destinationSlugs": [
+        "madrid"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-02-22T10:01:46+00:00",
+      "modifiedAt": "2026-02-22T18:26:10+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-mexico-city-the-best-gay-hotels-bars-clubs-more",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Mexico City – the best gay hotels, bars, clubs & more",
+      "url": "https://twobadtourists.com/gay-mexico-city-the-best-gay-hotels-bars-clubs-more/",
+      "destinationSlugs": [
+        "mexico-city"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-05-04T14:28:25+00:00",
+      "modifiedAt": "2026-05-04T15:05:07+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-miami-a-gay-travel-guide-to-the-latin-capital-of-the-us",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Miami – the best gay hotels, bars, clubs & more",
+      "url": "https://twobadtourists.com/gay-miami-a-gay-travel-guide-to-the-latin-capital-of-the-us/",
+      "destinationSlugs": [
+        "miami"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-06-04T10:25:00+00:00",
+      "modifiedAt": "2026-06-04T11:14:30+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-montreal-the-best-gay-hotels-bars-clubs-more",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Montreal – the best gay hotels, bars, clubs & more",
+      "url": "https://twobadtourists.com/gay-montreal-the-best-gay-hotels-bars-clubs-more/",
+      "destinationSlugs": [
+        "montreal"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-02-22T12:00:45+00:00",
+      "modifiedAt": "2026-02-22T18:07:48+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-new-york-city-a-gay-travel-guide-to-the-big-apple",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay New York – the best gay hotels, bars, clubs & more",
+      "url": "https://twobadtourists.com/gay-new-york-city-a-gay-travel-guide-to-the-big-apple/",
+      "destinationSlugs": [
+        "new-york-city"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-02-28T13:10:49+00:00",
+      "modifiedAt": "2026-02-28T18:57:58+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-palm-springs-the-best-gay-hotels-resorts-bars-clubs-more",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Palm Springs – the best gay hotels, resorts, bars, clubs & more",
+      "url": "https://twobadtourists.com/gay-palm-springs-the-best-gay-hotels-resorts-bars-clubs-more/",
+      "destinationSlugs": [
+        "palm-springs"
+      ],
+      "signals": [
+        "nightlife",
+        "lodging"
+      ],
+      "editorialRelevance": 9,
+      "publishedAt": "2026-05-03T16:53:23+00:00",
+      "modifiedAt": "2026-05-03T17:35:20+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:a-gay-travel-guide-to-provincetown-where-american-history-meets-lgbt-culture",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Provincetown – the best gay hotels, bars, clubs & more",
+      "url": "https://twobadtourists.com/a-gay-travel-guide-to-provincetown-where-american-history-meets-lgbt-culture/",
+      "destinationSlugs": [
+        "provincetown"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-03-02T10:19:52+00:00",
+      "modifiedAt": "2026-03-02T12:56:58+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-puerto-vallarta-a-travel-guide-to-mexicos-most-gay-friendly-beach-resort",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Puerto Vallarta – the best gay hotels, bars, clubs & more",
+      "url": "https://twobadtourists.com/gay-puerto-vallarta-a-travel-guide-to-mexicos-most-gay-friendly-beach-resort/",
+      "destinationSlugs": [
+        "puerto-vallarta"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-05-03T11:26:43+00:00",
+      "modifiedAt": "2026-05-03T15:46:12+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-san-francisco-a-gay-travel-guide-to-the-golden-gate-city",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay San Francisco – the best gay hotels, bars, clubs & more",
+      "url": "https://twobadtourists.com/gay-san-francisco-a-gay-travel-guide-to-the-golden-gate-city/",
+      "destinationSlugs": [
+        "san-francisco"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-02-02T11:56:49+00:00",
+      "modifiedAt": "2026-02-02T18:08:58+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:gay-tokyo-a-gay-travel-guide-to-japans-futurist-capital-city",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Gay Tokyo – the best gay hotels, bars, clubs & more",
+      "url": "https://twobadtourists.com/gay-tokyo-a-gay-travel-guide-to-japans-futurist-capital-city/",
+      "destinationSlugs": [
+        "tokyo"
+      ],
+      "signals": [
+        "nightlife",
+        "food",
+        "lodging"
+      ],
+      "editorialRelevance": 10,
+      "publishedAt": "2026-02-02T14:10:21+00:00",
+      "modifiedAt": "2026-02-02T17:00:18+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:st-tour-madrid-gay-nightlife-tour",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Madrid Gay Nightlife Tour",
+      "url": "https://twobadtourists.com/st_tour/madrid-gay-nightlife-tour/",
+      "destinationSlugs": [
+        "madrid"
+      ],
+      "signals": [
+        "nightlife"
+      ],
+      "editorialRelevance": 4,
+      "publishedAt": "2023-04-27T06:20:42+00:00",
+      "modifiedAt": "2026-05-22T13:09:39+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "two-bad-tourists:st-tour-madrid-lgbtq-tapas-tour",
+      "sourceId": "two-bad-tourists",
+      "sourceName": "Two Bad Tourists",
+      "title": "Madrid LGBTQ Tapas Tour",
+      "url": "https://twobadtourists.com/st_tour/madrid-lgbtq-tapas-tour/",
+      "destinationSlugs": [
+        "madrid"
+      ],
+      "signals": [
+        "nightlife",
+        "food"
+      ],
+      "editorialRelevance": 5,
+      "publishedAt": "2024-03-01T12:41:57+00:00",
+      "modifiedAt": "2026-05-22T12:34:42+00:00",
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "what-we-gan-did-next:london-pride-2013-weganers-hair-on-fire",
+      "sourceId": "what-we-gan-did-next",
+      "sourceName": "What We Gan Did Next",
+      "title": "London Pride 2013- Weganers + Hair on Fire!",
+      "url": "https://www.whatwegandidnext.com/london-pride-2013-weganers-hair-on-fire/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [
+        "pride"
+      ],
+      "editorialRelevance": 2,
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "what-we-gan-did-next:london-pride-2018-with-w-london",
+      "sourceId": "what-we-gan-did-next",
+      "sourceName": "What We Gan Did Next",
+      "title": "London Pride 2018 With W London!",
+      "url": "https://www.whatwegandidnext.com/london-pride-2018-with-w-london/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [
+        "pride"
+      ],
+      "editorialRelevance": 2,
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "what-we-gan-did-next:our-engagement-shoot-in-palm-springs",
+      "sourceId": "what-we-gan-did-next",
+      "sourceName": "What We Gan Did Next",
+      "title": "Our Engagement Shoot in Palm Springs",
+      "url": "https://www.whatwegandidnext.com/our-engagement-shoot-in-palm-springs/",
+      "destinationSlugs": [
+        "palm-springs"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "what-we-gan-did-next:victory-for-new-york",
+      "sourceId": "what-we-gan-did-next",
+      "sourceName": "What We Gan Did Next",
+      "title": "Victory For New York!!!",
+      "url": "https://www.whatwegandidnext.com/victory-for-new-york/",
+      "destinationSlugs": [
+        "new-york-city"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "what-we-gan-did-next:video-wegan-in-uk-brighton-london",
+      "sourceId": "what-we-gan-did-next",
+      "sourceName": "What We Gan Did Next",
+      "title": "VIDEO- Wegan in the UK! Brighton & London",
+      "url": "https://www.whatwegandidnext.com/video-wegan-in-uk-brighton-london/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "what-we-gan-did-next:wegan-travels-palm-springs-ca-for-fall",
+      "sourceId": "what-we-gan-did-next",
+      "sourceName": "What We Gan Did Next",
+      "title": "Wegan Travels Palm Springs, CA for Fall Preview of Modernism Week",
+      "url": "https://www.whatwegandidnext.com/wegan-travels-palm-springs-ca-for-fall/",
+      "destinationSlugs": [
+        "palm-springs"
+      ],
+      "signals": [],
+      "editorialRelevance": 2,
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "what-we-gan-did-next:what-wegan-did-next-snow-london-blate",
+      "sourceId": "what-we-gan-did-next",
+      "sourceName": "What We Gan Did Next",
+      "title": "What Wegan Did Next: Snow, London & a Blate",
+      "url": "https://www.whatwegandidnext.com/what-wegan-did-next-snow-london-blate/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [],
+      "editorialRelevance": 0,
+      "reviewStatus": "needs_editorial_review"
+    },
+    {
+      "id": "what-we-gan-did-next:what-wegan-did-next-worldpride-london",
+      "sourceId": "what-we-gan-did-next",
+      "sourceName": "What We Gan Did Next",
+      "title": "What Wegan Did Next: WorldPride London 2012!",
+      "url": "https://www.whatwegandidnext.com/what-wegan-did-next-worldpride-london/",
+      "destinationSlugs": [
+        "london"
+      ],
+      "signals": [
+        "pride"
+      ],
+      "editorialRelevance": 2,
+      "reviewStatus": "needs_editorial_review"
+    }
+  ],
+  "diagnostics": []
+}

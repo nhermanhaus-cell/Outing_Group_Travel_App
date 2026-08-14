@@ -1,0 +1,28 @@
+project_id = "gayi-travel-planner"
+
+[functions.trip-invites]
+verify_jwt = false
+
+[functions.analytics-ingest]
+verify_jwt = false
+
+[functions.analytics-forward]
+verify_jwt = false
+
+[functions.destination-discovery]
+verify_jwt = false
+
+[functions.inspiration-import]
+verify_jwt = false
+
+[functions.today-snapshot]
+verify_jwt = false
+
+[functions.weekly-discovery]
+verify_jwt = false
+
+[functions.inspiration-cleanup]
+verify_jwt = false
+
+[functions.account-deletion]
+verify_jwt = false

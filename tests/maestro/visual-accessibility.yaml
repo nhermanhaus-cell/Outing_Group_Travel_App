@@ -1,0 +1,23 @@
+appId: com.gayi.app
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Sign in"
+- takeScreenshot: "screenshots/first-open-light"
+- tapOn: "Sign in"
+- assertVisible: "Browse as guest"
+- tapOn: "Browse as guest"
+- assertVisible: "What are we getting into?"
+- assertVisible: "Find my place"
+- assertVisible: "Plan a trip"
+- assertVisible: "Home"
+- assertVisible: "Discover"
+- assertVisible: "Trips"
+- assertVisible: "You"
+- takeScreenshot: "screenshots/home-light"
+- tapOn: "Discover"
+- assertVisible: "Discover"
+- takeScreenshot: "screenshots/discover-light"
+- tapOn: "Trips"
+- assertVisible: "Trips"
+- takeScreenshot: "screenshots/trips-light"

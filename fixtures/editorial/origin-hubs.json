@@ -1,0 +1,118 @@
+{
+  "hubs": [
+    {
+      "id": "sf-bay",
+      "label": "San Francisco Bay Area",
+      "airports": [
+        "SFO",
+        "OAK",
+        "SJC"
+      ],
+      "homeDestinationSlugs": [
+        "san-francisco"
+      ],
+      "weekendNearbySlugs": [
+        "guerneville",
+        "palm-springs"
+      ],
+      "quickFlightSlugs": [
+        "los-angeles",
+        "las-vegas",
+        "palm-springs",
+        "puerto-vallarta"
+      ],
+      "notes": "Weekend drives to Russian River; short flights south, east to Vegas, and onward to PV."
+    },
+    {
+      "id": "nyc",
+      "label": "New York City",
+      "airports": [
+        "JFK",
+        "LGA",
+        "EWR"
+      ],
+      "homeDestinationSlugs": [
+        "new-york-city"
+      ],
+      "weekendNearbySlugs": [
+        "provincetown",
+        "montreal"
+      ],
+      "quickFlightSlugs": [
+        "miami",
+        "montreal",
+        "provincetown"
+      ],
+      "notes": "Fast East Coast escapes split neatly between beach-weekend energy and Montréal nightlife."
+    },
+    {
+      "id": "la",
+      "label": "Los Angeles",
+      "airports": [
+        "LAX",
+        "BUR",
+        "SNA"
+      ],
+      "homeDestinationSlugs": [
+        "los-angeles"
+      ],
+      "weekendNearbySlugs": [
+        "palm-springs",
+        "las-vegas"
+      ],
+      "quickFlightSlugs": [
+        "san-francisco",
+        "las-vegas",
+        "palm-springs",
+        "puerto-vallarta"
+      ],
+      "notes": "Short flights and easy desert escapes make LA a strong base for quick queer getaways."
+    },
+    {
+      "id": "london",
+      "label": "London",
+      "airports": [
+        "LHR",
+        "LGW",
+        "STN",
+        "LTN",
+        "CITY"
+      ],
+      "homeDestinationSlugs": [
+        "london"
+      ],
+      "weekendNearbySlugs": [
+        "amsterdam"
+      ],
+      "quickFlightSlugs": [
+        "amsterdam",
+        "berlin",
+        "barcelona",
+        "madrid",
+        "lisbon"
+      ],
+      "notes": "Europe break options stay strong even after filtering out cities not currently in the seed catalog."
+    },
+    {
+      "id": "berlin",
+      "label": "Berlin",
+      "airports": [
+        "BER"
+      ],
+      "homeDestinationSlugs": [
+        "berlin"
+      ],
+      "weekendNearbySlugs": [
+        "amsterdam"
+      ],
+      "quickFlightSlugs": [
+        "amsterdam",
+        "london",
+        "madrid",
+        "barcelona",
+        "lisbon"
+      ],
+      "notes": "Berlin’s route map makes long-weekend culture swaps easy without losing access to major queer scenes."
+    }
+  ]
+}

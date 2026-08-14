@@ -1,0 +1,17 @@
+appId: com.gayi.app
+---
+- launchApp
+- tapOn: "Home"
+- tapOn:
+    text: "Bring in an idea"
+- assertVisible: "Bring the idea into Outing"
+- assertVisible: "Photos"
+- assertVisible: "Place file"
+- tapOn:
+    text: "Google Maps, article, Instagram, TikTok, YouTube…"
+- inputText: "https://maps.google.com/?q=Golden+Gate+Park"
+- tapOn: "Add"
+- assertVisible: "Ready to review"
+- assertVisible:
+    text: "Sign in to process"
+    optional: true

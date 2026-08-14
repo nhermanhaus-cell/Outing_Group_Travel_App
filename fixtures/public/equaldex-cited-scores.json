@@ -1,0 +1,95 @@
+{
+  "_disclaimer": "Editorial cited snapshot for demo purposes only. Scores are approximate and do not constitute an endorsement of or by Equaldex. For authoritative, up-to-date data visit https://www.equaldex.com. The Equaldex commercial API requires a paid subscription — this plugin does NOT call the live API.",
+  "_snapshotDate": "2025-06-01",
+  "_source": "Equaldex Equality Index (editorial snapshot)",
+  "entries": [
+    {
+      "countryCode": "US",
+      "countryName": "United States",
+      "ei": 54,
+      "ei_legal": 64,
+      "ei_po": 44,
+      "equaldexUrl": "https://www.equaldex.com/region/united-states"
+    },
+    {
+      "countryCode": "CA",
+      "countryName": "Canada",
+      "ei": 84,
+      "ei_legal": 100,
+      "ei_po": 68,
+      "equaldexUrl": "https://www.equaldex.com/region/canada"
+    },
+    {
+      "countryCode": "MX",
+      "countryName": "Mexico",
+      "ei": 50,
+      "ei_legal": 62,
+      "ei_po": 38,
+      "equaldexUrl": "https://www.equaldex.com/region/mexico"
+    },
+    {
+      "countryCode": "GB",
+      "countryName": "United Kingdom",
+      "ei": 80,
+      "ei_legal": 96,
+      "ei_po": 64,
+      "equaldexUrl": "https://www.equaldex.com/region/united-kingdom"
+    },
+    {
+      "countryCode": "DE",
+      "countryName": "Germany",
+      "ei": 76,
+      "ei_legal": 93,
+      "ei_po": 59,
+      "equaldexUrl": "https://www.equaldex.com/region/germany"
+    },
+    {
+      "countryCode": "ES",
+      "countryName": "Spain",
+      "ei": 82,
+      "ei_legal": 100,
+      "ei_po": 64,
+      "equaldexUrl": "https://www.equaldex.com/region/spain"
+    },
+    {
+      "countryCode": "PT",
+      "countryName": "Portugal",
+      "ei": 74,
+      "ei_legal": 93,
+      "ei_po": 55,
+      "equaldexUrl": "https://www.equaldex.com/region/portugal"
+    },
+    {
+      "countryCode": "NL",
+      "countryName": "Netherlands",
+      "ei": 90,
+      "ei_legal": 100,
+      "ei_po": 80,
+      "equaldexUrl": "https://www.equaldex.com/region/netherlands"
+    },
+    {
+      "countryCode": "JP",
+      "countryName": "Japan",
+      "ei": 30,
+      "ei_legal": 19,
+      "ei_po": 41,
+      "equaldexUrl": "https://www.equaldex.com/region/japan"
+    },
+    {
+      "countryCode": "TH",
+      "countryName": "Thailand",
+      "ei": 48,
+      "ei_legal": 60,
+      "ei_po": 36,
+      "equaldexUrl": "https://www.equaldex.com/region/thailand"
+    },
+    {
+      "countryCode": "FR",
+      "countryName": "France",
+      "ei": 78,
+      "ei_legal": 96,
+      "ei_po": 60,
+      "equaldexUrl": "https://www.equaldex.com/region/france"
+    }
+  ]
+}

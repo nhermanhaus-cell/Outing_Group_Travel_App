@@ -1,0 +1,16 @@
+appId: com.gayi.app
+---
+- launchApp
+- tapOn: "Trips"
+- tapOn:
+    index: 0
+- tapOn:
+    text: "Open Today"
+    optional: true
+- assertVisible: "Plans changed?"
+- assertVisible: "Private trip awareness"
+- assertVisible: "Ask Outing about today"
+- tapOn: "Raining"
+- assertVisible:
+    text: "Alternatives to review"
+    optional: true
