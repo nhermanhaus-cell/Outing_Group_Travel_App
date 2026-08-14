@@ -12,6 +12,16 @@ describe('travel API contracts', () => {
     expect(value.places).toHaveLength(1);
   });
 
+  it('accepts resolved and user-authored itinerary essentials', () => {
+    const value = validateTravelApiContract<{ essentials: Array<{ source: string }> }>('resolveTripEssentials', {
+      essentials: [
+        { id: 'google-1', label: 'The Louvre', kind: 'place', source: 'google_places', providerPlaceId: '1', lat: 48.86, lng: 2.33, category: 'museum' },
+        { id: 'custom-1', label: 'A pastry class', kind: 'activity', source: 'user', category: 'tour' },
+      ],
+    });
+    expect(value.essentials.map((item) => item.source)).toEqual(['google_places', 'user']);
+  });
+
   it('rejects malformed provider payloads', () => {
     expect(() => validateTravelApiContract('placeSearch', { places: [{ id: 'missing-fields' }] })).toThrow(/malformed/i);
     expect(() => validateTravelApiContract('route', { routes: 'not-an-array' })).toThrow(/malformed/i);
@@ -105,5 +115,20 @@ describe('travel API contracts', () => {
       indicative: true,
     }).deals).toHaveLength(1);
     expect(() => validateTravelApiContract('skyscannerIndicative', { deals: [], observedAt: 'now', indicative: false })).toThrow(/malformed/i);
+  });
+
+  it('validates normalized Scrappa round-trip estimates without provider tokens', () => {
+    const value = validateTravelApiContract<{ estimate: { lowPrice: number } }>('scrappaRoundTrip', {
+      estimate: {
+        originIata: 'SFO', destinationIata: 'LAX', departureDate: '2026-09-15', returnDate: '2026-09-22', adults: 1,
+        currency: 'USD', lowPrice: 56, typicalPrice: 147, highPrice: 147, optionCount: 30, nonstopOptionCount: 30,
+        observedAt: '2026-08-12T12:00:00.000Z', source: 'scrappa_google_flights', pricingScope: 'round_trip_search',
+        returnSelectionRequired: true, priceIsPerTraveler: true,
+        googleFlightsUrl: 'https://www.google.com/travel/flights?q=SFO%20LAX',
+        message: 'Select a return flight to confirm the final fare.',
+        options: [{ price: 56, currency: 'USD', airlineName: 'Frontier', stops: 0 }],
+      },
+    });
+    expect(value.estimate.lowPrice).toBe(56);
   });
 });

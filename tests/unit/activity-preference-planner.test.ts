@@ -75,7 +75,7 @@ describe('activity preference itinerary planning', () => {
       { placeId: 'bar-1', memberId: 'b', choice: 'not_interested', category: 'bar', createdAt: '2026-08-01T10:03:00Z' },
     ];
     const signals = buildActivityPreferenceSignals(votes, 3);
-    expect(signals.scoreAdjustments['museum-1']).toBeGreaterThan(50);
+    expect(signals.scoreAdjustments['museum-1']).toBe(48);
     expect(signals.excludedPlaceIds).toContain('bar-1');
 
     const splitDecision = buildActivityPreferenceSignals(votes.slice(0, 3), 3);

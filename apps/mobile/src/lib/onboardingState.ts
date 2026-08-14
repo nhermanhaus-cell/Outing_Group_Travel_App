@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const ONBOARDING_STORAGE_KEY = 'outing:onboarding:v1:complete';
 
-const BYPASS_PREFIXES = ['/welcome', '/invite', '/share/', '/auth/'];
+const BYPASS_PREFIXES = ['/welcome', '/invite', '/share/', '/auth/', '/account-deletion'];
 
 export function shouldOfferOnboarding(input: {
   enabled: boolean;

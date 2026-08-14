@@ -31,6 +31,26 @@ pnpm catalog:validate
 
 Hydration writes `fixtures/catalog/destination-provider-enrichment.json`. Inspect every identity match, venue, hero image, and place-specific image. A location fallback is recorded only when a credible place-specific Pexels result is unavailable.
 
+If the configured Google key is intentionally restricted to the native iOS/Android Maps SDK, keep that restriction in place and hydrate imagery separately while a server-side Places key is provisioned:
+
+```bash
+pnpm catalog:hydrate -- --wave=lgbtq_priority --apply --skip-google --resume
+```
+
+`--resume` retains completed destinations and continues after provider throttling. Google identity and operating-status validation remain visibly pending; image enrichment never substitutes for canonical place validation.
+
+## Structured editorial research
+
+Use the configured Mistral web-search model to assemble reviewable destination, neighborhood, place, event, transport, cost-context, accessibility, and LGBTQ+ research:
+
+```bash
+pnpm catalog:research -- --resume --concurrency=2
+pnpm catalog:verify-sources -- --apply
+pnpm seed:expand-catalog
+```
+
+Research is written to `fixtures/catalog/destination-editorial-research.json`. Every record remains `requires_human_review`; the generator will not convert model research into editorial approval or mark event dates as publication-verified. Source verification marks reachable, access-restricted, unverified, and broken URLs, and excludes definitively broken links from the generated customer-facing source list.
+
 ## Editorial review and publication
 
 For each destination:

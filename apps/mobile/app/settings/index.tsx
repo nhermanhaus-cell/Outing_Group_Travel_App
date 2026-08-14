@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { type Href, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useAuth } from '../../src/providers/AppProviders';
@@ -12,6 +12,12 @@ import {
   resetAssistantPersonalization,
   setAssistantPersonalizationEnabled,
 } from '../../src/lib/assistant-api';
+import type { NotificationPreferences } from '@gayi/shared';
+import { defaultNotificationPreferences, loadNotificationPreferences, saveNotificationPreferences } from '../../src/lib/notifications';
+import { featureFlags } from '../../src/lib/featureFlags';
+import * as Haptics from 'expo-haptics';
+import { useDisplayPreferences } from '../../src/lib/display-preferences';
+import { DISPLAY_CURRENCIES } from '../../src/lib/display-format';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   const { colors, spacing } = useTheme();
@@ -73,6 +79,44 @@ function RowToggle({ label, subtitle, value, onPress }: { label: string; subtitl
   );
 }
 
+function ChoiceRow<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: Array<{ value: T; label: string }>;
+  onChange: (value: T) => void;
+}) {
+  const { colors, spacing, radius } = useTheme();
+  return (
+    <View style={{ padding: spacing.base, borderRadius: radius.lg, backgroundColor: colors.cardBackground, borderWidth: 1, borderColor: colors.cardBorder, gap: spacing.sm, borderCurve: 'continuous' }}>
+      <Text variant="labelMd">{label}</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+        {options.map((option) => {
+          const selected = value === option.value;
+          return (
+            <Pressable
+              key={option.value}
+              accessibilityRole="radio"
+              accessibilityState={{ selected }}
+              onPress={() => {
+                if (process.env.EXPO_OS === 'ios') void Haptics.selectionAsync();
+                onChange(option.value);
+              }}
+              style={{ minHeight: 40, minWidth: 64, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: selected ? colors.accent : colors.backgroundSecondary }}
+            >
+              <Text variant="labelSm" style={{ color: selected ? colors.textOnAccent : colors.textSecondary }}>{option.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 export default function SettingsScreen() {
   const {
     colors,
@@ -91,6 +135,11 @@ export default function SettingsScreen() {
     clearPreferenceSignals,
   } = useAnalytics();
   const [personalizationSaving, setPersonalizationSaving] = useState(false);
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(defaultNotificationPreferences());
+  const [notificationSaving, setNotificationSaving] = useState(false);
+  const [displayPreferences, setDisplayPreferences] = useDisplayPreferences();
+
+  useEffect(() => { void loadNotificationPreferences().then(setNotificationPreferences); }, []);
 
   useEffect(() => {
     if (!user || !supabase) return;
@@ -136,6 +185,21 @@ export default function SettingsScreen() {
       },
     ],
   );
+
+  const updateNotifications = async (updates: Partial<NotificationPreferences>) => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+    const next = { ...notificationPreferences, ...updates };
+    setNotificationSaving(true);
+    try {
+      await saveNotificationPreferences(next);
+      setNotificationPreferences(next);
+    } catch (caught) {
+      Alert.alert('Could not update notifications', caught instanceof Error ? caught.message : 'Try again shortly.');
+    } finally { setNotificationSaving(false); }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -193,6 +257,30 @@ export default function SettingsScreen() {
           </View>
         </Section>
 
+        <Section title="Travel display">
+          <ChoiceRow
+            label="Itinerary time"
+            value={displayPreferences.timeFormat}
+            options={[{ value: '12h', label: '12-hour' }, { value: '24h', label: '24-hour' }]}
+            onChange={(timeFormat) => setDisplayPreferences({ timeFormat })}
+          />
+          <ChoiceRow
+            label="Temperature"
+            value={displayPreferences.temperatureUnit}
+            options={[{ value: 'fahrenheit', label: '°F' }, { value: 'celsius', label: '°C' }]}
+            onChange={(temperatureUnit) => setDisplayPreferences({ temperatureUnit })}
+          />
+          <ChoiceRow
+            label="Display currency"
+            value={displayPreferences.currency}
+            options={DISPLAY_CURRENCIES.map((currency) => ({ value: currency, label: currency }))}
+            onChange={(currency) => setDisplayPreferences({ currency })}
+          />
+          <Text variant="caption" style={{ color: colors.textTertiary }}>
+            Destination costs are stored in USD. Other currencies are approximate display conversions; provider checkout pages show their own final currency.
+          </Text>
+        </Section>
+
         <Section title="Privacy">
           <RowToggle
             label="Learn from my activity"
@@ -206,10 +294,20 @@ export default function SettingsScreen() {
           <RowToggle label="Share trip activity" subtitle="Show trips on community map" value={false} />
         </Section>
 
-        <Section title="Notifications">
-          <RowToggle label="Trip reminders" subtitle="Upcoming departure alerts" value={true} />
-          <RowToggle label="Pride event alerts" subtitle="Events near saved destinations" value={false} />
-        </Section>
+        {featureFlags.outingFullExperienceV1 ? <Section title="Notifications">
+          <RowToggle
+            label="Active-trip reminders"
+            subtitle="Leave-by and itinerary reminders · separate from discovery"
+            value={notificationPreferences.activeTripRemindersEnabled}
+            onPress={notificationSaving ? undefined : () => void updateNotifications({ activeTripRemindersEnabled: !notificationPreferences.activeTripRemindersEnabled })}
+          />
+          <RowToggle
+            label="Weekly discovery"
+            subtitle="One personalized digest · Wednesday at 6 p.m. · quiet hours 9 p.m.–8 a.m."
+            value={notificationPreferences.discoveryDigestEnabled}
+            onPress={notificationSaving ? undefined : () => void updateNotifications({ discoveryDigestEnabled: !notificationPreferences.discoveryDigestEnabled })}
+          />
+        </Section> : null}
 
         <Section title="Data">
           <View
@@ -234,6 +332,7 @@ export default function SettingsScreen() {
               See travel connections
             </Button>
           </View>
+          {featureFlags.outingFullExperienceV1 ? <Button size="sm" variant="secondary" onPress={() => router.push('/settings/visit-history' as Href)}>Private visit history</Button> : null}
         </Section>
 
         <Section title="Account">
@@ -251,10 +350,17 @@ export default function SettingsScreen() {
               >
                 <Text variant="labelMd">Account deletion</Text>
                 <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-                  To request account deletion, contact support. All local trip data will be removed from this device when you sign out.
+                  Permanently delete your account, trips you organize, preferences, saved places, conversations, and private activity. Outing will show everything affected before you confirm.
                 </Text>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onPress={() => router.push('/account-deletion' as Href)}
+                >
+                  Delete account
+                </Button>
               </View>
-              <Button variant="danger" onPress={signOut}>Sign out</Button>
+              <Button variant="secondary" onPress={signOut}>Sign out</Button>
             </>
           ) : (
             <Button onPress={() => router.push('/auth/login')}>Sign in</Button>

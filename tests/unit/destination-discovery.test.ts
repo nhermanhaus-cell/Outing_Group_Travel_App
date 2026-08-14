@@ -99,4 +99,11 @@ describe('persistent destination discovery contracts', () => {
     expect(discovery).toContain("action: 'generate', candidateId");
     expect(discovery).toContain(".in('generation_status', claimableStatuses)");
   });
+
+  it('uses the current Google Places locality type for city lookup', () => {
+    const discovery = readFileSync('supabase/functions/destination-discovery/index.ts', 'utf8');
+    expect(discovery).toContain("includedType: 'locality'");
+    expect(discovery).not.toContain("includedType: '(cities)'");
+    expect(discovery).toContain('strictTypeFiltering: true');
+  });
 });

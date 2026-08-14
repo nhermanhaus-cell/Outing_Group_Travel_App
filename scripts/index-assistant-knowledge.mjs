@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { buildPlaceKnowledgeChunks } from './lib/place-intelligence.mjs';
 
 const dryRun = process.argv.includes('--dry-run');
 const projectUrl = (process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? '').replace(/\/$/, '');
@@ -16,6 +17,50 @@ const destinations = catalogRecords.filter((destination) => includeDrafts || (
   && destination.editorialReview?.placesValidated === true
 ));
 const experiences = JSON.parse(readFileSync(resolve(process.cwd(), 'fixtures/seed/experiences.json'), 'utf8'));
+
+async function loadPublishedPlaceOverlays() {
+  if (dryRun || !projectUrl || !serviceKey) return new Map();
+  const response = await fetch(`${projectUrl}/rest/v1/places?select=*&published=eq.true&deleted_at=is.null&limit=1000`, {
+    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
+  });
+  if (!response.ok) throw new Error(`Could not load enriched place records (${response.status})`);
+  const rows = await response.json();
+  return new Map(rows.map((row) => {
+    const payload = row.payload && typeof row.payload === 'object' ? row.payload : {};
+    return [String(row.id), {
+      ...payload,
+      id: row.id,
+      name: row.name,
+      category: row.category,
+      address: row.address,
+      summary: row.summary,
+      lat: row.lat,
+      lng: row.lng,
+      primaryType: row.primary_type ?? payload.primaryType,
+      neighborhood: row.neighborhood ?? payload.neighborhood,
+      lgbtqRelevance: row.lgbtq_relevance ?? payload.lgbtqRelevance,
+      estimatedCostUsd: row.estimated_cost_usd ?? payload.estimatedCostUsd,
+      durationMinutes: row.duration_minutes ?? payload.durationMinutes,
+      accessibilityNotes: row.accessibility_notes ?? payload.accessibilityNotes,
+      websiteUri: row.website_uri ?? payload.websiteUri,
+      googleMapsUri: row.google_maps_uri ?? payload.googleMapsUri,
+      rating: row.rating ?? payload.rating,
+      reviewCount: row.review_count ?? payload.reviewCount,
+      priceLevel: row.price_level ?? payload.priceLevel,
+      businessStatus: row.business_status ?? payload.businessStatus,
+      openingHours: payload.openingHours ?? row.opening_hours?.periods ?? [],
+      weekdayDescriptions: payload.weekdayDescriptions ?? row.opening_hours?.weekdayDescriptions ?? [],
+      currentWeekdayDescriptions: payload.currentWeekdayDescriptions ?? row.opening_hours?.currentWeekdayDescriptions ?? [],
+      openNow: payload.openNow ?? row.opening_hours?.openNow,
+      accessibilityOptions: payload.accessibilityOptions ?? row.attributes?.accessibilityOptions ?? {},
+      attributes: payload.attributes ?? row.attributes ?? {},
+      providerPlaceId: row.provider_place_id ?? payload.providerPlaceId,
+      verifiedAt: row.verified_at ?? payload.verifiedAt,
+    }];
+  }));
+}
+
+const publishedPlaceOverlays = await loadPublishedPlaceOverlays();
 
 function clean(value, limit = 7_500) {
   return String(value ?? '')
@@ -76,11 +121,16 @@ const chunks = destinations.flatMap((destination) => {
       destination.dataFreshness,
       { name: neighborhood.name },
     )),
-    ...(destination.places ?? []).map((place) => chunk(
-      'place', place.id, destination.slug, 'place',
-      `${place.name}. ${place.category ?? ''}. ${place.summary ?? ''}. ${place.lgbtqRelevance ?? ''}`,
-      sources, destination.dataFreshness, { name: place.name, category: place.category },
-    )),
+    ...(destination.places ?? []).flatMap((fixturePlace) => {
+      const place = { ...fixturePlace, ...(publishedPlaceOverlays.get(String(fixturePlace.id)) ?? {}) };
+      return buildPlaceKnowledgeChunks(place, {
+      destinationSourceIds: sources,
+      freshness: destination.dataFreshness,
+      }).map((placeChunk) => chunk(
+        'place', place.id, destination.slug, placeChunk.chunkKind,
+        placeChunk.text, placeChunk.sourceIds, placeChunk.freshness, placeChunk.metadata,
+      ));
+    }),
     ...(destination.events ?? []).map((event) => chunk(
       'event', event.id, destination.slug, 'event',
       `${event.title ?? event.name}. ${event.category ?? ''}. ${event.summary ?? ''}. ${event.startDate ?? ''}`,
@@ -137,7 +187,7 @@ async function rest(path, init = {}) {
   return body ? JSON.parse(body) : null;
 }
 
-const existing = await rest('assistant_knowledge_chunks?select=entity_type,entity_id,chunk_kind,content_hash,embedding_model');
+const existing = await rest('assistant_knowledge_chunks?select=id,entity_type,entity_id,chunk_kind,content_hash,embedding_model');
 const existingByKey = new Map((existing ?? []).map((row) => [
   `${row.entity_type}|${row.entity_id}|${row.chunk_kind}`,
   row,
@@ -146,6 +196,11 @@ const changed = validChunks.filter((item) => {
   const prior = existingByKey.get(`${item.entity_type}|${item.entity_id}|${item.chunk_kind}`);
   return prior?.content_hash !== item.content_hash || prior?.embedding_model !== embeddingModel;
 });
+const validKeys = new Set(validChunks.map((item) => `${item.entity_type}|${item.entity_id}|${item.chunk_kind}`));
+const managedEntityTypes = new Set(['destination', 'destination_context', 'place', 'event', 'experience', 'neighborhood']);
+const obsolete = (existing ?? []).filter((item) =>
+  managedEntityTypes.has(item.entity_type)
+  && !validKeys.has(`${item.entity_type}|${item.entity_id}|${item.chunk_kind}`));
 
 for (let start = 0; start < changed.length; start += 32) {
   const batch = changed.slice(start, start + 32);
@@ -170,4 +225,10 @@ for (let start = 0; start < changed.length; start += 32) {
   console.log(`Indexed ${Math.min(start + batch.length, changed.length)}/${changed.length} changed chunks`);
 }
 
-console.log(`Knowledge index ready: ${validChunks.length} total, ${changed.length} embedded or refreshed.`);
+for (let start = 0; start < obsolete.length; start += 100) {
+  const ids = obsolete.slice(start, start + 100).map((item) => item.id).filter(Boolean);
+  if (!ids.length) continue;
+  await rest(`assistant_knowledge_chunks?id=in.(${ids.join(',')})`, { method: 'DELETE' });
+}
+
+console.log(`Knowledge index ready: ${validChunks.length} total, ${changed.length} embedded or refreshed, ${obsolete.length} obsolete chunks removed.`);

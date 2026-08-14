@@ -21,12 +21,15 @@ const replayEnabled =
 const EXCLUDED_ROUTES = new Set([
   '/auth/login',
   '/auth/callback',
+  '/ask',
   '/quiz',
   '/quiz/results',
   '/profile',
   '/settings',
   '/settings/integrations',
   '/invite',
+  '/inspiration',
+  '/inspiration/[importId]',
   '/share/[tripId]',
   '/trips/new',
   '/trips/[tripId]',
@@ -39,7 +42,7 @@ function ReplayRouteGuard() {
 
   useEffect(() => {
     const route = normalizeAnalyticsRoute(pathname);
-    if (EXCLUDED_ROUTES.has(route) || route.startsWith('/trips/')) {
+    if (EXCLUDED_ROUTES.has(route) || route.startsWith('/trips/') || route.startsWith('/inspiration/')) {
       void posthog.optOut();
     } else {
       void posthog.optIn();

@@ -7,9 +7,13 @@ const ROOT = process.cwd();
 const DESTINATIONS_PATH = resolve(ROOT, 'fixtures/seed/destinations.json');
 const SCORING_PATH = resolve(ROOT, 'fixtures/seed/destinations.scoring.json');
 const PROVIDER_ENRICHMENT_PATH = resolve(ROOT, 'fixtures/catalog/destination-provider-enrichment.json');
+const EDITORIAL_RESEARCH_PATH = resolve(ROOT, 'fixtures/catalog/destination-editorial-research.json');
 const REVIEWED_AT = '2026-08-12T00:00:00.000Z';
 const PROVIDER_ENRICHMENT = existsSync(PROVIDER_ENRICHMENT_PATH)
   ? JSON.parse(readFileSync(PROVIDER_ENRICHMENT_PATH, 'utf8'))
+  : {};
+const EDITORIAL_RESEARCH = existsSync(EDITORIAL_RESEARCH_PATH)
+  ? JSON.parse(readFileSync(EDITORIAL_RESEARCH_PATH, 'utf8'))
   : {};
 
 const CLIMATES = {
@@ -82,6 +86,23 @@ function source(type, label, url) {
   return { type, label, url, accessedAt: REVIEWED_AT.slice(0, 10) };
 }
 
+const RESEARCH_SOURCE_TYPES = {
+  official_tourism: 'official_tourism', event_organizer: 'event_organizer', venue: 'venue',
+  government: 'government', human_rights: 'human_rights', local_advocacy: 'local_advocacy',
+  transport: 'transport', accessibility: 'accessibility', other: 'editorial_research',
+};
+
+function researchSources(research) {
+  if (research?.researchStatus !== 'requires_human_review') return [];
+  const accessedAt = String(research.researchedAt ?? REVIEWED_AT).slice(0, 10);
+  return (research.sources ?? []).flatMap((item) => item?.url && item?.title && item.verificationStatus !== 'broken' ? [{
+    type: RESEARCH_SOURCE_TYPES[item.kind] ?? 'editorial_research',
+    label: item.title,
+    url: item.url,
+    accessedAt,
+  }] : []);
+}
+
 const COMMUNITY_LANGUAGE = /\b(lgbtq|lgbt|queer|gay|lesbian|trans|pride|community life|queer history|nightlife anchor|social glue)\b/i;
 const GENERIC_PLACE_LANGUAGE = /included as (?:a strong|a broader) destination anchor/i;
 const COMMUNITY_SOURCE_TYPES = new Set(['human_rights', 'ilga', 'local_advocacy', 'government', 'comparative_index']);
@@ -119,6 +140,9 @@ function catalogPulseComponents(places, events, sources) {
 function buildDestination(author) {
   const climate = CLIMATES[author.climate];
   if (!climate) throw new Error(`Unknown climate profile ${author.climate} for ${author.slug}`);
+  const editorialResearch = EDITORIAL_RESEARCH[author.slug]?.researchStatus === 'requires_human_review'
+    ? EDITORIAL_RESEARCH[author.slug]
+    : null;
   const sources = [
     source('official_tourism', `${author.name} official tourism`, author.tourismUrl),
     source('local_advocacy', `${author.name} LGBTQ+ community source`, author.communityUrl),
@@ -126,44 +150,63 @@ function buildDestination(author) {
     source('comparative_index', 'Spartacus Gay Travel Index 2026', 'https://spartacus.gayguide.travel/gaytravelindex.pdf'),
     source('openstreetmap', 'OpenStreetMap © contributors', 'https://www.openstreetmap.org/copyright'),
     source('weather', 'Open-Meteo', 'https://open-meteo.com/'),
-  ];
+    ...researchSources(editorialResearch),
+  ].filter((item, index, all) => all.findIndex((candidate) => candidate.url === item.url) === index);
   const restrictive = author.legalStatus === 'criminalized' || author.legalStatus === 'heavily_criminalized';
   const sameSexRecognition = author.legalStatus === 'marriage_equality' || author.legalStatus === 'civil_union';
   const destinationId = uuidFor(`destination:${author.slug}`);
+  const researchedNeighborhoods = new Map((editorialResearch?.neighborhoods ?? []).map((item) => [item.name.toLowerCase(), item]));
+  const researchedPlaces = new Map((editorialResearch?.places ?? []).map((item) => [item.name.toLowerCase(), item]));
+  const researchedEvents = new Map((editorialResearch?.events ?? []).map((item) => [item.name.toLowerCase(), item]));
   const neighborhoods = author.neighborhoods.map((name, index) => ({
     id: uuidFor(`neighborhood:${author.slug}:${name}`),
     name,
     slug: name.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
-    summary: `${name} is one of the most useful areas for understanding ${author.name}'s ${index === 0 ? 'social and cultural rhythm' : 'broader neighborhood character'}.`,
+    summary: researchedNeighborhoods.get(name.toLowerCase())?.summary
+      ?? `${name} is one of the most useful areas for understanding ${author.name}'s ${index === 0 ? 'social and cultural rhythm' : 'broader neighborhood character'}.`,
     vibeTags: author.interests.slice(index * 2, index * 2 + 3),
     lat: Number((author.lat + (index === 0 ? 0.006 : -0.007)).toFixed(5)),
     lng: Number((author.lng + (index === 0 ? 0.006 : -0.007)).toFixed(5)),
     validationStatus: 'pending_google_places',
   }));
-  const places = author.places.map(([name, category], index) => ({
+  const places = author.places.map(([name, category], index) => {
+    const researched = researchedPlaces.get(name.toLowerCase());
+    return ({
     id: uuidFor(`place:${author.slug}:${name}`),
     name,
     category: category === 'community' ? 'other' : category,
     address: `${name}, ${author.name}`,
-    summary: `${name} is a useful ${category === 'community' ? 'community reference point' : `${category} stop`} for a ${author.name} itinerary. Verify hours, access, and current operating status before visiting.`,
+    summary: researched?.summary
+      ?? `${name} is a useful ${category === 'community' ? 'community reference point' : `${category} stop`} for a ${author.name} itinerary. Verify hours, access, and current operating status before visiting.`,
     lgbtqRelevance: category === 'community' || category === 'bar'
       ? 'Included for its direct connection to local LGBTQ+ community life.'
       : 'Included as a strong destination anchor; individual welcome and access should be checked directly.',
     estimatedCostUsd: category === 'museum' ? 20 : category === 'restaurant' || category === 'bar' ? 30 : 0,
     durationMinutes: category === 'park' || category === 'beach' ? 120 : 90,
     providerValidationStatus: 'pending',
+    ...(researched?.officialUrl ? { websiteUri: researched.officialUrl } : {}),
+    ...(researched?.accessibilityNote ? { accessibilityNotes: researched.accessibilityNote } : {}),
     imageUrls: [],
-  }));
-  const events = author.events.map(([title, month, category]) => ({
+  });
+  });
+  const events = author.events.map(([title, month, category]) => {
+    const researched = researchedEvents.get(title.toLowerCase());
+    const startDate = researched?.nextStartDate ?? `2027-${String(month).padStart(2, '0')}-01`;
+    const endDate = researched?.nextEndDate ?? startDate;
+    return ({
     id: uuidFor(`event:${author.slug}:${title}`),
     title,
-    startDate: `2027-${String(month).padStart(2, '0')}-01`,
-    endDate: `2027-${String(month).padStart(2, '0')}-01`,
+    startDate,
+    endDate,
     category,
-    summary: `${title} is an annual ${author.name} event. The month is useful for planning, but exact dates must be verified with the organizer before booking.`,
+    summary: researched?.planningNote
+      ?? `${title} is an annual ${author.name} event. The month is useful for planning, but exact dates must be verified with the organizer before booking.`,
     estimatedCostUsd: 0,
+    ...(researched?.organizerUrl ? { sourceUrl: researched.organizerUrl } : {}),
+    researchScheduleStatus: researched?.scheduleStatus ?? 'not_researched',
     scheduleStatus: 'estimated',
-  }));
+  });
+  });
   const daily = author.costs;
   const destination = {
     id: destinationId,
@@ -179,7 +222,7 @@ function buildDestination(author) {
     catalogFreshness: author.catalogFreshness ?? {
       legalContextReviewedAt: null,
       venuesReviewedAt: null,
-      eventsReviewedAt: null,
+      eventsReviewedAt: editorialResearch?.researchedAt ?? null,
       pricingReviewedAt: REVIEWED_AT,
       climateReviewedAt: REVIEWED_AT,
     },
@@ -187,7 +230,7 @@ function buildDestination(author) {
     lng: author.lng,
     timezone: author.timezone,
     currency: author.currency,
-    editorialSummary: author.summary,
+    editorialSummary: editorialResearch?.editorialOverview ?? author.summary,
     heroImageUrl: null,
     bestMonths: author.bestMonths,
     weatherProfile: { avgHighByMonth: climate.high, avgLowByMonth: climate.low },
@@ -211,14 +254,19 @@ function buildDestination(author) {
           : null,
       localVariation: author.context,
       neighborhoodNotes: neighborhoods.map((neighborhood) => `${neighborhood.name}: ${neighborhood.summary}`),
-      recentChanges: 'This catalog-expansion record requires final human review before publication.',
+      recentChanges: editorialResearch
+        ? `Current editorial research was gathered ${String(editorialResearch.researchedAt).slice(0, 10)} and still requires human review before publication.`
+        : 'This catalog-expansion record requires final human review before publication.',
       emergencyResources: [{ name: 'ILGA World Database', url: 'https://database.ilga.org/en' }],
       embassyGuidanceUrl: `https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages.html`,
-      sources: sources.slice(1, 4).map((item) => ({ title: item.label, url: item.url, accessedAt: item.accessedAt })),
+      sources: sources
+        .filter((item) => ['local_advocacy', 'human_rights', 'government', 'comparative_index', 'ilga'].includes(item.type))
+        .slice(0, 8)
+        .map((item) => ({ title: item.label, url: item.url, accessedAt: item.accessedAt })),
       lastReviewedAt: REVIEWED_AT,
       dataLabel: 'editorial_draft',
       travelerAdvisoryLevel: author.advisory,
-      humanRightsSummary: author.context,
+      humanRightsSummary: editorialResearch?.lgbtqContextUpdate ?? author.context,
       advocacyNotes: `Review current guidance from the linked local community source: ${author.communityUrl}`,
       recentRelevantEvents: [],
     },
@@ -228,6 +276,14 @@ function buildDestination(author) {
       brailleAvailable: false,
       notes: 'Accessibility varies by venue and transport provider. Verify step-free access and accommodations directly before booking.',
     },
+    ...(editorialResearch ? {
+      practical: editorialResearch.practical,
+      editorialResearch: {
+        status: 'requires_human_review',
+        researchedAt: editorialResearch.researchedAt,
+        sourceCount: editorialResearch.sources?.length ?? 0,
+      },
+    } : {}),
     neighborhoods,
     places,
     events,

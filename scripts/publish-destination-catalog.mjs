@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { placeMetadataCompleteness, placeSourceIds } from './lib/place-intelligence.mjs';
 
 const dryRun = process.argv.includes('--dry-run');
 const projectUrl = (process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL ?? '').replace(/\/$/, '');
@@ -147,6 +148,24 @@ for (const destination of destinations) {
     lat: place.lat ?? null,
     lng: place.lng ?? null,
     summary: place.summary ?? null,
+    provider_place_id: place.providerPlaceId ?? null,
+    primary_type: place.primaryType ?? place.category ?? null,
+    neighborhood: place.neighborhood ?? null,
+    lgbtq_relevance: place.lgbtqRelevance ?? null,
+    estimated_cost_usd: place.estimatedCostUsd ?? null,
+    duration_minutes: place.durationMinutes ?? null,
+    accessibility_notes: place.accessibilityNotes ?? null,
+    website_uri: place.websiteUri ?? null,
+    google_maps_uri: place.googleMapsUri ?? null,
+    rating: place.rating ?? null,
+    review_count: place.reviewCount ?? null,
+    price_level: place.priceLevel ?? null,
+    business_status: place.businessStatus ?? null,
+    opening_hours: place.openingHours ?? [],
+    attributes: place.attributes ?? {},
+    source_ids: placeSourceIds(place, uniqueSources(destination).map((source) => source.url ?? source.title)),
+    verified_at: place.verifiedAt ?? destination.dataFreshness ?? null,
+    metadata_completeness: placeMetadataCompleteness(place),
     payload: place,
     published: true,
     deleted_at: null,

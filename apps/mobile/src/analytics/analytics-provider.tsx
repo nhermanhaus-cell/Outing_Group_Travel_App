@@ -350,12 +350,15 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
   const resetIdentity = useCallback(async () => {
     await flush();
+    queueRef.current = [];
+    setQueueDepth(0);
     subjectIdRef.current = Crypto.randomUUID();
     sessionIdRef.current = Crypto.randomUUID();
     preferencesRef.current = {};
     setPreferenceSignals([]);
     await Promise.all([
       AsyncStorage.setItem(SUBJECT_KEY, subjectIdRef.current),
+      AsyncStorage.removeItem(QUEUE_KEY),
       AsyncStorage.removeItem(PREFERENCES_KEY),
     ]);
   }, [flush]);

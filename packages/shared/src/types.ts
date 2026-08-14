@@ -62,6 +62,23 @@ export type VacationStyle =
   | 'spontaneous'
   | 'photogenic';
 
+export interface TripEssential {
+  id: string;
+  label: string;
+  kind: 'place' | 'activity';
+  source: 'google_places' | 'user';
+  providerPlaceId?: string;
+  address?: string;
+  lat?: number;
+  lng?: number;
+  category?: PlaceCategory;
+  summary?: string;
+  imageUrl?: string;
+  imageAttribution?: string;
+  googleMapsUri?: string;
+  verifiedAt?: string;
+}
+
 export interface TripPlanningPreferences {
   goals: TripGoal[];
   vacationStyles: VacationStyle[];
@@ -70,6 +87,7 @@ export interface TripPlanningPreferences {
   avoidances: string[];
   hallmarkIds: string[];
   hallmarkNames: string[];
+  customEssentials?: TripEssential[];
   freeformWish?: string;
 }
 
@@ -298,9 +316,27 @@ export interface Place {
   fixedStartTimes?: string[];
   timezone?: string;
   bookingOffer?: BookableOffer;
+  /** Explainable-ranking metadata. Provider facts remain authoritative. */
+  fitReasons?: string[];
+  /** Confidence that identity and recommendation metadata are sufficient for planning. */
+  confidence?: number;
+  routeTimeMinutes?: number;
+  freshness?: 'live' | 'recent' | 'cached' | 'stale' | 'limited';
+  neighborhood?: string;
+  providerDisclosure?: string;
 }
 
-export type ActivityPreferenceChoice = 'interested' | 'not_interested';
+export type ActivityPreferenceChoice =
+  | 'very_interested'
+  | 'interested'
+  | 'neutral'
+  | 'uninterested'
+  | 'very_uninterested'
+  /** Legacy values accepted for backward-compatible decoding. */
+  | 'must_do'
+  | 'maybe'
+  | 'not_for_this_trip'
+  | 'not_interested';
 
 export interface ActivityPreferenceVote {
   placeId: string;

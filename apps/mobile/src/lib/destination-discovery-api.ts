@@ -29,7 +29,28 @@ async function installationId(): Promise<string> {
 async function invoke(request: DestinationDiscoveryRequest) {
   if (!supabase) throw new DestinationDiscoveryError('Outing is not connected.', 'NOT_CONFIGURED');
   const { data, error } = await supabase.functions.invoke('destination-discovery', { body: request });
-  if (error) throw new DestinationDiscoveryError(error.message);
+  if (error) {
+    let serverMessage: string | undefined;
+    let serverCode: string | undefined;
+    const context = (error as { context?: Response }).context;
+    if (context && typeof context.clone === 'function') {
+      try {
+        const payload = await context.clone().json() as { error?: unknown; code?: unknown };
+        serverMessage = typeof payload.error === 'string' ? payload.error : undefined;
+        serverCode = typeof payload.code === 'string' ? payload.code : undefined;
+      } catch {
+        // A provider or gateway may return plain text. Keep the user-facing
+        // fallback below rather than exposing transport implementation copy.
+      }
+    }
+    const technicalMessage = serverMessage ?? error.message;
+    const publicMessage = /authentication required/i.test(technicalMessage)
+      ? 'Sign in to generate and save this destination guide.'
+      : /too many destination searches/i.test(technicalMessage)
+        ? 'You’ve searched for several new places. Try again in a minute.'
+        : 'Outing couldn’t verify that city right now. Check your connection and try again.';
+    throw new DestinationDiscoveryError(publicMessage, serverCode ?? 'DESTINATION_DISCOVERY_UNAVAILABLE');
+  }
   if (data && typeof data === 'object' && typeof data.error === 'string') {
     throw new DestinationDiscoveryError(data.error, typeof data.code === 'string' ? data.code : undefined);
   }

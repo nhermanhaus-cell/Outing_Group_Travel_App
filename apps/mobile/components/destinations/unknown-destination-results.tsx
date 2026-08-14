@@ -121,7 +121,22 @@ export function UnknownDestinationResults({ query, enabled, returnPath }: Props)
           <Text variant="bodySm" style={{ color: colors.error }}>
             {(claim.error ?? matches.error) instanceof Error ? (claim.error ?? matches.error)!.message : 'Destination search is unavailable.'}
           </Text>
-          <Button size="sm" variant="secondary" onPress={() => matches.refetch()}>Try again</Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            onPress={() => {
+              if (claim.error && claim.variables) {
+                const variables = claim.variables;
+                claim.reset();
+                claim.mutate(variables);
+                return;
+              }
+              claim.reset();
+              void matches.refetch();
+            }}
+          >
+            Try again
+          </Button>
         </View>
       ) : matches.data?.length ? (
         matches.data.map((match) => (

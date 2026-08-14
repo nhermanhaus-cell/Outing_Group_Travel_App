@@ -1,0 +1,20 @@
+appId: com.gayi.app
+---
+- launchApp
+- tapOn: "Trips"
+- tapOn:
+    index: 0
+- tapOn:
+    text: "Taste Deck"
+    optional: true
+- assertVisible:
+    text: "Why this fits"
+    optional: true
+- assertVisible: "Not this trip"
+- assertVisible: "Maybe"
+- assertVisible: "Interested"
+- assertVisible: "Must do"
+- tapOn: "Must do"
+- assertNotVisible:
+    text: "Group so far:"
+    optional: true

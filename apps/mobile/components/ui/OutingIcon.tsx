@@ -11,7 +11,13 @@ export type OutingIconName =
   | 'vote'
   | 'spark'
   | 'bookmark'
-  | 'arrow';
+  | 'arrow'
+  | 'close'
+  | 'image'
+  | 'link'
+  | 'pin'
+  | 'heart'
+  | 'undo';
 
 export function OutingIcon({
   name,
@@ -75,6 +81,22 @@ export function OutingIcon({
       {name === 'spark' ? <Path d="M12 2c.5 5.8 3.2 8.5 9 9-5.8.5-8.5 3.2-9 9-.5-5.8-3.2-8.5-9-9 5.8-.5 8.5-3.2 9-9z" {...common} /> : null}
       {name === 'bookmark' ? <Path d="M6 3.5h12v17l-6-4-6 4z" {...common} /> : null}
       {name === 'arrow' ? <Path d="m8 4 8 8-8 8M4 12h12" {...common} /> : null}
+      {name === 'close' ? <Path d="m5 5 14 14M19 5 5 19" {...common} /> : null}
+      {name === 'image' ? (
+        <>
+          <Path d="M4 4h16v16H4zM4 17l4.5-5 3.5 3 2.5-2.5L20 18" {...common} />
+          <Circle cx="15.5" cy="8.5" r="1.5" {...common} />
+        </>
+      ) : null}
+      {name === 'link' ? <Path d="M9.5 14.5 14.5 9M7.5 16.5l-1 1a3.5 3.5 0 0 1-5-5l4-4a3.5 3.5 0 0 1 5 0M16.5 7.5l1-1a3.5 3.5 0 0 1 5 5l-4 4a3.5 3.5 0 0 1-5 0" {...common} /> : null}
+      {name === 'pin' ? (
+        <>
+          <Path d="M12 22s7-6.1 7-13a7 7 0 1 0-14 0c0 6.9 7 13 7 13z" {...common} />
+          <Circle cx="12" cy="9" r="2.2" {...common} />
+        </>
+      ) : null}
+      {name === 'heart' ? <Path d="M12 20.5 4.7 13.7A5.2 5.2 0 0 1 12 6.4a5.2 5.2 0 0 1 7.3 7.3z" {...common} /> : null}
+      {name === 'undo' ? <Path d="M9 7 4 12l5 5M5 12h7.5a6.5 6.5 0 0 1 6.5 6.5" {...common} /> : null}
     </Svg>
   );
 }

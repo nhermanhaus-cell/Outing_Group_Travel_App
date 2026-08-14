@@ -25,6 +25,10 @@ export type {
   TripPlanBookingAction,
   TripPlanDay,
   TripPlanFeedback,
+  TripPlanDayReworkAction,
+  TripPlanItemEditAction,
+  TripPlanProposalAction,
+  TripPlanPreviewProposal,
   TripPlanReaction,
   TripPublicPayload,
   WeightConfig,
@@ -81,16 +85,28 @@ export { estimateBudget } from './budget/engine';
 export type { BudgetEngineInput } from './budget/engine';
 
 // ─── Itinerary ────────────────────────────────────────────────────────────────
-export { generateItinerary } from './itinerary/engine';
+export {
+  generateItinerary,
+  hasImplausibleItineraryTime,
+  isPlaceOpenForVisit,
+} from './itinerary/engine';
 export type { ItineraryInput } from './itinerary/engine';
 export type { ItineraryRouteEstimate } from './itinerary/engine';
 export {
   createLegacyTripPlan,
   buildActivityPreferenceSignals,
+  isActivityPreferenceSessionComplete,
+  itineraryItemId,
+  normalizeActivityPreferenceChoice,
   generateTripPlan,
   refineTripPlan,
   replaceTripPlanItems,
+  createTripPlanReworkPreview,
+  decodeTripPlan,
 } from './itinerary/tripPlan';
+
+export { deriveHomeJourney } from './journey/homeJourney';
+export type { HomeJourneyResult, HomeJourneyTripInput } from './journey/homeJourney';
 export type {
   ActivityPreferenceSignals,
   PlannerTraveler,
