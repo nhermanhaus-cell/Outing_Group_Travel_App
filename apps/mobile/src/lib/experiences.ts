@@ -7,6 +7,7 @@ import {
 } from './travel-api';
 import { isExactViatorProductUrl } from '@gayi/shared';
 import { cleanExperienceText, compactExperienceSummary } from './experience-content';
+import { dedupeSimilarExperiences } from './experience-deduplication';
 export { isExactViatorProductUrl } from '@gayi/shared';
 
 export interface MobileExperience {
@@ -280,14 +281,9 @@ export async function loadDestinationExperiences(
       limit: Math.min(12, Math.max(1, limit)),
       currency,
     }, signal);
-    const seen = new Set<string>();
-    const live = result.products
+    const live = dedupeSimilarExperiences(result.products
       .map((product) => mapApiExperience(product, destinationSlug))
-      .filter((product) => {
-        if (seen.has(product.id)) return false;
-        seen.add(product.id);
-        return true;
-      })
+    )
       .slice(0, limit);
     if (live.length > 0) {
       return {

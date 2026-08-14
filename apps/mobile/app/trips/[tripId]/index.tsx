@@ -7,14 +7,13 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   blendGroupPreferences,
   buildActivityPreferenceSignals,
   createTripPlanReworkPreview,
-  estimateBudget,
   generateTripPlan,
   hasImplausibleItineraryTime,
   normalizeActivityPreferenceChoice,
@@ -22,8 +21,6 @@ import {
   suggestQueerNeighborhoods,
 } from '@gayi/domain';
 import type {
-  BudgetEngineInput,
-  FreeWindowSuggestion,
   ItineraryItem,
   TripPlan,
   TripPlanInput,
@@ -33,7 +30,7 @@ import type {
 import { useTheme } from '../../../src/theme/ThemeProvider';
 import { useAuth, useTravelProfile, useTrips } from '../../../src/providers/AppProviders';
 import { useDestinations } from '../../../src/providers/AppProviders';
-import { canDeleteTrip } from '../../../src/lib/tripPermissions';
+import { canDeleteTrip, tripPlanChangeRequiresVote } from '../../../src/lib/tripPermissions';
 import { Text } from '../../../components/ui/Text';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
@@ -111,6 +108,11 @@ import {
 } from '../../../src/lib/trip-hub-navigation';
 import { formatClockTime, formatMoney, formatMoneyRange } from '../../../src/lib/display-format';
 import { useDisplayPreferences } from '../../../src/lib/display-preferences';
+import {
+  buildTripBudget,
+  googleFlightsRoundTripUrl,
+  validGoogleFlightsEstimate,
+} from '../../../src/lib/trip-budget';
 
 type HubSectionKey = 'plan' | 'explore' | 'group';
 
@@ -232,8 +234,8 @@ export default function TripHubScreen() {
   const [lodgingGeocodeStatus, setLodgingGeocodeStatus] = useState<GeocodeStatus>('idle');
   const [liveNearbyPlaces, setLiveNearbyPlaces] = useState<NearbyPlaceResult[]>([]);
   const [liveInterestPlaces, setLiveInterestPlaces] = useState<NearbyPlaceResult[]>([]);
-  const [travelMode, setTravelMode] = useState<TravelMode | 'auto'>(profile.preferredTransportMode ?? 'auto');
-  const [legModeOverrides, setLegModeOverrides] = useState<Record<string, TravelMode>>({});
+  const [travelMode] = useState<TravelMode | 'auto'>(profile.preferredTransportMode ?? 'auto');
+  const [legModeOverrides] = useState<Record<string, TravelMode>>({});
   const [travelLegsByDay, setTravelLegsByDay] = useState<Record<number, TravelLeg[]>>({});
   const [selectedItineraryDay, setSelectedItineraryDay] = useState(1);
   const [selectedMapMarkerId, setSelectedMapMarkerId] = useState<string | null>(null);
@@ -273,31 +275,6 @@ export default function TripHubScreen() {
   }, [section, track]);
 
   const trip = getTrip(tripId ?? '');
-  const assistantTripInsights = useQuery({
-    queryKey: ['assistant-insights', 'trip', trip?.tripId, user?.id],
-    queryFn: ({ signal }) => loadAssistantInsights({
-      surface: 'trip',
-      tripId: trip!.tripId,
-      trigger: 'screen',
-      force: false,
-    }, signal),
-    enabled: Boolean(user && trip && featureFlags.proactiveInsightsV1),
-    staleTime: 5 * 60_000,
-    retry: 1,
-  });
-  const assistantTripAudit = useQuery({
-    queryKey: ['assistant-insights', 'trip-audit-v1', trip?.tripId, user?.id, trip?.tripPlan?.revision],
-    queryFn: ({ signal }) => loadAssistantInsights({
-      surface: 'trip',
-      tripId: trip!.tripId,
-      trigger: 'screen',
-      intent: { kind: 'audit' },
-      force: false,
-    }, signal),
-    enabled: Boolean(user && trip && featureFlags.tripAuditV1),
-    staleTime: 5 * 60_000,
-    retry: 1,
-  });
   const assistantGroupBrief = useQuery({
     queryKey: ['assistant-insights', 'group-brief-v1', trip?.tripId, user?.id, trip?.polls?.length, trip?.members?.length],
     queryFn: ({ signal }) => loadAssistantInsights({
@@ -311,8 +288,6 @@ export default function TripHubScreen() {
     staleTime: 5 * 60_000,
     retry: 1,
   });
-  const activityInsight = assistantTripInsights.data?.insights.find((insight) => insight.kind === 'activity_options');
-  const auditInsight = assistantTripAudit.data?.insights.find((insight) => insight.kind === 'trip_audit');
   const groupInsight = assistantGroupBrief.data?.insights.find((insight) => insight.kind === 'group_brief');
   const hasLodgingCoords = hasNumericCoords(trip?.lodgingLat, trip?.lodgingLng);
   const apiKeys = getApiKeyStatus();
@@ -468,7 +443,7 @@ export default function TripHubScreen() {
       destinationIata: destinationAirport!.iata.toUpperCase(),
       departureDate: trip!.startDate!,
       returnDate: trip!.endDate!,
-      adults: Math.min(9, Math.max(1, trip!.travelers)),
+      adults: Math.min(9, Math.max(1, Number.isFinite(trip!.travelers) ? Math.round(trip!.travelers) : 1)),
     }, signal),
     enabled: Boolean(
       trip?.origin?.match(/^[A-Za-z]{3}$/)
@@ -480,14 +455,37 @@ export default function TripHubScreen() {
     staleTime: 30 * 60_000,
     retry: 1,
   });
-  const roundTripFlightEstimate = roundTripFlightQuery.data?.estimate ?? undefined;
+  const roundTripFlightEstimate = validGoogleFlightsEstimate(roundTripFlightQuery.data?.estimate)
+    ? roundTripFlightQuery.data.estimate
+    : undefined;
 
   const destination = useMemo<Destination | null>(() => {
     if (!destScoring) return null;
     return destScoring as unknown as Destination;
   }, [destScoring]);
 
-  const glamour = (trip?.glamourLevel ?? 'comfortably_fabulous') as GlamourLevel;
+  const flightSearchUrl = useMemo(() => roundTripFlightEstimate?.googleFlightsUrl
+    ?? googleFlightsRoundTripUrl({
+      originIata: trip?.origin,
+      destinationIata: destinationAirport?.iata,
+      departureDate: trip?.startDate,
+      returnDate: trip?.endDate,
+    }), [
+    destinationAirport?.iata,
+    roundTripFlightEstimate?.googleFlightsUrl,
+    trip?.endDate,
+    trip?.origin,
+    trip?.startDate,
+  ]);
+
+  const tripBudget = useMemo(() => buildTripBudget({
+    destination,
+    glamourLevel: trip?.glamourLevel,
+    groupSize: trip?.travelers,
+    tripDurationDays: getDuration(trip?.startDate, trip?.endDate),
+    flightEstimate: roundTripFlightEstimate,
+  }), [destination, roundTripFlightEstimate, trip?.endDate, trip?.glamourLevel, trip?.startDate, trip?.travelers]);
+  const glamour = tripBudget.glamourLevel;
 
   const catalogPlaces = useMemo(
     () => (catalogDestination?.places ?? []) as Array<Record<string, unknown>>,
@@ -573,29 +571,7 @@ export default function TripHubScreen() {
     trip?.destinationSlug,
   ]);
 
-  const budget = useMemo(() => {
-    if (!destination) return null;
-    try {
-      const input: BudgetEngineInput = {
-        destination,
-        glamourLevel: glamour,
-        groupSize: trip?.travelers ?? 2,
-        tripDurationDays: getDuration(trip?.startDate, trip?.endDate),
-        ...(roundTripFlightEstimate?.currency === 'USD' ? {
-          categoryOverrides: {
-            flights: {
-              low: roundTripFlightEstimate.lowPrice,
-              high: roundTripFlightEstimate.highPrice,
-              assumption: `Observed per-traveler starting prices from a Google Flights round-trip search for ${roundTripFlightEstimate.originIata}–${roundTripFlightEstimate.destinationIata}. Final fare depends on the selected return flight.`,
-            },
-          },
-        } : {}),
-      };
-      return estimateBudget(input);
-    } catch {
-      return null;
-    }
-  }, [destination, glamour, roundTripFlightEstimate, trip]);
+  const budget = tripBudget.budget;
   const experienceBudgetCap = budget
     ? Math.max(50, Math.round(budget.perPerson.categories.activities.high * 0.65))
     : undefined;
@@ -607,7 +583,7 @@ export default function TripHubScreen() {
 
   const destinationExperiencesQuery = useQuery({
     queryKey: [
-      'destination-experiences-v4',
+      'destination-experiences-v5',
       catalogDestination?.slug,
       blendedPreferences?.interests ?? [],
       trip?.startDate,
@@ -756,10 +732,6 @@ export default function TripHubScreen() {
     [trip?.activityPreferences, trip?.members?.length, trip?.travelers],
   );
   const activityPreferenceMemberId = user?.id ?? (trip ? `owner-${trip.tripId}` : 'owner');
-  const currentMemberActivityVotes = useMemo(
-    () => (trip?.activityPreferences ?? []).filter((vote) => vote.memberId === activityPreferenceMemberId),
-    [activityPreferenceMemberId, trip?.activityPreferences],
-  );
 
   const routeCandidatePoints = useMemo(() => {
     const lodging = trip && hasNumericCoords(trip.lodgingLat, trip.lodgingLng)
@@ -1110,8 +1082,7 @@ export default function TripHubScreen() {
 
   const acceptPlanPreview = useCallback(async () => {
     if (!trip || !planPreview) return;
-    const role = trip.members?.find((member) => member.id === user?.id)?.role;
-    const requiresVote = (trip.members?.length ?? trip.travelers) > 1 && role !== 'owner' && role !== 'organizer';
+    const requiresVote = tripPlanChangeRequiresVote(trip, user?.id);
     if (requiresVote) {
       const pollingProposal = { ...planPreview, status: 'polling' as const };
       await updateTrip(trip.tripId, {
@@ -1152,61 +1123,6 @@ export default function TripHubScreen() {
     });
     setPlanPreview(null);
   }, [planPreview, trip, updateTrip]);
-
-  const toggleFreeWindowSuggestion = useCallback(async (
-    suggestion: FreeWindowSuggestion,
-  ) => {
-    if (!trip || !activeTripPlan) return;
-    const memberId = user?.id ?? `owner-${trip.tripId}`;
-    const wasAccepted = suggestion.acceptedByMemberIds.includes(memberId);
-    const nextPlan: TripPlan = {
-      ...activeTripPlan,
-      revision: activeTripPlan.revision + 1,
-      generatedAt: new Date().toISOString(),
-      days: activeTripPlan.days.map((day) => ({
-        ...day,
-        freeWindowSuggestions: day.freeWindowSuggestions.map((candidate) => {
-          if (candidate.suggestionId !== suggestion.suggestionId) return candidate;
-          const accepted = candidate.acceptedByMemberIds.includes(memberId);
-          return {
-            ...candidate,
-            acceptedByMemberIds: accepted
-              ? candidate.acceptedByMemberIds.filter((id) => id !== memberId)
-              : [...candidate.acceptedByMemberIds, memberId],
-          };
-        }),
-      })),
-    };
-    await saveTripPlan(nextPlan);
-    if (wasAccepted) {
-      track(ANALYTICS_EVENTS.RECOMMENDATION_DISMISSED, {
-        recommendationType: 'free_window_suggestion',
-        category: suggestion.category,
-        reasonCode: 'unsaved',
-      });
-      observePreference({
-        subjectType: 'activity_category',
-        subjectKey: suggestion.category,
-        value: -0.6,
-        weight: 1,
-        source: 'dismiss',
-        observedAt: new Date().toISOString(),
-      });
-    } else {
-      track(ANALYTICS_EVENTS.FREE_WINDOW_SUGGESTION_ACCEPTED, {
-        category: suggestion.category,
-        attendance: suggestion.attendance,
-      });
-      observePreference({
-        subjectType: 'activity_category',
-        subjectKey: suggestion.category,
-        value: 0.8,
-        weight: 1,
-        source: 'accept',
-        observedAt: new Date().toISOString(),
-      });
-    }
-  }, [activeTripPlan, observePreference, saveTripPlan, track, trip, user?.id]);
 
   const lodgingStop = useMemo(() => {
     if (!trip || !hasNumericCoords(trip.lodgingLat, trip.lodgingLng)) return undefined;
@@ -1964,67 +1880,20 @@ export default function TripHubScreen() {
         {section === 'itinerary' && (
           <View style={{ gap: spacing.md }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
-              <Text variant="h3" style={{ flex: 1 }}>Your itinerary</Text>
-              <Button size="sm" variant="secondary" disabled={!trip.startDate || !itinerary?.length} onPress={() => setCalendarExportVisible(true)}>Add to calendar</Button>
+              <View style={{ flex: 1, gap: spacing.xxs }}>
+                <Text variant="h1">Your itinerary</Text>
+                <Text variant="bodySm" style={{ color: colors.textSecondary }}>Tap any time to shape that part of the day.</Text>
+              </View>
+              <Button size="sm" variant="secondary" disabled={activityCandidates.length === 0} onPress={() => setActivityDeckVisible(true)}>
+                Tune plan
+              </Button>
             </View>
             <View style={{ flexDirection: 'row', gap: spacing.sm }}>
               <TripShortcut icon="trips" label="Details" onPress={() => router.push({ pathname: '/trips/[tripId]', params: { tripId: trip.tripId, section: 'overview' } })} />
               <TripShortcut icon="pin" label="Map" onPress={() => router.push({ pathname: '/trips/[tripId]', params: { tripId: trip.tripId, section: 'map' } })} />
               <TripShortcut icon="bookmark" label="Budget" onPress={() => router.push({ pathname: '/trips/[tripId]', params: { tripId: trip.tripId, section: 'budget' } })} />
+              <TripShortcut icon="calendar" label="Calendar" onPress={() => setCalendarExportVisible(true)} disabled={!trip.startDate || !itinerary?.length} />
             </View>
-            {featureFlags.outingFullExperienceV1 && trip.tripPlan ? (
-              <Pressable onPress={() => router.push(`/trips/${trip.tripId}/today` as Href)} style={{ padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.poolLight, flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                <OutingIcon name="route" size={20} color={colors.pool} />
-                <View style={{ flex: 1 }}><Text variant="labelLg">Today</Text><Text variant="caption" style={{ color: colors.textSecondary }}>What’s next, when to leave, and nearby options</Text></View>
-                <OutingIcon name="arrow" size={16} color={colors.pool} />
-              </Pressable>
-            ) : null}
-            <View style={{ padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.backgroundSecondary }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                <View style={{ flex: 1, gap: spacing.xxs }}>
-                  <Text variant="labelLg">Activity mix</Text>
-                  <Text variant="caption" style={{ color: colors.textSecondary }}>
-                    {currentMemberActivityVotes.length
-                      ? `${currentMemberActivityVotes.length} ideas rated. Refine only if you want to.`
-                      : 'Optional: rate ideas to make this plan even more specific.'}
-                  </Text>
-                </View>
-                <Button size="sm" variant="secondary" disabled={activityCandidates.length === 0} onPress={() => setActivityDeckVisible(true)}>
-                  {currentMemberActivityVotes.length ? 'Refine' : 'Rate ideas'}
-                </Button>
-              </View>
-            </View>
-            {auditInsight?.decisionCard ? (
-              <DecisionBriefCard
-                card={auditInsight.decisionCard}
-                surface="trip"
-                onAction={(card) => router.push({ pathname: '/trips/[tripId]/ask', params: { tripId: trip.tripId, prompt: card.action?.value } })}
-              />
-            ) : null}
-            {activityInsight?.recommendations.length ? (
-              <Card elevated>
-                <View style={{ gap: spacing.md }}>
-                  <View style={{ gap: spacing.xs }}>
-                    <Text variant="labelSm" style={{ color: colors.plum }}>ASK OUTING PICKS</Text>
-                    <Text variant="h3">{activityInsight.title}</Text>
-                    <Text variant="bodySm" style={{ color: colors.textSecondary }}>{activityInsight.summary}</Text>
-                  </View>
-                  {activityInsight.recommendations.slice(0, 3).map((recommendation, index) => (
-                    <Pressable
-                      key={recommendation.id}
-                      onPress={() => router.push(`/trips/${trip.tripId}/ask`)}
-                      style={{ padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.backgroundSecondary, gap: spacing.xs }}
-                    >
-                      <Text variant="labelSm" style={{ color: colors.pool }}>OPTION {index + 1}</Text>
-                      <Text variant="labelLg">{recommendation.title}</Text>
-                      <Text variant="bodySm" style={{ color: colors.textSecondary }}>{recommendation.summary}</Text>
-                      <Text variant="caption" style={{ color: colors.pool }}>{recommendation.fitReasons.join(' · ')}</Text>
-                    </Pressable>
-                  ))}
-                  <Button size="sm" variant="secondary" onPress={() => router.push(`/trips/${trip.tripId}/ask`)}>Compare these with Ask Outing</Button>
-                </View>
-              </Card>
-            ) : null}
             {itinerary?.length && !trip.startDate ? <Text variant="caption" style={{ color: colors.textTertiary }}>Add trip dates before exporting calendar events.</Text> : null}
             {!destination ? (
               <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
@@ -2036,122 +1905,6 @@ export default function TripHubScreen() {
               </Text>
             ) : (
               <>
-                {activeTripPlan ? (
-                  <Card elevated>
-                    <View style={{ gap: spacing.sm }}>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm }}>
-                        <Text variant="labelLg" style={{ flex: 1 }}>Your group-first trip plan</Text>
-                        <Badge label={`Plan ${activeTripPlan.revision}`} variant="accent" />
-                      </View>
-                      <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-                        {activeTripPlan.summary}
-                      </Text>
-                      <Text variant="caption" style={{ color: colors.textTertiary }}>
-                        Shared anchors stay fixed in the group plan. Solo and subgroup ideas are optional suggestions inside free windows.
-                      </Text>
-                      {roundTripFlightEstimate ? (
-                        <View style={{ gap: spacing.sm, paddingTop: spacing.xs }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
-                            <Text variant="labelMd">Round-trip flight estimate</Text>
-                            <Badge label="Google Flights" variant="info" />
-                          </View>
-                          <Text variant="h3">
-                            {formatMoneyRange(roundTripFlightEstimate.lowPrice, roundTripFlightEstimate.highPrice, roundTripFlightEstimate.currency, displayPreferences.currency)}
-                          </Text>
-                          <Text variant="caption" style={{ color: colors.textSecondary }}>
-                            Per traveler · typical option {formatMoney(roundTripFlightEstimate.typicalPrice, roundTripFlightEstimate.currency, displayPreferences.currency)} · {roundTripFlightEstimate.optionCount} observed options
-                          </Text>
-                          <Text variant="caption" style={{ color: colors.textTertiary }}>
-                            {roundTripFlightEstimate.message}
-                          </Text>
-                          {roundTripFlightEstimate.options.length ? (
-                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
-                              {roundTripFlightEstimate.options.slice(0, 3).map((option, index) => (
-                                <Badge
-                                  key={`${option.airlineName ?? 'flight'}-${option.price}-${index}`}
-                                  label={`${option.airlineName ?? 'Flight'} · ${formatMoney(option.price, option.currency, displayPreferences.currency)}${option.stops === 0 ? ' · nonstop' : ''}`}
-                                  variant="default"
-                                />
-                              ))}
-                            </View>
-                          ) : null}
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onPress={() => {
-                              track(ANALYTICS_EVENTS.EXTERNAL_LINK_OPENED, {
-                                linkType: 'flight_search',
-                                provider: 'google_flights',
-                                sourceScreen: '/trips/[tripId]',
-                              });
-                              void Linking.openURL(roundTripFlightEstimate.googleFlightsUrl).catch(() => Alert.alert('Couldn’t open Google Flights'));
-                            }}
-                          >
-                            View these dates on Google Flights
-                          </Button>
-                        </View>
-                      ) : activeTripPlan.flightPriceGuidance ? (
-                        <View style={{ gap: spacing.xs, paddingTop: spacing.xs }}>
-                          <Text variant="labelMd">Flight guidance</Text>
-                          {activeTripPlan.flightPriceGuidance.currentPrice !== undefined ? (
-                            <Text variant="bodyMd">
-                              {formatMoney(activeTripPlan.flightPriceGuidance.currentPrice, activeTripPlan.flightPriceGuidance.currency ?? 'USD', displayPreferences.currency)}
-                              {' · indicative'}
-                            </Text>
-                          ) : null}
-                          <Text variant="caption" style={{ color: colors.textTertiary }}>
-                            {activeTripPlan.flightPriceGuidance.message}
-                          </Text>
-                          {activeTripPlan.flightPriceGuidance.trackingUrl ? (
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onPress={() => void Linking.openURL(activeTripPlan.flightPriceGuidance!.trackingUrl!).catch(() => Alert.alert('Couldn’t open flight tracking'))}
-                            >
-                              Track on Google Flights
-                            </Button>
-                          ) : null}
-                        </View>
-                      ) : roundTripFlightQuery.isLoading ? (
-                        <Text variant="caption" style={{ color: colors.textTertiary }}>Checking round-trip flight prices for your dates…</Text>
-                      ) : null}
-                    </View>
-                  </Card>
-                ) : null}
-
-                {activeTripPlan?.bookingTimeline.some((action) => action.status === 'open') ? (
-                  <Card>
-                    <View style={{ gap: spacing.sm }}>
-                      <Text variant="labelLg">Book and prepare</Text>
-                      {activeTripPlan.bookingTimeline
-                        .filter((action) => action.status === 'open')
-                        .map((action) => (
-                          <View key={action.actionId} style={{ gap: spacing.xxs }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
-                              <Badge label={formatTokenLabel(action.timing)} variant={action.timing === 'watch' ? 'info' : 'warning'} />
-                              <Text variant="labelMd" style={{ flex: 1 }}>{action.title}</Text>
-                            </View>
-                            <Text variant="caption" style={{ color: colors.textTertiary }}>{action.reason}</Text>
-                            {action.url ? (
-                              <Pressable onPress={() => void openBookingLink(
-                                action.url!,
-                                action.provider ?? 'direct',
-                                action.category,
-                              ).catch(() => Alert.alert('Couldn’t open booking link'))}>
-                                <Text variant="labelSm" style={{ color: colors.accent }}>
-                                  Open {action.provider ? formatTokenLabel(action.provider) : 'booking option'} →
-                                </Text>
-                              </Pressable>
-                            ) : null}
-                            {action.disclosure ? (
-                              <Text variant="caption" style={{ color: colors.textTertiary }}>{action.disclosure}</Text>
-                            ) : null}
-                          </View>
-                        ))}
-                    </View>
-                  </Card>
-                ) : null}
-
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.xs }}>
                   {Array.from(new Set(itinerary.map((item) => item.day))).map((day) => (
                     <Pressable key={day} onPress={() => setSelectedItineraryDay(day)} style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: radius.full, backgroundColor: selectedItineraryDay === day ? colors.accent : colors.backgroundSecondary }}>
@@ -2177,155 +1930,47 @@ export default function TripHubScreen() {
                       </View>
                       <View style={{ flexDirection: 'row', gap: spacing.sm }}>
                         <Button variant="secondary" style={{ flex: 1 }} onPress={() => void dismissPlanPreview()}>Keep current</Button>
-                        <Button style={{ flex: 1 }} onPress={() => void acceptPlanPreview()}>{(trip.members?.length ?? trip.travelers) > 1 && !['owner', 'organizer'].includes(trip.members?.find((member) => member.id === user?.id)?.role ?? '') ? 'Send to vote' : 'Use this plan'}</Button>
+                        <Button style={{ flex: 1 }} onPress={() => void acceptPlanPreview()}>{tripPlanChangeRequiresVote(trip, user?.id) ? 'Send to vote' : 'Use this plan'}</Button>
                       </View>
                     </View>
                   </Card>
                 ) : null}
-                {itineraryMarkers.length > 0 ? (
-                  <TripMap
-                    markers={[...(lodgingMarker ? [lodgingMarker] : []), ...selectedDayItineraryMarkers].map((marker) => ({
-                      id: marker.id,
-                      label: marker.label,
-                      lat: marker.lat,
-                      lng: marker.lng,
-                      kind: marker.kind === 'lodging' ? 'lodging' as const : 'itinerary' as const,
-                    }))}
-                    routeCoords={itineraryRouteCoords}
-                    height={240}
-                    fitTrigger={selectedItineraryDay}
-                    selectedMarkerId={selectedMapMarkerId}
-                    onSelectMarker={(marker) => setSelectedMapMarkerId(marker.id)}
-                  />
-                ) : null}
-
-                <View style={{ gap: spacing.sm }}>
-                  <Text variant="labelMd" style={{ color: colors.textSecondary }}>
-                    Travel time between stops
-                  </Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
-                    {(
-                      [
-                        { key: 'auto' as const, label: 'Auto' },
-                        { key: 'walking' as const, label: 'Walk' },
-                        { key: 'transit' as const, label: 'Transit' },
-                        { key: 'driving' as const, label: 'Drive' },
-                      ]
-                    ).map((opt) => {
-                      const active = travelMode === opt.key;
-                      return (
-                        <Pressable
-                          key={opt.key}
-                          onPress={() => setTravelMode(opt.key)}
-                          style={{
-                            paddingHorizontal: spacing.md,
-                            paddingVertical: spacing.sm,
-                            borderRadius: 999,
-                            borderWidth: 1.5,
-                            borderColor: active ? colors.accent : colors.border,
-                            backgroundColor: active ? colors.accentLight : colors.cardBackground,
-                          }}
-                        >
-                          <Text
-                            variant="labelMd"
-                            style={{ color: active ? colors.accent : colors.textPrimary }}
-                          >
-                            {opt.label}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </View>
-
-                <Button
-                  variant="secondary"
-                  onPress={() => {
-                    if (!trip || !generatedTripPlan || !activeTripPlan) return;
-                    if (!featureFlags.outingFullExperienceV1) {
-                      void saveTripPlan(generatedTripPlan);
-                      return;
-                    }
-                    setPlanPreview({
-                      proposalId: `optimize-${activeTripPlan.planId}-${Date.now()}`,
-                      tripId: trip.tripId,
-                      action: 'less_walking',
-                      day: selectedItineraryDay,
-                      priorPlanId: activeTripPlan.planId,
-                      priorRevision: activeTripPlan.revision,
-                      preview: generatedTripPlan,
-                      summary: 'Preview the re-optimized route and timing before replacing the accepted plan.',
-                      createdAt: new Date().toISOString(),
-                      status: 'preview',
-                    });
-                  }}
-                >
-                  Preview re-optimized stops
-                </Button>
-
-                {blendedPreferences ? (
-                  <Card>
-                    <View style={{ gap: spacing.sm }}>
-                      <Text variant="labelLg">Blended group preferences</Text>
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
-                        <Badge label={`Pace: ${formatPaceLabel(blendedPreferences.activityPace ?? 'balanced')}`} variant="accent" />
-                        <Badge label={`Nightlife: ${Math.round(blendedPreferences.nightlifeImportance * 100)}%`} variant="default" />
-                        <Badge label={`Group size: ${blendedPreferences.groupSize}`} variant="default" />
-                        <Badge label={`${liveInterestPlaces.length} Google matches`} variant={liveInterestPlaces.length > 0 ? 'info' : 'default'} />
-                        <Badge label={`${destinationExperiences.length} excursions`} variant={destinationExperiences.length > 0 ? 'warning' : 'default'} />
-                      </View>
-                      <Text variant="caption" style={{ color: colors.textTertiary }}>
-                        Interests: {blendedPreferences.interests.map((interest) => formatTokenLabel(interest)).join(', ')}
-                      </Text>
-                    </View>
-                  </Card>
-                ) : null}
-
                 {groupByDay(itinerary).filter(({ day }) => day === selectedItineraryDay).map(({ day, items }) => {
                   const dayLegs = travelLegsByDay[day] ?? [];
                   const dayPlan = activeTripPlan?.days.find((candidate) => candidate.day === day);
                   return (
                     <View key={day}>
-                      <View style={{ gap: spacing.xxs, marginBottom: spacing.sm }}>
-                        <Text variant="labelLg" style={{ color: colors.accent }}>
-                          Day {day}{dayPlan ? ` · ${dayPlan.title}` : ''}
-                        </Text>
+                      <View style={{ gap: spacing.sm, marginBottom: spacing.lg }}>
+                        <Text variant="labelSm" style={{ color: colors.accent, letterSpacing: 1.1 }}>DAY {day}</Text>
+                        <Text variant="h2">{dayPlan?.title ?? `Day ${day}`}</Text>
                         {dayPlan ? (
-                          <View style={{ gap: spacing.sm }}>
-                            <Text variant="caption" style={{ color: colors.textTertiary }}>{dayPlan.summary}</Text>
-                            {dayPlan.rationale ? <Text variant="bodySm" style={{ color: colors.textSecondary }}>{dayPlan.rationale}</Text> : null}
+                          <View style={{ gap: spacing.md }}>
+                            <Text variant="bodyMd" numberOfLines={2} style={{ color: colors.textSecondary }}>{dayPlan.summary}</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
                               {dayPlan.pace ? <Badge label={`${formatTokenLabel(dayPlan.pace)} pace`} variant="default" /> : null}
                               {dayPlan.estimatedTravelMinutes !== undefined ? <Badge label={`${dayPlan.estimatedTravelMinutes} min travel`} variant="info" /> : null}
-                              {dayPlan.reservationRisk ? <Badge label={`${formatTokenLabel(dayPlan.reservationRisk)} reservation risk`} variant={dayPlan.reservationRisk === 'high' ? 'warning' : 'default'} /> : null}
-                              {dayPlan.freshness ? <Badge label={`${dayPlan.freshness} data`} variant={dayPlan.freshness === 'stale' ? 'warning' : 'info'} /> : null}
                             </View>
-                            {dayPlan.fitReasons?.length ? <Text variant="caption" style={{ color: colors.pool }}>Why it fits: {dayPlan.fitReasons.join(' · ')}</Text> : null}
-                            {dayPlan.tradeoffs?.length ? <Text variant="caption" style={{ color: colors.textTertiary }}>Tradeoffs: {dayPlan.tradeoffs.join(' · ')}</Text> : null}
-                            {featureFlags.outingFullExperienceV1 ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.xs }}>
-                              {([
-                                ['less_walking', 'Less walking'], ['cheaper', 'Cheaper'], ['more_spontaneous', 'More spontaneous'],
-                                ['rainy_day', 'Rainy day'], ['later_start', 'Later start'], ['lighter_pace', 'Lighter pace'],
-                              ] as Array<[TripPlanDayReworkAction, string]>).map(([action, label]) => (
-                                <Pressable key={action} onPress={() => previewDayRework(day, action)}><Badge label={label} variant="outline" /></Pressable>
-                              ))}
-                              <Pressable onPress={() => router.push({ pathname: '/trips/[tripId]/ask', params: { tripId: trip.tripId, focusKind: 'day', focusAction: 'rework', day: String(day), prompt: `Help me improve Day ${day}` } })}><Badge label="Ask about this day" variant="accent" /></Pressable>
-                            </ScrollView> : null}
+                            {featureFlags.outingFullExperienceV1 ? (
+                              <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                                <Button size="sm" variant="secondary" style={{ flex: 1 }} onPress={() => previewDayRework(day, 'less_walking')}>Less walking</Button>
+                                <Button size="sm" variant="secondary" style={{ flex: 1 }} onPress={() => previewDayRework(day, 'later_start')}>Later start</Button>
+                                <Button size="sm" variant="ghost" style={{ flex: 1 }} onPress={() => router.push({ pathname: '/trips/[tripId]/ask', params: { tripId: trip.tripId, focusKind: 'day', focusAction: 'rework', day: String(day), prompt: `Help me adjust Day ${day}` } })}>More</Button>
+                              </View>
+                            ) : null}
                           </View>
                         ) : null}
                       </View>
                       {items.map((item, i) => {
                         const legAfter = dayLegs.find((leg) => leg.fromLabel === item.title);
                         const markerId = `itinerary-${item.placeId}-${item.day}-${item.time}`;
-                        const memberId = user?.id ?? `owner-${trip.tripId}`;
                         const freeWindowSuggestions = dayPlan?.freeWindowSuggestions.filter(
                           (suggestion) => suggestion.windowItemId === item.itemId,
                         ) ?? [];
                         return (
-                          <View key={`${item.placeId}-${item.time}`}>
+                          <View key={itineraryItemRouteId(item)}>
                             <View style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.sm }}>
-                              <View style={{ width: 44, alignItems: 'center' }}>
-                                <Text variant="caption" style={{ color: colors.textTertiary }}>{formatClockTime(item.time, displayPreferences.timeFormat)}</Text>
+                              <View style={{ width: 58, alignItems: 'center' }}>
+                                <Text variant="labelMd" style={{ color: colors.textPrimary }}>{formatClockTime(item.time, displayPreferences.timeFormat)}</Text>
                                 {i < items.length - 1 && (
                                   <View style={{ flex: 1, width: 1, backgroundColor: colors.border, marginTop: spacing.xs }} />
                                 )}
@@ -2340,105 +1985,40 @@ export default function TripHubScreen() {
                                 })}
                               >
                               <Card elevated={selectedMapMarkerId === markerId} style={selectedMapMarkerId === markerId ? { borderColor: colors.accent, borderWidth: 1.5 } : undefined}>
-                                <View style={{ gap: spacing.xs }}>
+                                <View style={{ gap: spacing.sm }}>
                                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-                                    <Text variant="labelLg" style={{ flex: 1 }}>{item.title}</Text>
+                                    <Text variant="h3" style={{ flex: 1 }}>{item.title}</Text>
                                     <OutingIcon name="arrow" size={17} color={colors.accent} />
                                   </View>
                                   {item.summary ? (
-                                    <Text variant="bodySm" numberOfLines={2} style={{ color: colors.textSecondary }}>{item.summary}</Text>
+                                    <Text variant="bodyMd" numberOfLines={1} style={{ color: colors.textSecondary }}>{item.summary}</Text>
                                   ) : null}
-                                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
-                                    {item.anchor ? <Badge label="Shared anchor" variant="accent" /> : null}
-                                    {item.kind === 'downtime' ? <Badge label="Group free window" variant="info" /> : null}
-                                    {item.attendance === 'group' ? <Badge label="Group plan" variant="default" /> : null}
-                                  </View>
-                                  <Text variant="caption" style={{ color: colors.textSecondary }}>
-                                    {item.category} · {item.duration}min
+                                  <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                                    {formatTokenLabel(item.category)} · {item.duration} min
                                     {item.windowEndTime ? ` · until ${formatClockTime(item.windowEndTime, displayPreferences.timeFormat)}` : ''}
                                   </Text>
-                                  <Text variant="labelSm" style={{ color: colors.accent }}>View details and shape this stop</Text>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
+                                    <Text variant="labelMd" style={{ color: colors.accent }}>
+                                      {item.kind === 'meal' ? 'Choose a restaurant' : item.kind === 'downtime' ? 'Add something here' : 'View details'}
+                                    </Text>
+                                    {item.anchor ? <Badge label="Anchor" variant="accent" /> : freeWindowSuggestions.length ? <Badge label={`${freeWindowSuggestions.length} ideas`} variant="info" /> : null}
+                                  </View>
                                 </View>
                               </Card>
                               </Pressable>
                             </View>
-                            {freeWindowSuggestions.length > 0 ? (
-                              <View style={{ marginLeft: 52, marginBottom: spacing.md, gap: spacing.sm }}>
-                                <Text variant="labelMd" style={{ color: colors.textSecondary }}>
-                                  Optional ideas during this free window
-                                </Text>
-                                {freeWindowSuggestions.map((suggestion) => {
-                                  const accepted = suggestion.acceptedByMemberIds.includes(memberId);
-                                  const suggestedFor = suggestion.suggestedFor
-                                    .map((person) => person.displayName ?? 'a traveler')
-                                    .join(', ');
-                                  return (
-                                    <Card key={suggestion.suggestionId}>
-                                      <View style={{ gap: spacing.xs }}>
-                                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
-                                          <Badge
-                                            label={suggestion.attendance === 'solo' ? 'Solo option' : 'Subgroup option'}
-                                            variant="info"
-                                          />
-                                          <Badge label={`Return by ${formatClockTime(suggestion.returnBy, displayPreferences.timeFormat)}`} variant="default" />
-                                        </View>
-                                        <Text variant="labelLg">{suggestion.title}</Text>
-                                        <Text variant="caption" style={{ color: colors.textSecondary }}>
-                                          Suggested for {suggestedFor} · start around {suggestion.suggestedStartTime}
-                                        </Text>
-                                        <Text variant="caption" style={{ color: colors.textTertiary }}>
-                                          {suggestion.durationMinutes} min there · {suggestion.outboundTravelMinutes + suggestion.returnTravelMinutes} min estimated round-trip travel
-                                        </Text>
-                                        <Text variant="caption" style={{ color: colors.textTertiary }}>
-                                          {suggestion.whySuggested}
-                                        </Text>
-                                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
-                                          <Pressable onPress={() => void toggleFreeWindowSuggestion(suggestion)}>
-                                            <Badge
-                                              label={accepted ? 'Saved for me' : 'Save for me'}
-                                              variant={accepted ? 'success' : 'default'}
-                                            />
-                                          </Pressable>
-                                          {suggestion.bookingOffer ? (
-                                            <Pressable onPress={() => void openBookingLink(
-                                              suggestion.bookingOffer!.url,
-                                              suggestion.bookingOffer!.provider,
-                                              suggestion.category,
-                                            ).catch(() => Alert.alert('Couldn’t open booking link'))}>
-                                              <Badge label={`View on ${formatTokenLabel(suggestion.bookingOffer.provider)}`} variant="warning" />
-                                            </Pressable>
-                                          ) : null}
-                                        </View>
-                                        {suggestion.bookingOffer?.disclosure ? (
-                                          <Text variant="caption" style={{ color: colors.textTertiary }}>
-                                            {suggestion.bookingOffer.disclosure}
-                                          </Text>
-                                        ) : null}
-                                      </View>
-                                    </Card>
-                                  );
-                                })}
-                              </View>
-                            ) : null}
                             {legAfter ? (
                               <View
                                 style={{
-                                  marginLeft: 52,
+                                  marginLeft: 66,
                                   marginBottom: spacing.md,
                                   paddingVertical: spacing.xs,
                                   paddingHorizontal: spacing.sm,
                                 }}
                               >
-                                <Text variant="caption" style={{ color: colors.accent }}>
-                                  → {legAfter.durationText} {legAfter.mode} · {legAfter.distanceText} to next{legAfter.estimated ? ' · estimated' : ''}
+                                <Text variant="bodySm" style={{ color: colors.accent }}>
+                                  {legAfter.durationText} by {legAfter.mode} to the next stop{legAfter.estimated ? ' · estimated' : ''}
                                 </Text>
-                                <View style={{ flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xs }}>
-                                  {(['walking', 'transit', 'driving'] as TravelMode[]).map((mode) => (
-                                    <Pressable key={mode} onPress={() => setLegModeOverrides((current) => ({ ...current, [`${day}:${legAfter.fromLabel}->${legAfter.toLabel}`]: mode }))}>
-                                      <Badge label={mode} variant={legAfter.mode === mode ? 'accent' : 'default'} />
-                                    </Pressable>
-                                  ))}
-                                </View>
                               </View>
                             ) : null}
                           </View>
@@ -2460,9 +2040,14 @@ export default function TripHubScreen() {
               Based on the {formatTokenLabel(glamour).toLowerCase()} travel style already selected for this trip.
             </Text>
             {!budget ? (
-              <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-                Set a destination with cost data to estimate budget.
-              </Text>
+              <Card>
+                <View style={{ gap: spacing.xs }}>
+                  <Text variant="labelLg">Budget is temporarily unavailable</Text>
+                  <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                    We couldn’t safely calculate this trip’s totals. Your trip is still intact—check that its destination and dates are set, then try again.
+                  </Text>
+                </View>
+              </Card>
             ) : (
               <View style={{ gap: spacing.md }}>
                 <Card elevated>
@@ -2480,7 +2065,9 @@ export default function TripHubScreen() {
                   <View style={{ gap: spacing.xs }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
                       <Text variant="labelLg">Round-trip flights</Text>
-                      {roundTripFlightEstimate?.currency === 'USD' ? <Badge label="Live estimate" variant="info" /> : <Badge label="Planning estimate" variant="default" />}
+                      {tripBudget.liveFlightApplied
+                        ? <Badge label="Google Flights estimate" variant="info" />
+                        : <Badge label="Planning estimate" variant="default" />}
                     </View>
                     <Text variant="h3">
                       {formatMoneyRange(budget.perPerson.categories.flights.low, budget.perPerson.categories.flights.high, 'USD', displayPreferences.currency)}
@@ -2491,8 +2078,19 @@ export default function TripHubScreen() {
                     <Text variant="caption" style={{ color: colors.textTertiary }}>
                       {budget.perPerson.categories.flights.assumption}
                     </Text>
+                    {roundTripFlightQuery.isFetching ? (
+                      <Text variant="caption" style={{ color: colors.accent }}>Checking current round-trip prices…</Text>
+                    ) : !tripBudget.liveFlightApplied ? (
+                      <Text variant="caption" style={{ color: colors.textTertiary }}>
+                        {roundTripFlightQuery.isError || roundTripFlightQuery.data?.unavailableReason
+                          ? 'Current pricing could not be loaded, so the total uses a route-independent planning range. Verify the live fare before booking.'
+                          : flightSearchUrl
+                            ? 'The total currently uses a planning range. Open Google Flights to verify live pricing for these dates.'
+                            : 'Add a three-letter departure airport and trip dates to check current Google Flights pricing.'}
+                      </Text>
+                    ) : null}
                     {displayPreferences.currency !== 'USD' ? <Text variant="caption" style={{ color: colors.textTertiary }}>Approximate display conversion from Outing’s USD planning estimate.</Text> : null}
-                    {roundTripFlightEstimate ? (
+                    {flightSearchUrl ? (
                       <Button
                         size="sm"
                         variant="secondary"
@@ -2502,16 +2100,16 @@ export default function TripHubScreen() {
                             provider: 'google_flights',
                             sourceScreen: '/trips/[tripId]/budget',
                           });
-                          void Linking.openURL(roundTripFlightEstimate.googleFlightsUrl).catch(() => Alert.alert('Couldn’t open Google Flights'));
+                          void Linking.openURL(flightSearchUrl).catch(() => Alert.alert('Couldn’t open Google Flights'));
                         }}
                       >
-                        Check exact flights
+                        View these dates on Google Flights
                       </Button>
                     ) : null}
                   </View>
                 </Card>
                 {Object.entries(budget.perPerson.categories).map(([cat, line]) => (
-                  cat !== 'flights' ? (
+                  cat !== 'flights' && Number.isFinite(line.high) && budget.perPerson.total.high > 0 ? (
                     <ProgressBar
                       key={cat}
                       label={cat}
@@ -2629,12 +2227,6 @@ export default function TripHubScreen() {
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
                         {member.activityPace ? (
                           <Badge label={`Pace: ${formatPaceLabel(member.activityPace)}`} variant="default" />
-                        ) : null}
-                        {typeof member.nightlifeImportance === 'number' ? (
-                          <Badge
-                            label={`Nightlife: ${Math.round(member.nightlifeImportance * 100)}%`}
-                            variant="default"
-                          />
                         ) : null}
                       </View>
                       {(member.interests ?? []).length > 0 ? (
@@ -3074,12 +2666,14 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function TripShortcut({ icon, label, onPress }: { icon: OutingIconName; label: string; onPress: () => void }) {
+function TripShortcut({ icon, label, onPress, disabled = false }: { icon: OutingIconName; label: string; onPress: () => void; disabled?: boolean }) {
   const { colors, spacing, radius } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Open trip ${label.toLowerCase()}`}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={onPress}
       style={{
         flex: 1,
@@ -3092,10 +2686,11 @@ function TripShortcut({ icon, label, onPress }: { icon: OutingIconName; label: s
         borderWidth: 1,
         borderColor: colors.border,
         backgroundColor: colors.cardBackground,
+        opacity: disabled ? 0.42 : 1,
       }}
     >
       <OutingIcon name={icon} size={16} color={colors.accent} />
-      <Text variant="labelSm" style={{ color: colors.textSecondary }}>{label}</Text>
+      <Text variant="labelSm" numberOfLines={1} style={{ color: colors.textSecondary }}>{label}</Text>
     </Pressable>
   );
 }

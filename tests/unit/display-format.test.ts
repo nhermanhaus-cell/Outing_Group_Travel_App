@@ -4,6 +4,7 @@ import {
   celsiusToFahrenheit,
   formatClockRange,
   formatClockTime,
+  formatMoney,
   formatMoneyRange,
   formatTemperature,
   normalizeClockInput,
@@ -41,5 +42,14 @@ describe('traveler display formatting', () => {
   it('labels destination planning ranges with the selected currency', () => {
     expect(formatMoneyRange(100, 200, 'USD', 'USD')).toMatch(/USD$/);
     expect(formatMoneyRange(100, 200, 'USD', 'EUR')).toMatch(/EUR$/);
+  });
+
+  it('falls back to USD instead of crashing when a saved currency is missing', () => {
+    expect(formatMoneyRange(100, 200, 'USD', undefined)).toMatch(/USD$/);
+    expect(formatMoney(150, 'USD', undefined)).toMatch(/USD$/);
+  });
+
+  it('keeps malformed amounts from reaching Intl or native rendering', () => {
+    expect(formatMoneyRange(Number.NaN, Number.POSITIVE_INFINITY, 'USD', undefined)).toMatch(/USD$/);
   });
 });

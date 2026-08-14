@@ -28,6 +28,30 @@ const USD_DISPLAY_RATES: Record<DisplayCurrency, number> = {
   CHF: 0.89,
 };
 
+export function normalizeDisplayCurrency(value: unknown): DisplayCurrency {
+  const normalized = typeof value === 'string' ? value.toUpperCase() : '';
+  return DISPLAY_CURRENCIES.includes(normalized as DisplayCurrency)
+    ? normalized as DisplayCurrency
+    : DEFAULT_DISPLAY_PREFERENCES.currency;
+}
+
+function finiteAmount(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function formatCurrencyValue(value: number, currency: DisplayCurrency): string {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency,
+      currencyDisplay: 'narrowSymbol',
+      maximumFractionDigits: 0,
+    }).format(finiteAmount(value));
+  } catch {
+    return `${currency} ${Math.round(finiteAmount(value)).toLocaleString()}`;
+  }
+}
+
 export function formatClockTime(value: string, preference: TimeFormatPreference): string {
   const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
   if (!match) return value;
@@ -84,50 +108,52 @@ export function formatTemperature(
 
 export function convertCurrency(
   amount: number,
-  sourceCurrency: string,
-  displayCurrency: DisplayCurrency,
+  sourceCurrency: string | null | undefined,
+  displayCurrency: DisplayCurrency | null | undefined,
 ): { amount: number; currency: string; converted: boolean } {
-  const source = sourceCurrency.toUpperCase() as DisplayCurrency;
+  const source = normalizeDisplayCurrency(sourceCurrency);
+  const target = normalizeDisplayCurrency(displayCurrency);
   const sourceRate = USD_DISPLAY_RATES[source];
-  const targetRate = USD_DISPLAY_RATES[displayCurrency];
-  if (!Number.isFinite(amount) || !sourceRate || !targetRate) {
-    return { amount, currency: sourceCurrency.toUpperCase(), converted: false };
+  const targetRate = USD_DISPLAY_RATES[target];
+  if (!Number.isFinite(amount)) {
+    return { amount: 0, currency: target, converted: source !== target };
   }
   return {
     amount: amount / sourceRate * targetRate,
-    currency: displayCurrency,
-    converted: source !== displayCurrency,
+    currency: target,
+    converted: source !== target,
   };
 }
 
 export function formatMoney(
   amount: number,
-  sourceCurrency: string,
-  displayCurrency: DisplayCurrency,
+  sourceCurrency: string | null | undefined,
+  displayCurrency: DisplayCurrency | null | undefined,
   showCode = true,
 ): string {
   const converted = convertCurrency(amount, sourceCurrency, displayCurrency);
-  const formatted = new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: converted.currency,
-    maximumFractionDigits: 0,
-  }).format(converted.amount);
+  const currency = normalizeDisplayCurrency(converted.currency);
+  const formatted = formatCurrencyValue(converted.amount, currency);
   return showCode ? `${formatted} ${converted.currency}` : formatted;
 }
 
 export function formatMoneyRange(
   low: number,
   high: number,
-  sourceCurrency: string,
-  displayCurrency: DisplayCurrency,
+  sourceCurrency: string | null | undefined,
+  displayCurrency: DisplayCurrency | null | undefined,
   showCode = true,
 ): string {
   const lowValue = convertCurrency(low, sourceCurrency, displayCurrency);
   const highValue = convertCurrency(high, sourceCurrency, displayCurrency);
-  const currency = lowValue.currency === highValue.currency ? lowValue.currency : sourceCurrency.toUpperCase();
-  const number = (value: number) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(Math.round(value));
-  const symbol = new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 0 })
-    .formatToParts(0)
-    .find((part) => part.type === 'currency')?.value ?? currency;
-  return `${symbol}${number(lowValue.amount)}–${symbol}${number(highValue.amount)}${showCode ? ` ${currency}` : ''}`;
+  const currency = normalizeDisplayCurrency(
+    lowValue.currency === highValue.currency ? lowValue.currency : displayCurrency,
+  );
+  const lowAmount = finiteAmount(lowValue.amount);
+  const highAmount = finiteAmount(highValue.amount);
+  const lower = Math.min(lowAmount, highAmount);
+  const upper = Math.max(lowAmount, highAmount);
+  const formattedLow = formatCurrencyValue(lower, currency);
+  const formattedHigh = formatCurrencyValue(upper, currency);
+  return `${formattedLow}–${formattedHigh}${showCode ? ` ${currency}` : ''}`;
 }
