@@ -206,6 +206,12 @@ export async function loadInspirationImport(importId: string, signal?: AbortSign
   return inspirationImportSchema.parse(body.import);
 }
 
+export async function loadInspirationLibrary(signal?: AbortSignal): Promise<InspirationImport[]> {
+  const body = await functionRequest({ action: 'list' }, signal);
+  const imports = Array.isArray(body.imports) ? body.imports : [];
+  return imports.map((value) => inspirationImportSchema.parse(value));
+}
+
 export async function reviewInspirationItem(
   importId: string,
   itemId: string,

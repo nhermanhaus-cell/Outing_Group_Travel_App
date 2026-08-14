@@ -14,6 +14,11 @@ import {
   resolveInitialTripSection,
   TRIP_PRIMARY_AREAS,
 } from '../../apps/mobile/src/lib/trip-hub-navigation';
+import {
+  applyWrittenTravelIntent,
+  shouldIncludeQuestionnaireStep,
+} from '../../apps/mobile/src/lib/questionnaire-flow';
+import type { TravelPreferences } from '@gayi/shared';
 
 const destination = {
   destinationSlug: 'barcelona',
@@ -21,6 +26,44 @@ const destination = {
 };
 
 describe('trip planning flow', () => {
+  it('asks for written intent and interests once before destination recommendations', () => {
+    const state = { hasDestination: false, resumedAfterDestinationChoice: false };
+    expect(shouldIncludeQuestionnaireStep('intent', state)).toBe(true);
+    expect(shouldIncludeQuestionnaireStep('interest', state)).toBe(true);
+    expect(shouldIncludeQuestionnaireStep('personalization', state)).toBe(false);
+  });
+
+  it('does not replay intent or interests after a recommended destination is selected', () => {
+    const state = { hasDestination: true, resumedAfterDestinationChoice: true };
+    expect(shouldIncludeQuestionnaireStep('foundation', state)).toBe(false);
+    expect(shouldIncludeQuestionnaireStep('intent', state)).toBe(false);
+    expect(shouldIncludeQuestionnaireStep('interest', state)).toBe(false);
+    expect(shouldIncludeQuestionnaireStep('personalization', state)).toBe(true);
+  });
+
+  it('keeps one intent and interest pass when planning directly from a destination', () => {
+    const state = { hasDestination: true, resumedAfterDestinationChoice: false };
+    expect(shouldIncludeQuestionnaireStep('discovery', state)).toBe(false);
+    expect(shouldIncludeQuestionnaireStep('intent', state)).toBe(true);
+    expect(shouldIncludeQuestionnaireStep('interest', state)).toBe(true);
+  });
+
+  it('uses explicit written travel intent as a destination-matching signal', () => {
+    const preferences = {
+      interests: ['food'],
+      weatherPreference: 'any',
+    } as TravelPreferences;
+    const enriched = applyWrittenTravelIntent(
+      preferences,
+      ['learn'],
+      'Somewhere warm with beaches, museums, and jazz',
+    );
+    expect(enriched.weatherPreference).toBe('warm');
+    expect(enriched.interests).toEqual(expect.arrayContaining([
+      'food', 'culture', 'history', 'beach', 'art', 'music',
+    ]));
+  });
+
   it('starts the questionnaire when planning from a destination page', () => {
     expect(destinationPlanHref(destination)).toEqual({
       pathname: '/quiz',

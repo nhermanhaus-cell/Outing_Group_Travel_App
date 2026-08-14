@@ -379,7 +379,7 @@ Deno.serve(async (request) => {
 
   const { data: destinationRows } = await service
     .from('destinations')
-    .select('slug,name,country,editorial_summary,payload,data_freshness')
+    .select('slug,name,country,editorial_summary,hero_image_url,payload,data_freshness')
     .eq('published', true)
     .limit(250);
   const communitySignals: CommunitySignal[] = enabled('AI_ENABLE_COMMUNITY_SIGNALS')

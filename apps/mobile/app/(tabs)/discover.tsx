@@ -248,7 +248,7 @@ export default function DiscoverScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md }}>
           <Text variant="displayMd">Discover</Text>
           {featureFlags.outingFullExperienceV1 ? (
-            <Pressable accessibilityRole="button" accessibilityLabel="Import travel inspiration" onPress={() => router.push('/inspiration' as never)} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.poolLight, alignItems: 'center', justifyContent: 'center' }}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Import travel inspiration" onPress={() => router.push('/inspiration/new' as never)} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: colors.poolLight, alignItems: 'center', justifyContent: 'center' }}>
               <OutingIcon name="image" color={colors.pool} size={21} />
             </Pressable>
           ) : null}

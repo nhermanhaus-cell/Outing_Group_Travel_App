@@ -20,7 +20,6 @@ import { posthog } from '../../src/config/posthog';
 import { Text } from '../ui/Text';
 import { Button } from '../ui/Button';
 import { OutingIcon } from '../ui/OutingIcon';
-import { featureFlags } from '../../src/lib/featureFlags';
 
 const STAGES = [
   'Reading the details you shared',
@@ -44,10 +43,6 @@ export function ImportCaptureScreen() {
   const [processing, setProcessing] = useState(false);
   const [stage, setStage] = useState(0);
   const remaining = Math.max(0, 10 - sources.length);
-
-  useEffect(() => {
-    if (!featureFlags.outingFullExperienceV1) router.replace('/discover');
-  }, [router]);
 
   useEffect(() => { void loadGuestInspirationQueue().then(setSources); }, []);
   useEffect(() => {
@@ -110,7 +105,7 @@ export function ImportCaptureScreen() {
   const processSources = useCallback(async () => {
     if (!sources.length || processing) return;
     if (!user) {
-      router.push({ pathname: '/auth/login', params: { returnTo: '/inspiration' } });
+      router.push({ pathname: '/auth/login', params: { returnTo: '/inspiration/new' } });
       return;
     }
     setProcessing(true);

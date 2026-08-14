@@ -128,7 +128,9 @@ export default function RootLayout() {
             <Stack.Screen name="trips/[tripId]/index" options={{ headerShown: false }} />
             <Stack.Screen name="trips/[tripId]/ask" options={{ headerShown: false }} />
             <Stack.Screen name="trips/[tripId]/today" options={{ headerShown: false }} />
+            <Stack.Screen name="trips/[tripId]/itinerary/[itemId]" options={{ headerShown: true, title: 'Itinerary' }} />
             <Stack.Screen name="inspiration/index" options={{ headerShown: false }} />
+            <Stack.Screen name="inspiration/new" options={{ presentation: 'modal', headerShown: false }} />
             <Stack.Screen name="inspiration/[importId]" options={{ headerShown: false }} />
             <Stack.Screen name="trips/[tripId]/invite" options={{ headerShown: false }} />
             <Stack.Screen name="auth/login" options={{ presentation: 'modal', headerShown: false }} />

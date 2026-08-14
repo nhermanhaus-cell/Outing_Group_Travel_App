@@ -9,7 +9,9 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import * as Location from 'expo-location';
+import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { featureFlags } from '../../src/lib/featureFlags';
 import { loadAssistantInsights } from '../../src/lib/assistant-api';
@@ -25,6 +27,7 @@ import {
   type TravelRange,
   type TravelScope,
   type VacationStyle,
+  type TripEssential,
 } from '@gayi/shared';
 import { useDestinations, useTravelProfile } from '../../src/providers/AppProviders';
 import { useAnalytics } from '../../src/analytics/analytics-provider';
@@ -33,6 +36,7 @@ import { airportDataAttribution, airports, nearestAirports, type AirportRecord }
 import { TravelerSelector, type GroupType } from '../../components/trip-wizard/TravelerSelector';
 import { AirportAutocomplete } from '../../components/trip-wizard/airport-autocomplete';
 import { QUIZ_BUDDY_DRAFT_KEY, TravelBuddyPicker } from '../../components/trip-wizard/travel-buddy-picker';
+import { PlanningExitButton } from '../../components/trip-wizard/planning-exit-button';
 import {
   questionnaireCompletionHref,
   selectedDestinationFromParams,
@@ -40,7 +44,10 @@ import {
 import {
   getDestinationHallmarks,
   getDestinationInterestOptions,
+  mergeDestinationHallmarkMedia,
 } from '../../src/lib/destinationQuestionnaire';
+import { shouldIncludeQuestionnaireStep } from '../../src/lib/questionnaire-flow';
+import { lookupPlaceByName, resolveTripEssentials } from '../../src/lib/googlePlaces';
 
 // ─── Quiz state ───────────────────────────────────────────────────────────────
 
@@ -67,6 +74,7 @@ export interface QuizAnswers {
   avoidances: string[];
   hallmarkIds: string[];
   hallmarkNames: string[];
+  customEssentials: TripEssential[];
   freeformWish: string;
   lodgingStatus: 'none' | 'booked';
   lodgingAddress: string;
@@ -102,6 +110,7 @@ const DEFAULT_ANSWERS: QuizAnswers = {
   avoidances: [],
   hallmarkIds: [],
   hallmarkNames: [],
+  customEssentials: [],
   freeformWish: '',
   lodgingStatus: 'none',
   lodgingAddress: '',
@@ -138,15 +147,6 @@ const TRIP_GOALS: Array<{ key: TripGoal; label: string }> = [
   { key: 'romance', label: 'Make it romantic' },
   { key: 'learn', label: 'Learn & understand' },
   { key: 'indulge', label: 'Treat myself' },
-];
-
-const VACATION_STYLES: Array<{ key: VacationStyle; label: string }> = [
-  { key: 'iconic_highlights', label: 'The icons are icons for a reason' },
-  { key: 'local_neighborhoods', label: 'Live like a local' },
-  { key: 'hidden_gems', label: 'Surprise me with hidden gems' },
-  { key: 'reservation_worthy', label: 'Book the can’t-miss things' },
-  { key: 'spontaneous', label: 'Leave room to improvise' },
-  { key: 'photogenic', label: 'Beautiful, memorable settings' },
 ];
 
 const MEAL_PREFERENCES = [
@@ -302,9 +302,43 @@ export default function QuizScreen() {
     () => getDestinationInterestOptions(catalogDestination),
     [catalogDestination],
   );
-  const destinationHallmarks = useMemo(
+  const catalogHallmarks = useMemo(
     () => getDestinationHallmarks(catalogDestination),
     [catalogDestination],
+  );
+  const hallmarkMediaQuery = useQuery({
+    queryKey: [
+      'quiz-google-hallmark-media-v1',
+      catalogDestination?.slug,
+      catalogHallmarks.filter((item) => item.kind === 'place').map((item) => `${item.id}:${item.label}`).join('|'),
+    ],
+    queryFn: async () => {
+      if (!catalogDestination) return [];
+      const results = await Promise.all(catalogHallmarks
+        .filter((item) => item.kind === 'place')
+        .map(async (item) => {
+          const place = await lookupPlaceByName(item.label, catalogDestination.name, {
+            center: { lat: catalogDestination.lat, lng: catalogDestination.lng },
+          });
+          return place?.imageUrls[0]
+            ? {
+                hallmarkId: item.id,
+                providerPlaceId: place.placeId,
+                imageUrl: place.imageUrls[0],
+                imageAttribution: place.imageAttributions?.[0],
+              }
+            : null;
+        }));
+      return results.filter((item): item is NonNullable<typeof item> => item != null);
+    },
+    enabled: Boolean(catalogDestination && catalogHallmarks.some((item) => item.kind === 'place')),
+    staleTime: 24 * 60 * 60_000,
+    gcTime: 7 * 24 * 60 * 60_000,
+    retry: 1,
+  });
+  const destinationHallmarks = useMemo(
+    () => mergeDestinationHallmarkMedia(catalogHallmarks, hallmarkMediaQuery.data ?? []),
+    [catalogHallmarks, hallmarkMediaQuery.data],
   );
 
   const [step, setStep] = useState(0);
@@ -326,10 +360,14 @@ export default function QuizScreen() {
       avoidances: prior.avoidances ?? profile.defaultAvoidances ?? [],
       hallmarkIds: prior.hallmarkIds ?? [],
       hallmarkNames: prior.hallmarkNames ?? [],
+      customEssentials: prior.customEssentials ?? [],
       dayRhythm: prior.dayRhythm ?? profile.defaultDayRhythm ?? 'flexible',
     };
   });
   const [nearbyAirports, setNearbyAirports] = useState<AirportRecord[]>([]);
+  const [essentialInput, setEssentialInput] = useState('');
+  const [essentialError, setEssentialError] = useState<string | null>(null);
+  const [resolvingEssentials, setResolvingEssentials] = useState(false);
   const analyticsStartedAtRef = useRef(Date.now());
   const analyticsCompletedRef = useRef(false);
   const analyticsStartedRef = useRef(false);
@@ -337,23 +375,20 @@ export default function QuizScreen() {
 
   useEffect(() => {
     if (!selectedDestination) return;
-    const allowedInterests = new Set<string>(destinationInterestOptions.map((option) => option.key));
     const allowedHallmarks = new Map(destinationHallmarks.map((option) => [option.id, option.label]));
     setAnswers((current) => {
-      const interests = current.interests.filter((interest) => allowedInterests.has(interest));
       const hallmarkIds = current.hallmarkIds.filter((id) => allowedHallmarks.has(id));
       const hallmarkNames = hallmarkIds.flatMap((id) => {
         const label = allowedHallmarks.get(id);
         return label ? [label] : [];
       });
       if (
-        interests.length === current.interests.length
-        && hallmarkIds.length === current.hallmarkIds.length
+        hallmarkIds.length === current.hallmarkIds.length
         && hallmarkNames.length === current.hallmarkNames.length
       ) return current;
-      return { ...current, interests, hallmarkIds, hallmarkNames };
+      return { ...current, hallmarkIds, hallmarkNames };
     });
-  }, [destinationHallmarks, destinationInterestOptions, selectedDestination]);
+  }, [destinationHallmarks, selectedDestination]);
 
   useEffect(() => {
     const primary = profile.homeAirports.find((airport) => airport.primary) ?? profile.homeAirports[0];
@@ -368,6 +403,53 @@ export default function QuizScreen() {
 
   const set = useCallback(<K extends keyof QuizAnswers>(key: K, val: QuizAnswers[K]) => {
     setAnswers((prev) => ({ ...prev, [key]: val }));
+  }, []);
+
+  const addCustomEssentials = useCallback(async () => {
+    const text = essentialInput.trim();
+    if (!text || !selectedDestination) return;
+    setResolvingEssentials(true);
+    setEssentialError(null);
+    let resolved: TripEssential[] = [];
+    try {
+      resolved = await resolveTripEssentials({
+        text,
+        destinationName: selectedDestination.destinationName,
+        ...(catalogDestination
+          ? { center: { lat: catalogDestination.lat, lng: catalogDestination.lng } }
+          : {}),
+      });
+    } catch {
+      const fallbackLabels = text.split(/[\n;,]+/).map((value) => value.trim()).filter(Boolean).slice(0, 5);
+      resolved = fallbackLabels.map((label, index) => ({
+        id: `custom-${Date.now()}-${index}`,
+        label,
+        kind: 'activity',
+        source: 'user',
+        category: 'tour',
+        summary: `A personal must-do you added for ${selectedDestination.destinationName}.`,
+      }));
+      setEssentialError('Saved as your own must-do. We’ll match live place details when they’re available.');
+    } finally {
+      setResolvingEssentials(false);
+    }
+    if (resolved.length === 0) {
+      setEssentialError('Try a named place or an activity such as “a neighborhood food tour.”');
+      return;
+    }
+    setAnswers((current) => {
+      const existing = new Set(current.customEssentials.map((item) => item.label.trim().toLowerCase()));
+      const additions = resolved.filter((item) => !existing.has(item.label.trim().toLowerCase()));
+      return { ...current, customEssentials: [...current.customEssentials, ...additions] };
+    });
+    setEssentialInput('');
+  }, [catalogDestination, essentialInput, selectedDestination]);
+
+  const removeCustomEssential = useCallback((id: string) => {
+    setAnswers((current) => ({
+      ...current,
+      customEssentials: current.customEssentials.filter((item) => item.id !== id),
+    }));
   }, []);
 
   const suggestNearbyAirports = async () => {
@@ -469,7 +551,7 @@ export default function QuizScreen() {
         }).catch(() => undefined);
       }
     });
-    router.push(questionnaireCompletionHref(answers, selectedDestination));
+    router.replace(questionnaireCompletionHref(answers, selectedDestination));
   };
 
   const allSteps = [
@@ -621,15 +703,44 @@ export default function QuizScreen() {
       ),
     },
     {
-      phase: 'personalization' as const,
-      title: 'What should this trip give you?',
-      subtitle: 'Choose the outcomes that would make the vacation feel worthwhile.',
+      phase: 'intent' as const,
+      title: 'What are you looking for?',
+      subtitle: 'Tell us in your own words. We’ll use it when matching destinations and shaping your trip.',
       content: (
-        <ChipSelect
-          options={TRIP_GOALS}
-          selected={answers.tripGoals}
-          onChange={(value) => set('tripGoals', value)}
-        />
+        <View style={{ gap: spacing.xl }}>
+          <View style={{ gap: spacing.sm }}>
+            <TextInput
+              value={answers.freeformWish}
+              onChangeText={(value) => set('freeformWish', value.slice(0, 500))}
+              placeholder="Warm weather, memorable meals, beautiful architecture, and enough downtime to wander…"
+              placeholderTextColor={colors.textTertiary}
+              multiline
+              textAlignVertical="top"
+              style={{
+                minHeight: 132,
+                padding: spacing.md,
+                borderRadius: radius.lg,
+                borderWidth: 1.5,
+                borderColor: answers.freeformWish ? colors.accent : colors.border,
+                backgroundColor: colors.cardBackground,
+                color: colors.textPrimary,
+                fontSize: 16,
+                lineHeight: 23,
+              }}
+            />
+            <Text variant="caption" style={{ color: colors.textTertiary, textAlign: 'right' }}>
+              {answers.freeformWish.length}/500
+            </Text>
+          </View>
+          <View style={{ gap: spacing.sm }}>
+            <Text variant="h3">A few quick signals</Text>
+            <ChipSelect
+              options={TRIP_GOALS}
+              selected={answers.tripGoals}
+              onChange={(value) => set('tripGoals', value)}
+            />
+          </View>
+        </View>
       ),
     },
     {
@@ -649,14 +760,19 @@ export default function QuizScreen() {
     {
       phase: 'personalization' as const,
       title: `What feels essential in ${selectedDestination?.destinationName ?? 'this destination'}?`,
-      subtitle: 'Choose real destination hallmarks you want the itinerary to prioritize.',
-      content: destinationHallmarks.length > 0 ? (
-        <View style={{ gap: spacing.sm }}>
-          {destinationHallmarks.map((hallmark) => {
+      subtitle: 'Choose suggested hallmarks or add your own. We’ll treat every selection as a must-have when building the itinerary.',
+      content: (
+        <View style={{ gap: spacing.xl }}>
+          <View style={{ gap: spacing.sm }}>
+          {destinationHallmarks.length > 0 ? destinationHallmarks.map((hallmark) => {
             const active = answers.hallmarkIds.includes(hallmark.id);
             return (
               <Pressable
                 key={hallmark.id}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: active }}
+                accessibilityLabel={`${hallmark.label}. ${hallmark.description}`}
+                accessibilityHint={active ? 'Double tap to remove from your priorities' : 'Double tap to prioritize this in your itinerary'}
                 onPress={() => setAnswers((current) => ({
                   ...current,
                   hallmarkIds: active
@@ -667,40 +783,187 @@ export default function QuizScreen() {
                     : [...current.hallmarkNames, hallmark.label],
                 }))}
                 style={{
-                  padding: spacing.base,
+                  padding: spacing.sm,
                   borderRadius: radius.lg,
+                  borderCurve: 'continuous',
                   borderWidth: 1.5,
                   borderColor: active ? colors.accent : colors.border,
                   backgroundColor: active ? colors.accentLight : colors.cardBackground,
-                  gap: spacing.xxs,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: spacing.md,
                 }}
               >
-                <Text variant="labelLg" style={{ color: active ? colors.accent : colors.textPrimary }}>
-                  {hallmark.label}
-                </Text>
-                <Text variant="caption" style={{ color: colors.textTertiary, textTransform: 'capitalize' }}>
-                  {hallmark.kind}{hallmark.category ? ` · ${hallmark.category.replace(/_/g, ' ')}` : ''}
-                </Text>
+                {hallmark.imageUrl ? (
+                  <Image
+                    source={{ uri: hallmark.imageUrl }}
+                    recyclingKey={hallmark.imageUrl}
+                    contentFit="cover"
+                    transition={180}
+                    style={{
+                      width: 92,
+                      height: 92,
+                      borderRadius: 24,
+                      backgroundColor: colors.backgroundSecondary,
+                    }}
+                  />
+                ) : (
+                  <View
+                    style={{
+                      width: 92,
+                      height: 92,
+                      borderRadius: 24,
+                      borderCurve: 'continuous',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: colors.backgroundSecondary,
+                    }}
+                  >
+                    <Text variant="h2" style={{ color: colors.textTertiary }}>✦</Text>
+                  </View>
+                )}
+                <View style={{ flex: 1, gap: spacing.xxs, paddingVertical: spacing.xxs }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm }}>
+                    <Text
+                      variant="labelLg"
+                      style={{ flex: 1, color: active ? colors.accent : colors.textPrimary }}
+                    >
+                      {hallmark.label}
+                    </Text>
+                    <View
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: 12,
+                        borderWidth: 1.5,
+                        borderColor: active ? colors.accent : colors.border,
+                        backgroundColor: active ? colors.accent : colors.cardBackground,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {active ? <Text variant="caption" style={{ color: '#FFFFFF', fontWeight: '800' }}>✓</Text> : null}
+                    </View>
+                  </View>
+                  <Text variant="caption" style={{ color: colors.textTertiary, textTransform: 'capitalize' }}>
+                    {hallmark.kind}{hallmark.category ? ` · ${hallmark.category.replace(/_/g, ' ')}` : ''}
+                  </Text>
+                  <Text variant="bodySm" numberOfLines={3} style={{ color: colors.textSecondary }}>
+                    {hallmark.description}
+                  </Text>
+                  {hallmark.imageProvider === 'google_places' ? (
+                    <Text variant="caption" numberOfLines={1} style={{ color: colors.textTertiary }}>
+                      Photo via Google{hallmark.imageAttribution ? ` · ${hallmark.imageAttribution}` : ''}
+                    </Text>
+                  ) : null}
+                </View>
               </Pressable>
             );
-          })}
+          }) : (
+            <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
+              We’ll use your interests to surface signature local choices.
+            </Text>
+          )}
+          </View>
+
+          <View
+            style={{
+              gap: spacing.md,
+              padding: spacing.md,
+              borderRadius: radius.xl,
+              borderCurve: 'continuous',
+              backgroundColor: colors.backgroundSecondary,
+            }}
+          >
+            <View style={{ gap: spacing.xxs }}>
+              <Text variant="h3">Add your own must-sees</Text>
+              <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                Name a place or describe an experience. Outing will match named places with Google and keep every idea in your plan.
+              </Text>
+            </View>
+            <TextInput
+              value={essentialInput}
+              onChangeText={(value) => {
+                setEssentialInput(value.slice(0, 500));
+                if (essentialError) setEssentialError(null);
+              }}
+              onSubmitEditing={() => { void addCustomEssentials(); }}
+              placeholder="The Louvre, a pastry class, sunset from a quiet viewpoint…"
+              placeholderTextColor={colors.textTertiary}
+              multiline
+              textAlignVertical="top"
+              accessibilityLabel="Your own must-see places and activities"
+              style={{
+                minHeight: 92,
+                padding: spacing.md,
+                borderRadius: radius.lg,
+                borderWidth: 1,
+                borderColor: essentialInput ? colors.accent : colors.border,
+                backgroundColor: colors.cardBackground,
+                color: colors.textPrimary,
+                fontSize: 16,
+                lineHeight: 22,
+              }}
+            />
+            <Button
+              size="sm"
+              loading={resolvingEssentials}
+              disabled={!essentialInput.trim() || !selectedDestination}
+              onPress={() => { void addCustomEssentials(); }}
+            >
+              Match and add
+            </Button>
+            {essentialError ? (
+              <Text variant="caption" style={{ color: colors.textSecondary }}>{essentialError}</Text>
+            ) : null}
+            {answers.customEssentials.length > 0 ? (
+              <View style={{ gap: spacing.sm }}>
+                {answers.customEssentials.map((essential) => (
+                  <View
+                    key={essential.id}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: spacing.sm,
+                      padding: spacing.sm,
+                      borderRadius: radius.lg,
+                      borderCurve: 'continuous',
+                      backgroundColor: colors.cardBackground,
+                    }}
+                  >
+                    {essential.imageUrl ? (
+                      <Image
+                        source={{ uri: essential.imageUrl }}
+                        recyclingKey={essential.imageUrl}
+                        contentFit="cover"
+                        style={{ width: 54, height: 54, borderRadius: 16 }}
+                      />
+                    ) : (
+                      <View style={{ width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentLight }}>
+                        <Text variant="h3" style={{ color: colors.accent }}>✦</Text>
+                      </View>
+                    )}
+                    <View style={{ flex: 1, gap: spacing.xxs }}>
+                      <Text variant="labelLg">{essential.label}</Text>
+                      <Text variant="caption" style={{ color: colors.textTertiary }}>
+                        {essential.source === 'google_places' ? 'Matched with Google · required in itinerary' : 'Your idea · required in itinerary'}
+                      </Text>
+                    </View>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remove ${essential.label}`}
+                      hitSlop={10}
+                      onPress={() => removeCustomEssential(essential.id)}
+                      style={{ width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.backgroundSecondary }}
+                    >
+                      <Text variant="labelLg" style={{ color: colors.textSecondary }}>×</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </View>
         </View>
-      ) : (
-        <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-          We’ll use your interests to surface signature local choices.
-        </Text>
-      ),
-    },
-    {
-      phase: 'personalization' as const,
-      title: 'How do you like to vacation?',
-      subtitle: 'Mix and match—this tells us how familiar, local, structured, or spontaneous the plan should feel.',
-      content: (
-        <ChipSelect
-          options={VACATION_STYLES}
-          selected={answers.vacationStyles}
-          onChange={(value) => set('vacationStyles', value)}
-        />
       ),
     },
     {
@@ -844,41 +1107,11 @@ export default function QuizScreen() {
       title: 'Things to avoid',
       subtitle: 'Choose anything you’d rather have less of. We’ll use it to shape your recommendations.',
       content: (
-        <View style={{ gap: spacing.xl }}>
-          <ChipSelect
-            options={AVOIDANCES}
-            selected={answers.avoidances as never[]}
-            onChange={(value) => set('avoidances', value as string[])}
-          />
-          <View style={{ gap: spacing.sm }}>
-            <Text variant="h3">Finish this thought</Text>
-            <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-              “This trip will be a success if…”
-            </Text>
-            <TextInput
-              value={answers.freeformWish}
-              onChangeText={(value) => set('freeformWish', value.slice(0, 500))}
-              placeholder="We find tiny jazz bars, never rush dinner, and leave room for one great surprise…"
-              placeholderTextColor={colors.textTertiary}
-              multiline
-              textAlignVertical="top"
-              style={{
-                minHeight: 120,
-                padding: spacing.md,
-                borderRadius: radius.lg,
-                borderWidth: 1.5,
-                borderColor: answers.freeformWish ? colors.accent : colors.border,
-                backgroundColor: colors.cardBackground,
-                color: colors.textPrimary,
-                fontSize: 16,
-                lineHeight: 23,
-              }}
-            />
-            <Text variant="caption" style={{ color: colors.textTertiary, textAlign: 'right' }}>
-              {answers.freeformWish.length}/500
-            </Text>
-          </View>
-        </View>
+        <ChipSelect
+          options={AVOIDANCES}
+          selected={answers.avoidances as never[]}
+          onChange={(value) => set('avoidances', value as string[])}
+        />
       ),
     },
     ...(answers.groupType !== 'solo' ? [{
@@ -894,12 +1127,10 @@ export default function QuizScreen() {
     }] : []),
   ];
 
-  const steps = allSteps.filter((candidate) => {
-    if (!selectedDestination) return candidate.phase !== 'personalization';
-    if (candidate.phase === 'discovery') return false;
-    if (resumedAfterDestinationChoice && candidate.phase === 'foundation') return false;
-    return true;
-  });
+  const steps = allSteps.filter((candidate) => shouldIncludeQuestionnaireStep(candidate.phase, {
+    hasDestination: Boolean(selectedDestination),
+    resumedAfterDestinationChoice,
+  }));
 
   const totalSteps = steps.length;
   const progress = ((step + 1) / totalSteps) * 100;
@@ -974,6 +1205,7 @@ export default function QuizScreen() {
             ? `${selectedDestination.destinationName} · ${step + 1}/${totalSteps}`
             : `${step + 1}/${totalSteps}`}
         </Text>
+        <PlanningExitButton compact />
       </View>
 
       <ScrollView

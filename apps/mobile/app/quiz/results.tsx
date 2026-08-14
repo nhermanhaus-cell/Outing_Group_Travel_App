@@ -24,6 +24,8 @@ import originHubsJson from '../../assets/editorial/origin-hubs.json';
 import { useAnalytics } from '../../src/analytics/analytics-provider';
 import { destinationPlanHref } from '../../src/lib/tripPlanningFlow';
 import { parseQuizResultsAnswers } from '../../src/lib/quizResultsState';
+import { PlanningExitButton } from '../../components/trip-wizard/planning-exit-button';
+import { applyWrittenTravelIntent } from '../../src/lib/questionnaire-flow';
 
 const RECOVERY_ANSWERS: QuizAnswers = {
   originAirport: '',
@@ -46,13 +48,14 @@ const RECOVERY_ANSWERS: QuizAnswers = {
   avoidances: [],
   hallmarkIds: [],
   hallmarkNames: [],
+  customEssentials: [],
   freeformWish: '',
   lodgingStatus: 'none',
   lodgingAddress: '',
 };
 
 function mapAnswersToPrefs(answers: QuizAnswers): TravelPreferences {
-  return {
+  const preferences: TravelPreferences = {
     budgetLevel: answers.glamourLevel,
     departureAirports: answers.originAirport ? [answers.originAirport] : [],
     travelRanges: answers.travelRanges ?? [],
@@ -77,6 +80,7 @@ function mapAnswersToPrefs(answers: QuizAnswers): TravelPreferences {
     lodgingStatus: answers.lodgingStatus ?? 'none',
     lodgingAddress: answers.lodgingAddress || undefined,
   };
+  return applyWrittenTravelIntent(preferences, answers.tripGoals, answers.freeformWish);
 }
 
 type SectionKey = 'weekend' | 'quick' | 'best';
@@ -102,6 +106,10 @@ export default function QuizResultsScreen() {
     [params.answers],
   );
   const answers = parsedAnswers ?? RECOVERY_ANSWERS;
+  const adjustQuiz = () => router.replace({
+    pathname: '/quiz',
+    params: { quizAnswers: JSON.stringify(answers) },
+  });
 
   const prefs = useMemo(() => mapAnswersToPrefs(answers), [answers]);
 
@@ -225,11 +233,11 @@ export default function QuizResultsScreen() {
           justifyContent: 'space-between',
         }}
       >
-        <Pressable onPress={() => router.back()}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Adjust questionnaire answers" onPress={adjustQuiz}>
           <Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text>
         </Pressable>
         <Text variant="h3">Your matches</Text>
-        <View style={{ width: 20 }} />
+        <PlanningExitButton />
       </View>
 
       <SectionList
@@ -254,7 +262,7 @@ export default function QuizResultsScreen() {
         ListEmptyComponent={
           <View style={{ paddingVertical: spacing['4xl'], alignItems: 'center', gap: spacing.md }}>
             <Text variant="h3" style={{ color: colors.textTertiary }}>No matches found</Text>
-            <Button variant="secondary" onPress={() => router.back()}>Adjust quiz</Button>
+            <Button variant="secondary" onPress={adjustQuiz}>Adjust preferences</Button>
           </View>
         }
         renderSectionHeader={({ section }) => (
@@ -373,7 +381,7 @@ function ResultCard({
             </Button>
             <Button
               style={{ flex: 1 }}
-              onPress={() => router.push(destinationPlanHref({
+              onPress={() => router.replace(destinationPlanHref({
                 destinationSlug: result.slug,
                 destinationName: result.destinationName,
               }, JSON.stringify(answers)))}

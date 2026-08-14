@@ -48,6 +48,25 @@ describe('Scrappa round-trip normalization', () => {
     expect(estimate.optionCount).toBe(2);
   });
 
+  it('converts Scrappa party totals into per-traveler prices exactly once', () => {
+    const normalized = normalizeScrappaRoundTrip({
+      flights: [
+        { price: 616, currency: 'USD', airline_name: 'Frontier', trip_type: 'one_way', outbound_legs: [{}], return_legs: [] },
+        { price: 734, currency: 'USD', airline_name: 'American', trip_type: 'one_way', outbound_legs: [{}], return_legs: [] },
+      ],
+      search_metadata: { currency: 'USD', passengers: { adults: 2 } },
+    }, { ...request, destinationIata: 'JFK', adults: 2 });
+    const estimate = normalized?.estimate as Record<string, unknown>;
+    expect(estimate.lowPrice).toBe(308);
+    expect(estimate.typicalPrice).toBe(367);
+    expect(estimate.highPrice).toBe(367);
+    expect(estimate.priceIsPerTraveler).toBe(true);
+    expect(estimate.options).toEqual(expect.arrayContaining([
+      expect.objectContaining({ price: 308, airlineName: 'Frontier' }),
+      expect.objectContaining({ price: 367, airlineName: 'American' }),
+    ]));
+  });
+
   it('creates an exact-date Google Flights handoff', () => {
     expect(decodeURIComponent(googleFlightsRoundTripUrl(request))).toContain(
       'Flights from SFO to LAX on 2026-09-15 returning 2026-09-22',

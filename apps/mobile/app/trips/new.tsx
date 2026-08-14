@@ -38,6 +38,7 @@ import { TripPathChooser } from '../../components/trip-wizard/TripPathChooser';
 import type { QuizAnswers } from '../quiz';
 import { AirportAutocomplete } from '../../components/trip-wizard/airport-autocomplete';
 import { DateField } from '../../components/trip-wizard/date-field';
+import { PlanningExitButton } from '../../components/trip-wizard/planning-exit-button';
 import { UnknownDestinationResults } from '../../components/destinations/unknown-destination-results';
 import { QUIZ_BUDDY_DRAFT_KEY, TravelBuddyPicker } from '../../components/trip-wizard/travel-buddy-picker';
 import { airports } from '../../src/content/airports';
@@ -258,6 +259,7 @@ export default function NewTripScreen() {
           avoidances: quizAnswers.avoidances ?? [],
           hallmarkIds: quizAnswers.hallmarkIds ?? [],
           hallmarkNames: quizAnswers.hallmarkNames ?? [],
+          customEssentials: quizAnswers.customEssentials ?? [],
           ...(quizAnswers.freeformWish?.trim()
             ? { freeformWish: quizAnswers.freeformWish.trim() }
             : {}),
@@ -339,15 +341,12 @@ export default function NewTripScreen() {
             gap: spacing.xl,
           }}
         >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Close date selection"
-            hitSlop={12}
-            onPress={() => router.back()}
-            style={{ alignSelf: 'flex-start', paddingVertical: spacing.xs }}
-          >
-            <OutingIcon name="close" size={22} color={colors.textPrimary} />
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Go back" hitSlop={12} onPress={() => router.back()} style={{ minWidth: 38, minHeight: 38, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text>
+            </Pressable>
+            <PlanningExitButton />
+          </View>
 
           <View style={{ gap: spacing.sm }}>
             <View
@@ -530,9 +529,10 @@ export default function NewTripScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top + spacing.lg }}>
         <View style={{ paddingHorizontal: spacing.base, gap: spacing.xs }}>
-          <Pressable onPress={() => router.back()} style={{ paddingVertical: spacing.sm }}>
-            <Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Pressable onPress={() => router.back()} style={{ minWidth: 38, minHeight: 38, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text></Pressable>
+            <PlanningExitButton />
+          </View>
           <Text variant="displayMd">Start a new trip</Text>
           <Text variant="bodyLg" style={{ color: colors.textSecondary }}>
             Find your next destination, or begin with a flexible draft.
@@ -545,7 +545,7 @@ export default function NewTripScreen() {
               entryPoint: 'new_trip',
             });
             posthog.capture('trip_creation_path_selected', { path: 'recommendations', entry_point: 'new_trip' });
-            router.push('/quiz');
+            router.replace('/quiz');
           }}
           onManual={() => {
             track(ANALYTICS_EVENTS.TRIP_CREATION_PATH_SELECTED, {
@@ -571,9 +571,10 @@ export default function NewTripScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top + spacing.lg }}>
         <View style={{ paddingHorizontal: spacing.base, gap: spacing.md, flex: 1 }}>
-          <Pressable onPress={() => setCreationPath('choose')} style={{ paddingVertical: spacing.sm }}>
-            <Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Pressable onPress={() => setCreationPath('choose')} style={{ minWidth: 38, minHeight: 38, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text></Pressable>
+            <PlanningExitButton />
+          </View>
           <View style={{ gap: spacing.xs }}>
             <Text variant="displayMd">Where are you going?</Text>
             <Text variant="bodyLg" style={{ color: colors.textSecondary }}>
@@ -595,7 +596,7 @@ export default function NewTripScreen() {
                     path: 'manual',
                     entryPoint: 'new_trip',
                   });
-                  router.push(destinationPlanHref({
+                  router.replace(destinationPlanHref({
                     destinationSlug: destination.slug,
                     destinationName: destination.name,
                   }));
@@ -646,11 +647,9 @@ export default function NewTripScreen() {
             justifyContent: 'space-between',
           }}
         >
-          <Pressable onPress={() => router.back()}>
-            <Text style={{ fontSize: 20, color: colors.textSecondary }}>✕</Text>
-          </Pressable>
+          <Pressable onPress={() => router.back()}><Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text></Pressable>
           <Text variant="h3">New trip</Text>
-          <View style={{ width: 32 }} />
+          <PlanningExitButton compact />
         </View>
 
         <ScrollView

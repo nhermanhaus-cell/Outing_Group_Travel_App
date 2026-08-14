@@ -26,7 +26,7 @@ function nonEmptyString(value: unknown): string | undefined {
 }
 
 function percentile(values: number[], quantile: number): number {
-  const index = Math.min(values.length - 1, Math.max(0, Math.floor((values.length - 1) * quantile)));
+  const index = Math.min(values.length - 1, Math.max(0, Math.round((values.length - 1) * quantile)));
   return values[index] ?? values[0] ?? 0;
 }
 
@@ -43,15 +43,19 @@ export function normalizeScrappaRoundTrip(
   const root = record(payload);
   const rawFlights = Array.isArray(root?.flights) ? root.flights : [];
   const metadata = record(root?.search_metadata);
+  // Scrappa returns the combined price for every adult in the search. Outing's
+  // budget and UI use per-traveler prices, so normalize once here before the
+  // estimate is cached or multiplied into a group total.
+  const travelerCount = Math.max(1, request.adults);
   const rows = rawFlights.flatMap((value) => {
     const flight = record(value);
-    const price = finiteNumber(flight?.price);
+    const partyPrice = finiteNumber(flight?.price);
     const currency = nonEmptyString(flight?.currency)?.toUpperCase();
-    if (!flight || price === undefined || price <= 0 || !currency) return [];
+    if (!flight || partyPrice === undefined || partyPrice <= 0 || !currency) return [];
     const outbound = Array.isArray(flight.outbound_legs) ? flight.outbound_legs : [];
     const returns = Array.isArray(flight.return_legs) ? flight.return_legs : [];
     return [{
-      price,
+      price: Math.round((partyPrice / travelerCount) * 100) / 100,
       currency,
       airlineName: nonEmptyString(flight.airline_name),
       durationMinutes: finiteNumber(flight.total_duration_minutes),
@@ -99,7 +103,7 @@ export function normalizeScrappaRoundTrip(
       priceIsPerTraveler: true,
       googleFlightsUrl: googleFlightsRoundTripUrl(request),
       message: returnSelectionRequired
-        ? 'Starting prices from a round-trip Google Flights search. Select the return flight on Google Flights to confirm the final fare.'
+        ? 'Per-traveler starting prices from a round-trip Google Flights search. Select the outbound and return flights on Google Flights to confirm the final fare.'
         : 'Observed round-trip Google Flights options. Fare and availability can change before booking.',
       options: uniqueOptions,
     },

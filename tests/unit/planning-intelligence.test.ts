@@ -5,6 +5,8 @@ import {
   decodeTripPlan,
   generateTripPlan,
   generateItinerary,
+  hasImplausibleItineraryTime,
+  isPlaceOpenForVisit,
   rankPlacesNearLodging,
   refineTripPlan,
   suggestQueerNeighborhoods,
@@ -116,6 +118,25 @@ describe('generateItinerary pace', () => {
     expect(items.some((i) => i.title === 'Open downtime')).toBe(true);
   });
 
+  it('keeps a traveler-declared must-see in the itinerary ahead of soft-ranked choices', () => {
+    const mustSee: Place = {
+      ...places[0]!,
+      placeId: 'traveler-must-see',
+      name: 'Traveler must-see',
+      category: 'restaurant',
+      rating: 1,
+      interests: [],
+    };
+    const items = generateItinerary({
+      destination,
+      places: [...places, mustSee],
+      preferences: basePrefs,
+      tripDurationDays: 1,
+      requiredPlaceIds: [mustSee.placeId],
+    });
+    expect(items.some((item) => item.placeId === mustSee.placeId)).toBe(true);
+  });
+
   it('schedules more slots for packed pace than downtime', () => {
     const packed = generateItinerary({
       destination,
@@ -169,6 +190,67 @@ describe('generateItinerary pace', () => {
     expect(fixed?.arrivalBufferMinutes).toBe(15);
     expect(fixed?.travelFromPrevious?.durationMinutes).toBe(25);
     expect(fixed?.scheduleStatus).toBe('verified');
+  });
+
+  it('does not place a dated museum on the timeline until provider hours are known', () => {
+    const items = generateItinerary({
+      destination,
+      places: [{
+        ...places[0]!,
+        placeId: 'museum-without-hours',
+        name: 'Museum without hours',
+        category: 'museum',
+        interests: ['culture'],
+      }],
+      preferences: { ...basePrefs, interests: ['culture'], nightlifeImportance: 0 },
+      tripDurationDays: 1,
+      startDate: '2026-06-01',
+    });
+    expect(items.some((item) => item.placeId === 'museum-without-hours')).toBe(false);
+  });
+
+  it('keeps a museum visit inside its verified opening window', () => {
+    const museum: Place = {
+      ...places[0]!,
+      placeId: 'daytime-museum',
+      name: 'Daytime museum',
+      category: 'museum',
+      durationMinutes: 90,
+      interests: ['culture'],
+      openingHours: [{ dayOfWeek: 1, open: '10:00', close: '17:00' }],
+    };
+    const items = generateItinerary({
+      destination,
+      places: [museum],
+      preferences: { ...basePrefs, interests: ['culture'], nightlifeImportance: 0 },
+      tripDurationDays: 1,
+      startDate: '2026-06-01',
+    });
+    const scheduled = items.find((item) => item.placeId === museum.placeId);
+    expect(scheduled).toBeDefined();
+    expect(scheduled!.time >= '10:00').toBe(true);
+    expect(isPlaceOpenForVisit(museum, '2026-06-01', 14 * 60 + 45, 16 * 60 + 15)).toBe(true);
+    expect(isPlaceOpenForVisit(museum, '2026-06-01', 16 * 60, 17 * 60 + 30)).toBe(false);
+  });
+
+  it('rejects midnight provider sentinels for daytime activities', () => {
+    const items = generateItinerary({
+      destination,
+      places: [{
+        ...places[0]!,
+        placeId: 'timed-tour',
+        name: 'Timed tour',
+        category: 'tour',
+        bookingRequired: true,
+        interests: ['culture'],
+        fixedStartTimes: ['not-a-time', '00:00', '10:00'],
+      }],
+      preferences: { ...basePrefs, interests: ['culture'] },
+      tripDurationDays: 1,
+    });
+    const scheduled = items.find((item) => item.placeId === 'timed-tour');
+    expect(scheduled?.time).toBe('10:00');
+    expect(hasImplausibleItineraryTime({ ...scheduled!, time: '00:00' })).toBe(true);
   });
 
   it('keeps a coordinate-resolved Viator experience and exact booking handoff in the itinerary', () => {
@@ -286,6 +368,7 @@ describe('generateTripPlan', () => {
       bookingRequired: index % 4 === 0,
       interests: index % 4 === 3 ? ['nightlife'] : ['food', 'culture'],
       source: index % 4 === 0 ? 'viator' : 'google_places',
+      openingHours: [{ open: '06:00', close: '23:59' }],
       ...(index % 4 === 0
         ? {
             bookingOffer: {

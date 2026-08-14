@@ -97,6 +97,10 @@ export const assistantRecommendationSchema = z.object({
   kind: assistantRecommendationKindSchema,
   title: z.string().min(1).max(240),
   summary: z.string().min(1).max(800),
+  imageUrl: z.string().url().max(2_000).optional(),
+  facts: z.array(z.string().min(1).max(120)).max(4).default([]),
+  providerPlaceId: z.string().min(1).max(240).optional(),
+  googleMapsUrl: z.string().url().max(2_000).optional(),
   fitScore: z.number().min(0).max(100).optional(),
   fitReasons: z.array(z.string().min(1).max(240)).max(4),
   tradeoffs: z.array(z.string().min(1).max(240)).max(3),
@@ -442,6 +446,11 @@ export const assistantProposalPayloadSchema = z.object({
   endDate: z.string().date().optional(),
   destinationSlug: z.string().max(120).optional(),
   notes: z.string().max(800).optional(),
+  category: z.string().max(80).optional(),
+  lat: z.number().min(-90).max(90).optional(),
+  lng: z.number().min(-180).max(180).optional(),
+  estimatedCost: z.number().nonnegative().max(100_000).optional(),
+  googleMapsUrl: z.string().url().max(2_000).optional(),
 }).strict();
 
 export type AssistantProposalPayload = z.infer<typeof assistantProposalPayloadSchema>;

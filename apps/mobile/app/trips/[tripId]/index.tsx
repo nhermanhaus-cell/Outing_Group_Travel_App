@@ -16,10 +16,9 @@ import {
   createTripPlanReworkPreview,
   estimateBudget,
   generateTripPlan,
+  hasImplausibleItineraryTime,
   normalizeActivityPreferenceChoice,
   rankPlacesNearLodging,
-  refineTripPlan,
-  replaceTripPlanItems,
   suggestQueerNeighborhoods,
 } from '@gayi/domain';
 import type {
@@ -27,11 +26,9 @@ import type {
   FreeWindowSuggestion,
   ItineraryItem,
   TripPlan,
-  TripPlanFeedback,
   TripPlanInput,
   TripPlanDayReworkAction,
   TripPlanPreviewProposal,
-  TripPlanReaction,
 } from '@gayi/domain';
 import { useTheme } from '../../../src/theme/ThemeProvider';
 import { useAuth, useTravelProfile, useTrips } from '../../../src/providers/AppProviders';
@@ -55,6 +52,7 @@ import type {
   LookingFor,
   MemberPreferenceSnapshot,
   Place,
+  TripEssential,
   TravelPreferences,
 } from '@gayi/shared';
 import {
@@ -64,6 +62,8 @@ import {
 import {
   fetchNearbyHighlyRated,
   geocodeLodgingAddress,
+  lookupPlaceById,
+  lookupPlaceByName,
   searchPlacesForInterests,
   type NearbyPlaceResult,
 } from '../../../src/lib/googlePlaces';
@@ -92,7 +92,6 @@ import {
 } from '../../../src/lib/travel-api';
 import { nearestAirports } from '../../../src/content/airports';
 import { CalendarExportSheet } from '../../../components/trips/CalendarExportSheet';
-import { openItineraryItemInCalendar } from '../../../src/lib/calendarExport';
 import { useAnalytics } from '../../../src/analytics/analytics-provider';
 import { OutingIcon, type OutingIconName } from '../../../components/ui/OutingIcon';
 import { featureFlags } from '../../../src/lib/featureFlags';
@@ -103,12 +102,15 @@ import { DecisionBriefCard } from '../../../components/assistant/DecisionBriefCa
 import { ActivityPreferenceDeck } from '../../../components/trips/activity-preference-deck';
 import { ItineraryBuildingScreen } from '../../../components/trips/itinerary-building-screen';
 import { itineraryBuildRemainingMs } from '../../../src/lib/itinerary-building-state';
+import { itineraryItemRouteId } from '../../../src/lib/itinerary-item-actions';
 import {
   resolveInitialTripSection,
   TRIP_GROUP_SECTIONS,
   TRIP_PRIMARY_AREAS,
   type TripHubSectionKey as SectionKey,
 } from '../../../src/lib/trip-hub-navigation';
+import { formatClockTime, formatMoney, formatMoneyRange } from '../../../src/lib/display-format';
+import { useDisplayPreferences } from '../../../src/lib/display-preferences';
 
 type HubSectionKey = 'plan' | 'explore' | 'group';
 
@@ -206,6 +208,7 @@ const INTEREST_ALIASES: Record<string, Interest[]> = {
 
 export default function TripHubScreen() {
   const { colors, spacing, radius } = useTheme();
+  const [displayPreferences] = useDisplayPreferences();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { tripId, section: requestedSection, deck, day: requestedDay, rework, building } = useLocalSearchParams<{ tripId: string; section?: string; deck?: string; day?: string; rework?: string; building?: string }>();
@@ -453,7 +456,7 @@ export default function TripHubScreen() {
   );
   const roundTripFlightQuery = useQuery({
     queryKey: [
-      'scrappa-round-trip-v1',
+      'scrappa-round-trip-v2',
       trip?.origin,
       destinationAirport?.iata,
       trip?.startDate,
@@ -583,7 +586,7 @@ export default function TripHubScreen() {
             flights: {
               low: roundTripFlightEstimate.lowPrice,
               high: roundTripFlightEstimate.highPrice,
-              assumption: `Observed per-traveler starting prices from a Scrappa-backed Google Flights round-trip search for ${roundTripFlightEstimate.originIata}–${roundTripFlightEstimate.destinationIata}. Final fare depends on the selected return flight.`,
+              assumption: `Observed per-traveler starting prices from a Google Flights round-trip search for ${roundTripFlightEstimate.originIata}–${roundTripFlightEstimate.destinationIata}. Final fare depends on the selected return flight.`,
             },
           },
         } : {}),
@@ -639,6 +642,64 @@ export default function TripHubScreen() {
     [destinationExperiencesQuery.data?.experiences],
   );
 
+  const customEssentialPlaces = useMemo(
+    () => (trip?.planningPreferences?.customEssentials ?? []).map((essential) =>
+      mapTripEssentialToDomainPlace(
+        essential,
+        catalogDestination,
+        blendedPreferences?.interests ?? [],
+      )),
+    [blendedPreferences?.interests, catalogDestination, trip?.planningPreferences?.customEssentials],
+  );
+
+  const providerScheduleCandidates = useMemo(
+    () => [...customEssentialPlaces, ...domainPlaces],
+    [customEssentialPlaces, domainPlaces],
+  );
+  const providerScheduleQueries = useQueries({
+    queries: providerScheduleCandidates.map((place) => ({
+      queryKey: [
+        'itinerary-place-hours-v1',
+        catalogDestination?.slug,
+        place.providerPlaceId ?? place.name,
+      ],
+      queryFn: ({ signal }: { signal: AbortSignal }) => place.providerPlaceId
+        ? lookupPlaceById(place.providerPlaceId, signal)
+        : lookupPlaceByName(
+            place.name,
+            catalogDestination!.name,
+            {
+              center: place.coords,
+              ...(place.address ? { address: place.address } : {}),
+            },
+            signal,
+          ),
+      enabled: Boolean(
+        catalogDestination?.name
+        && Number.isFinite(place.coords.lat)
+        && Number.isFinite(place.coords.lng)
+        && (place.coords.lat !== 0 || place.coords.lng !== 0)
+      ),
+      // Regular hours are cached server-side for a day. Keeping the mobile
+      // cache longer still allows a useful offline itinerary while the server
+      // controls provider freshness.
+      staleTime: 24 * 60 * 60_000,
+      retry: 1,
+    })),
+  });
+  const providerScheduleFingerprint = providerScheduleQueries
+    .map((query) => `${query.data?.placeId ?? ''}:${query.data?.verifiedAt ?? ''}`)
+    .join('|');
+  const verifiedPlanningPlaces = useMemo(
+    () => providerScheduleCandidates.map((place, index) => {
+      const verified = providerScheduleQueries[index]?.data;
+      return verified ? mergeVerifiedPlaceFacts(place, verified) : place;
+    }),
+    // The fingerprint is stable while React Query result wrappers change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [providerScheduleCandidates, providerScheduleFingerprint],
+  );
+
   const itineraryPlaces = useMemo<Place[]>(() => {
     const livePlaces = liveInterestPlaces.map((place) =>
       mapGooglePlaceToDomainPlace(place, blendedPreferences?.interests ?? []),
@@ -653,19 +714,20 @@ export default function TripHubScreen() {
       )
       .filter((place): place is Place => place != null);
 
-    const seen = new Set<string>();
-    return [...domainPlaces, ...livePlaces, ...experiencePlaces].filter((place) => {
+    const placesByName = new Map<string, Place>();
+    for (const place of [...verifiedPlanningPlaces, ...livePlaces, ...experiencePlaces]) {
       const key = place.name.trim().toLowerCase();
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+      if (!key) continue;
+      const existing = placesByName.get(key);
+      placesByName.set(key, existing ? mergeDuplicatePlaceFacts(existing, place) : place);
+    }
+    return [...placesByName.values()];
   }, [
     blendedPreferences?.interests,
     catalogDestination,
     destinationExperiences,
-    domainPlaces,
     liveInterestPlaces,
+    verifiedPlanningPlaces,
   ]);
 
   const activityCandidates = useMemo(() => {
@@ -789,7 +851,15 @@ export default function TripHubScreen() {
       ...(budget !== null && { budget }),
       feedback: trip.itineraryFeedback ?? trip.tripPlan?.feedback ?? [],
       excludedPlaceIds: activityPreferenceSignals.excludedPlaceIds,
-      anchorCandidatePlaceIds: activityPreferenceSignals.anchorCandidatePlaceIds,
+      requiredPlaceIds: [
+        ...(trip.planningPreferences?.hallmarkIds ?? []),
+        ...customEssentialPlaces.map((place) => place.placeId),
+      ],
+      anchorCandidatePlaceIds: [
+        ...activityPreferenceSignals.anchorCandidatePlaceIds,
+        ...(trip.planningPreferences?.hallmarkIds ?? []),
+        ...customEssentialPlaces.map((place) => place.placeId),
+      ],
       minorityFavoriteMemberIdsByPlace: activityPreferenceSignals.minorityFavoriteMemberIdsByPlace,
       scoreAdjustments: {
         ...inferredScoreAdjustments,
@@ -854,7 +924,12 @@ export default function TripHubScreen() {
     }
   }, [tripPlanInput]);
 
-  const activeTripPlan = trip?.tripPlan ?? generatedTripPlan;
+  const savedPlanNeedsScheduleRepair = Boolean(
+    trip?.tripPlan?.items.some((item) => !item.locked && hasImplausibleItineraryTime(item)),
+  );
+  const activeTripPlan = savedPlanNeedsScheduleRepair
+    ? generatedTripPlan
+    : trip?.tripPlan ?? generatedTripPlan;
   const itinerary = activeTripPlan?.items ??
     (trip?.itineraryItems?.length
       ? trip.itineraryItems as unknown as ItineraryItem[]
@@ -1019,123 +1094,6 @@ export default function TripHubScreen() {
     }
     setActivityDeckVisible(false);
   }, [activityCandidates.length, inferredScoreAdjustments, itineraryPlaces, observePreference, track, trip, tripPlanInput, updateTrip, user?.id]);
-
-  const saveItinerary = useCallback(async (items: ItineraryItem[]) => {
-    if (!trip) return;
-    if (activeTripPlan) {
-      await saveTripPlan(replaceTripPlanItems(activeTripPlan, items));
-      return;
-    }
-    await updateTrip(trip.tripId, {
-      itineraryItems: items as unknown as Array<Record<string, unknown>>,
-    });
-  }, [activeTripPlan, saveTripPlan, trip, updateTrip]);
-
-  const editItineraryItem = useCallback((target: ItineraryItem, updates: Partial<ItineraryItem> | null) => {
-    if (!itinerary) return;
-    const category = target.category || target.kind || 'activity';
-    if (updates === null) {
-      track(ANALYTICS_EVENTS.ITINERARY_ITEM_REMOVED, {
-        category,
-        source: target.source,
-        attendance: target.attendance ?? 'group',
-      });
-      observePreference({
-        subjectType: 'activity_category',
-        subjectKey: category,
-        value: -0.6,
-        weight: 1,
-        source: 'remove',
-        observedAt: new Date().toISOString(),
-      });
-    } else if (updates.locked !== undefined) {
-      track(ANALYTICS_EVENTS.ITINERARY_ITEM_LOCKED, {
-        category,
-        locked: updates.locked,
-      });
-    } else if (updates.day !== undefined || updates.time !== undefined) {
-      track(ANALYTICS_EVENTS.ITINERARY_ITEM_MOVED, {
-        category,
-        ...(updates.day !== undefined ? { dayDelta: updates.day - target.day } : {}),
-      });
-    }
-    const next = updates === null
-      ? itinerary.filter((item) => item !== target)
-      : itinerary.map((item) => {
-          if (item !== target) return item;
-          const updated = { ...item, ...updates };
-          if (trip?.startDate && (updates.time !== undefined || updates.day !== undefined)) {
-            const schedule = scheduledLocalTimestamps(trip.startDate, updated.day, updated.time, updated.duration);
-            return { ...updated, ...schedule };
-          }
-          return updated;
-        });
-    void saveItinerary(next);
-  }, [itinerary, observePreference, saveItinerary, track, trip?.startDate]);
-
-  const reactToItineraryItem = useCallback(async (
-    item: ItineraryItem,
-    reaction: TripPlanReaction,
-  ) => {
-    if (!trip || !activeTripPlan || !tripPlanInput || !item.itemId) return;
-    const memberId = user?.id ?? `owner-${trip.tripId}`;
-    const prior = trip.itineraryFeedback ?? activeTripPlan.feedback;
-    const existing = prior.find(
-      (feedback) => feedback.itemId === item.itemId && feedback.memberId === memberId,
-    );
-    const withoutExisting = prior.filter(
-      (feedback) => !(feedback.itemId === item.itemId && feedback.memberId === memberId),
-    );
-    const nextFeedback: TripPlanFeedback[] =
-      existing?.reaction === reaction
-        ? withoutExisting
-        : [
-            ...withoutExisting,
-            {
-              itemId: item.itemId,
-              placeId: item.placeId,
-              day: item.day,
-              memberId,
-              reaction,
-              createdAt: new Date().toISOString(),
-            },
-          ];
-    const refined = refineTripPlan(
-      tripPlanInput,
-      activeTripPlan,
-      nextFeedback,
-      [item.day],
-    );
-    if (!featureFlags.outingFullExperienceV1) {
-      await saveTripPlan(refined);
-    } else setPlanPreview({
-      proposalId: `feedback-${activeTripPlan.planId}-${item.day}-${Date.now()}`,
-      tripId: trip.tripId,
-      action: 'lighter_pace',
-      day: item.day,
-      priorPlanId: activeTripPlan.planId,
-      priorRevision: activeTripPlan.revision,
-      preview: refined,
-      summary: `Preview Day ${item.day} after applying this feedback. Review the replacements and timing before changing the accepted plan.`,
-      createdAt: new Date().toISOString(),
-      status: 'preview',
-    });
-    const cleared = existing?.reaction === reaction;
-    track(ANALYTICS_EVENTS.ITINERARY_FEEDBACK_SUBMITTED, {
-      category: item.category || item.kind || 'activity',
-      reaction: cleared ? 'cleared' : reaction,
-    });
-    if (!cleared) {
-      observePreference({
-        subjectType: 'activity_category',
-        subjectKey: item.category || item.kind || 'activity',
-        value: reaction === 'like' ? 1 : -1,
-        weight: 2,
-        source: reaction,
-        observedAt: new Date().toISOString(),
-      });
-    }
-  }, [activeTripPlan, observePreference, saveTripPlan, track, trip, tripPlanInput, user?.id]);
 
   const previewDayRework = useCallback((day: number, action: TripPlanDayReworkAction) => {
     if (!trip || !tripPlanInput || !activeTripPlan) return;
@@ -1481,7 +1439,7 @@ export default function TripHubScreen() {
         )
         .map((item) => ({
           id: `itinerary-${item.placeId}-${item.day}-${item.time}`,
-          label: `${item.title} · Day ${item.day} ${item.time}`,
+          label: `${item.title} · Day ${item.day} ${formatClockTime(item.time, displayPreferences.timeFormat)}`,
           lat: item.coords.lat,
           lng: item.coords.lng,
           kind: 'itinerary' as const,
@@ -1489,7 +1447,7 @@ export default function TripHubScreen() {
           saveKey: item.placeId,
           day: item.day,
         })),
-    [routableItinerary],
+    [displayPreferences.timeFormat, routableItinerary],
   );
 
   const selectedDayItineraryMarkers = useMemo(
@@ -1935,7 +1893,7 @@ export default function TripHubScreen() {
                 <InfoRow label="Pace" value={formatPaceLabel(trip.activityPace ?? blendedPreferences?.activityPace ?? 'balanced')} />
                 <InfoRow label="Stay" value={trip.lodgingStatus === 'booked' ? trip.lodgingAddress || 'Booked' : 'Not booked yet'} />
                 {trip.origin ? <InfoRow label="Flying from" value={trip.origin} /> : null}
-                {trip.budget ? <InfoRow label="Budget" value={`$${trip.budget}`} /> : null}
+                {trip.budget ? <InfoRow label="Budget" value={formatMoney(trip.budget, 'USD', displayPreferences.currency)} /> : null}
               </View>
             </Card>
 
@@ -2095,13 +2053,13 @@ export default function TripHubScreen() {
                         <View style={{ gap: spacing.sm, paddingTop: spacing.xs }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
                             <Text variant="labelMd">Round-trip flight estimate</Text>
-                            <Badge label="Scrappa · Google Flights" variant="info" />
+                            <Badge label="Google Flights" variant="info" />
                           </View>
                           <Text variant="h3">
-                            {roundTripFlightEstimate.currency} {roundTripFlightEstimate.lowPrice.toLocaleString()}–{roundTripFlightEstimate.highPrice.toLocaleString()}
+                            {formatMoneyRange(roundTripFlightEstimate.lowPrice, roundTripFlightEstimate.highPrice, roundTripFlightEstimate.currency, displayPreferences.currency)}
                           </Text>
                           <Text variant="caption" style={{ color: colors.textSecondary }}>
-                            Per traveler · typical option {roundTripFlightEstimate.currency} {roundTripFlightEstimate.typicalPrice.toLocaleString()} · {roundTripFlightEstimate.optionCount} observed options
+                            Per traveler · typical option {formatMoney(roundTripFlightEstimate.typicalPrice, roundTripFlightEstimate.currency, displayPreferences.currency)} · {roundTripFlightEstimate.optionCount} observed options
                           </Text>
                           <Text variant="caption" style={{ color: colors.textTertiary }}>
                             {roundTripFlightEstimate.message}
@@ -2111,7 +2069,7 @@ export default function TripHubScreen() {
                               {roundTripFlightEstimate.options.slice(0, 3).map((option, index) => (
                                 <Badge
                                   key={`${option.airlineName ?? 'flight'}-${option.price}-${index}`}
-                                  label={`${option.airlineName ?? 'Flight'} · ${option.currency} ${option.price}${option.stops === 0 ? ' · nonstop' : ''}`}
+                                  label={`${option.airlineName ?? 'Flight'} · ${formatMoney(option.price, option.currency, displayPreferences.currency)}${option.stops === 0 ? ' · nonstop' : ''}`}
                                   variant="default"
                                 />
                               ))}
@@ -2137,7 +2095,7 @@ export default function TripHubScreen() {
                           <Text variant="labelMd">Flight guidance</Text>
                           {activeTripPlan.flightPriceGuidance.currentPrice !== undefined ? (
                             <Text variant="bodyMd">
-                              {activeTripPlan.flightPriceGuidance.currency ?? 'USD'} {activeTripPlan.flightPriceGuidance.currentPrice.toLocaleString()}
+                              {formatMoney(activeTripPlan.flightPriceGuidance.currentPrice, activeTripPlan.flightPriceGuidance.currency ?? 'USD', displayPreferences.currency)}
                               {' · indicative'}
                             </Text>
                           ) : null}
@@ -2214,7 +2172,7 @@ export default function TripHubScreen() {
                       <Text variant="bodySm" style={{ color: colors.textSecondary }}>{planPreview.summary}</Text>
                       <View style={{ padding: spacing.md, borderRadius: radius.lg, backgroundColor: colors.backgroundSecondary, gap: spacing.xs }}>
                         {planPreview.preview.items.filter((item) => item.day === planPreview.day).map((item) => (
-                          <Text key={item.itemId ?? `${item.time}-${item.placeId}`} variant="bodySm">{item.time} · {item.title}</Text>
+                          <Text key={item.itemId ?? `${item.time}-${item.placeId}`} variant="bodySm">{formatClockTime(item.time, displayPreferences.timeFormat)} · {item.title}</Text>
                         ))}
                       </View>
                       <View style={{ flexDirection: 'row', gap: spacing.sm }}>
@@ -2360,9 +2318,6 @@ export default function TripHubScreen() {
                         const legAfter = dayLegs.find((leg) => leg.fromLabel === item.title);
                         const markerId = `itinerary-${item.placeId}-${item.day}-${item.time}`;
                         const memberId = user?.id ?? `owner-${trip.tripId}`;
-                        const currentReaction = (trip.itineraryFeedback ?? activeTripPlan?.feedback ?? []).find(
-                          (feedback) => feedback.itemId === item.itemId && feedback.memberId === memberId,
-                        )?.reaction;
                         const freeWindowSuggestions = dayPlan?.freeWindowSuggestions.filter(
                           (suggestion) => suggestion.windowItemId === item.itemId,
                         ) ?? [];
@@ -2370,17 +2325,28 @@ export default function TripHubScreen() {
                           <View key={`${item.placeId}-${item.time}`}>
                             <View style={{ flexDirection: 'row', gap: spacing.md, marginBottom: spacing.sm }}>
                               <View style={{ width: 44, alignItems: 'center' }}>
-                                <Text variant="caption" style={{ color: colors.textTertiary }}>{item.time}</Text>
+                                <Text variant="caption" style={{ color: colors.textTertiary }}>{formatClockTime(item.time, displayPreferences.timeFormat)}</Text>
                                 {i < items.length - 1 && (
                                   <View style={{ flex: 1, width: 1, backgroundColor: colors.border, marginTop: spacing.xs }} />
                                 )}
                               </View>
-                              <Pressable style={{ flex: 1 }} onPress={() => setSelectedMapMarkerId(markerId)}>
+                              <Pressable
+                                accessibilityRole="button"
+                                accessibilityLabel={`Open ${item.title} itinerary details`}
+                                style={{ flex: 1 }}
+                                onPress={() => router.push({
+                                  pathname: '/trips/[tripId]/itinerary/[itemId]',
+                                  params: { tripId: trip.tripId, itemId: itineraryItemRouteId(item) },
+                                })}
+                              >
                               <Card elevated={selectedMapMarkerId === markerId} style={selectedMapMarkerId === markerId ? { borderColor: colors.accent, borderWidth: 1.5 } : undefined}>
                                 <View style={{ gap: spacing.xs }}>
-                                  <Text variant="labelLg">{item.title}</Text>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                                    <Text variant="labelLg" style={{ flex: 1 }}>{item.title}</Text>
+                                    <OutingIcon name="arrow" size={17} color={colors.accent} />
+                                  </View>
                                   {item.summary ? (
-                                    <Text variant="bodySm" style={{ color: colors.textSecondary }}>{item.summary}</Text>
+                                    <Text variant="bodySm" numberOfLines={2} style={{ color: colors.textSecondary }}>{item.summary}</Text>
                                   ) : null}
                                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
                                     {item.anchor ? <Badge label="Shared anchor" variant="accent" /> : null}
@@ -2389,63 +2355,9 @@ export default function TripHubScreen() {
                                   </View>
                                   <Text variant="caption" style={{ color: colors.textSecondary }}>
                                     {item.category} · {item.duration}min
-                                    {item.windowEndTime ? ` · until ${item.windowEndTime}` : ''}
-                                    {' · '}{item.scheduleStatus ?? 'estimated'}
+                                    {item.windowEndTime ? ` · until ${formatClockTime(item.windowEndTime, displayPreferences.timeFormat)}` : ''}
                                   </Text>
-                                  {item.arrivalBufferMinutes ? <Text variant="caption" style={{ color: colors.textSecondary }}>{item.arrivalBufferMinutes} min arrival buffer</Text> : null}
-                                  {item.lgbtqRelevance ? (
-                                    <Text variant="caption" style={{ color: colors.accent }}>
-                                      ✦ {item.lgbtqRelevance}
-                                    </Text>
-                                  ) : null}
-                                  <Text variant="caption" style={{ color: colors.textTertiary }}>
-                                    {item.whySelected}
-                                  </Text>
-                                  {item.bookingOffer ? (
-                                    <View style={{ gap: spacing.xxs }}>
-                                      <Pressable onPress={() => void openBookingLink(
-                                        item.bookingOffer!.url,
-                                        item.bookingOffer!.provider,
-                                        item.category,
-                                      ).catch(() => Alert.alert('Couldn’t open booking link'))}>
-                                        <Text variant="labelSm" style={{ color: colors.accent }}>
-                                          View on {formatTokenLabel(item.bookingOffer.provider)} →
-                                        </Text>
-                                      </Pressable>
-                                      {item.bookingOffer.disclosure ? (
-                                        <Text variant="caption" style={{ color: colors.textTertiary }}>{item.bookingOffer.disclosure}</Text>
-                                      ) : null}
-                                    </View>
-                                  ) : null}
-                                  {item.kind !== 'downtime' && item.kind !== 'meal' && item.itemId ? (
-                                    <View style={{ gap: spacing.xs, paddingTop: spacing.xs }}>
-                                      <Text variant="caption" style={{ color: colors.textSecondary }}>Help refine this day</Text>
-                                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
-                                        {([
-                                          ['like', 'Like', 'success'],
-                                          ['dislike', 'Not for me', 'default'],
-                                          ['veto', 'Veto', 'warning'],
-                                        ] as Array<[TripPlanReaction, string, 'success' | 'default' | 'warning']>).map(([reaction, label, variant]) => (
-                                          <Pressable key={reaction} onPress={() => void reactToItineraryItem(item, reaction)}>
-                                            <Badge
-                                              label={label}
-                                              variant={currentReaction === reaction ? variant : 'default'}
-                                            />
-                                          </Pressable>
-                                        ))}
-                                      </View>
-                                    </View>
-                                  ) : null}
-                                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.xs }}>
-                                    <Pressable onPress={() => editItineraryItem(item, { locked: !item.locked })}><Badge label={item.locked ? 'Unlock' : 'Lock'} variant={item.locked ? 'accent' : 'default'} /></Pressable>
-                                    <Pressable onPress={() => editItineraryItem(item, { time: shiftClock(item.time, -30) })}><Badge label="−30 min" /></Pressable>
-                                    <Pressable onPress={() => editItineraryItem(item, { time: shiftClock(item.time, 30) })}><Badge label="+30 min" /></Pressable>
-                                    {day > 1 ? <Pressable onPress={() => editItineraryItem(item, { day: day - 1 })}><Badge label="Previous day" /></Pressable> : null}
-                                    {day < getDuration(trip.startDate, trip.endDate) ? <Pressable onPress={() => editItineraryItem(item, { day: day + 1 })}><Badge label="Next day" /></Pressable> : null}
-                                    {trip.startDate ? <Pressable onPress={() => void openItineraryItemInCalendar(item, { tripId: trip.tripId, tripName: trip.name, startDate: trip.startDate, destinationName: trip.destinationName, lodgingAddress: trip.lodgingAddress }).catch((error) => Alert.alert('Couldn’t open calendar', error instanceof Error ? error.message : 'Please try again.'))}><Badge label="Calendar" variant="info" /></Pressable> : null}
-                                    {item.itemId ? <Pressable onPress={() => router.push({ pathname: '/trips/[tripId]/ask', params: { tripId: trip.tripId, focusKind: 'item', itemId: item.itemId, prompt: `Tell me about ${item.title} and nearby alternatives` } })}><Badge label="Ask nearby" variant="accent" /></Pressable> : null}
-                                    <Pressable onPress={() => editItineraryItem(item, null)}><Badge label="Remove" variant="warning" /></Pressable>
-                                  </View>
+                                  <Text variant="labelSm" style={{ color: colors.accent }}>View details and shape this stop</Text>
                                 </View>
                               </Card>
                               </Pressable>
@@ -2468,7 +2380,7 @@ export default function TripHubScreen() {
                                             label={suggestion.attendance === 'solo' ? 'Solo option' : 'Subgroup option'}
                                             variant="info"
                                           />
-                                          <Badge label={`Return by ${suggestion.returnBy}`} variant="default" />
+                                          <Badge label={`Return by ${formatClockTime(suggestion.returnBy, displayPreferences.timeFormat)}`} variant="default" />
                                         </View>
                                         <Text variant="labelLg">{suggestion.title}</Text>
                                         <Text variant="caption" style={{ color: colors.textSecondary }}>
@@ -2556,11 +2468,11 @@ export default function TripHubScreen() {
                 <Card elevated>
                   <View style={{ gap: spacing.sm }}>
                     <Text variant="h2">
-                      ${budget.perPerson.total.low.toLocaleString()} – ${budget.perPerson.total.high.toLocaleString()}
+                      {formatMoneyRange(budget.perPerson.total.low, budget.perPerson.total.high, 'USD', displayPreferences.currency)}
                     </Text>
                     <Text variant="bodyMd" style={{ color: colors.textSecondary }}>per person</Text>
                     <Text variant="caption" style={{ color: colors.textTertiary }}>
-                      Group total: ${budget.groupTotal.total.low.toLocaleString()} – ${budget.groupTotal.total.high.toLocaleString()}
+                      Group total: {formatMoneyRange(budget.groupTotal.total.low, budget.groupTotal.total.high, 'USD', displayPreferences.currency)}
                     </Text>
                   </View>
                 </Card>
@@ -2571,7 +2483,7 @@ export default function TripHubScreen() {
                       {roundTripFlightEstimate?.currency === 'USD' ? <Badge label="Live estimate" variant="info" /> : <Badge label="Planning estimate" variant="default" />}
                     </View>
                     <Text variant="h3">
-                      ${budget.perPerson.categories.flights.low.toLocaleString()}–${budget.perPerson.categories.flights.high.toLocaleString()}
+                      {formatMoneyRange(budget.perPerson.categories.flights.low, budget.perPerson.categories.flights.high, 'USD', displayPreferences.currency)}
                     </Text>
                     <Text variant="caption" style={{ color: colors.textSecondary }}>
                       Per traveler · included in both the per-person and group totals above.
@@ -2579,6 +2491,7 @@ export default function TripHubScreen() {
                     <Text variant="caption" style={{ color: colors.textTertiary }}>
                       {budget.perPerson.categories.flights.assumption}
                     </Text>
+                    {displayPreferences.currency !== 'USD' ? <Text variant="caption" style={{ color: colors.textTertiary }}>Approximate display conversion from Outing’s USD planning estimate.</Text> : null}
                     {roundTripFlightEstimate ? (
                       <Button
                         size="sm"
@@ -3529,6 +3442,93 @@ function mapGooglePlaceToDomainPlace(
   };
 }
 
+function mergeVerifiedPlaceFacts(base: Place, verified: NearbyPlaceResult): Place {
+  const live = mapGooglePlaceToDomainPlace(verified, base.interests);
+  return {
+    ...base,
+    providerPlaceId: live.providerPlaceId,
+    coords: live.coords,
+    ...(live.address ? { address: live.address } : {}),
+    ...(live.rating !== undefined ? { rating: live.rating } : {}),
+    ...(live.reviewCount !== undefined ? { reviewCount: live.reviewCount } : {}),
+    ...(live.photos?.length ? { photos: live.photos } : {}),
+    ...(live.businessStatus ? { businessStatus: live.businessStatus } : {}),
+    ...(live.priceLevel !== undefined ? { priceLevel: live.priceLevel } : {}),
+    openingHours: live.openingHours ?? [],
+    ...(live.verifiedAt ? { verifiedAt: live.verifiedAt } : {}),
+    ...(live.confidence !== undefined ? { confidence: live.confidence } : {}),
+    ...(live.freshness ? { freshness: live.freshness } : {}),
+    ...(live.neighborhood ? { neighborhood: live.neighborhood } : {}),
+  };
+}
+
+function mergeDuplicatePlaceFacts(primary: Place, duplicate: Place): Place {
+  return {
+    ...primary,
+    ...(primary.providerPlaceId ? {} : duplicate.providerPlaceId ? { providerPlaceId: duplicate.providerPlaceId } : {}),
+    ...(!primary.address && duplicate.address ? { address: duplicate.address } : {}),
+    ...(!primary.openingHours?.length && duplicate.openingHours?.length
+      ? { openingHours: duplicate.openingHours }
+      : {}),
+    ...(primary.businessStatus === undefined && duplicate.businessStatus !== undefined
+      ? { businessStatus: duplicate.businessStatus }
+      : {}),
+    ...(primary.rating === undefined && duplicate.rating !== undefined ? { rating: duplicate.rating } : {}),
+    ...(primary.reviewCount === undefined && duplicate.reviewCount !== undefined
+      ? { reviewCount: duplicate.reviewCount }
+      : {}),
+    ...(!primary.photos?.length && duplicate.photos?.length ? { photos: duplicate.photos } : {}),
+    ...(primary.verifiedAt === undefined && duplicate.verifiedAt !== undefined
+      ? { verifiedAt: duplicate.verifiedAt }
+      : {}),
+    ...(primary.freshness === undefined && duplicate.freshness !== undefined
+      ? { freshness: duplicate.freshness }
+      : {}),
+  };
+}
+
+function mapTripEssentialToDomainPlace(
+  essential: TripEssential,
+  destination: { lat?: unknown; lng?: unknown } | null | undefined,
+  interests: Interest[],
+): Place {
+  const category = normalizeCategory(essential.category ?? (essential.kind === 'activity' ? 'tour' : 'other'));
+  const lat = typeof essential.lat === 'number'
+    ? essential.lat
+    : typeof destination?.lat === 'number' ? destination.lat : 0;
+  const lng = typeof essential.lng === 'number'
+    ? essential.lng
+    : typeof destination?.lng === 'number' ? destination.lng : 0;
+  return {
+    placeId: essential.id,
+    ...(essential.providerPlaceId ? { providerPlaceId: essential.providerPlaceId } : {}),
+    name: essential.label,
+    summary: essential.summary ?? 'A must-do supplied by the traveler for this trip.',
+    category,
+    coords: { lat, lng },
+    durationMinutes: essential.kind === 'activity' ? 120 : category === 'museum' ? 120 : 90,
+    estimatedCostPerPerson: 0,
+    bookingRequired: false,
+    interests: inferPlaceInterests(category, essential.summary ?? '', undefined, interests),
+    source: essential.source,
+    ...(essential.address ? { address: essential.address } : {}),
+    ...(essential.imageUrl ? {
+      photos: [{
+        url: essential.imageUrl,
+        ...(essential.imageAttribution ? { attribution: essential.imageAttribution } : {}),
+        provider: essential.source,
+      }],
+    } : {}),
+    ...(essential.verifiedAt ? { verifiedAt: essential.verifiedAt } : {}),
+    confidence: essential.source === 'google_places' ? 0.9 : 0.55,
+    freshness: essential.source === 'google_places' ? 'cached' : 'limited',
+    fitReasons: ['You marked this as essential for the trip'],
+    providerDisclosure: essential.source === 'google_places'
+      ? 'Place identity and photo supplied by Google Places. No booking commission applies.'
+      : 'This is your own trip idea; timing and availability still need confirmation.',
+  };
+}
+
 function mapExperienceToDomainPlace(
   experience: MobileExperience,
   _catalogDestination: { lat?: unknown; lng?: unknown } | null | undefined,
@@ -3537,11 +3537,17 @@ function mapExperienceToDomainPlace(
   const hasExperienceCoords = hasNumericCoords(experience.lat, experience.lng);
   if (!hasExperienceCoords) return null;
 
+  const category = normalizeCategory(experience.category ?? 'tour');
+  const fixedStartTimes = sanitizeProviderStartTimes(
+    experience.availabilityStartTimes,
+    category,
+  );
+
   return {
     placeId: `experience-${experience.id}`,
     name: experience.title,
     summary: experience.description ?? experience.summary,
-    category: normalizeCategory(experience.category ?? 'tour'),
+    category,
     coords: {
       lat: Number(experience.lat),
       lng: Number(experience.lng),
@@ -3557,7 +3563,7 @@ function mapExperienceToDomainPlace(
         ?? (experience.provider === 'viator' ? 'Viator' : 'Outing editorial'),
       provider: experience.provider,
     })),
-    fixedStartTimes: experience.availabilityStartTimes,
+    ...(fixedStartTimes.length > 0 ? { fixedStartTimes } : {}),
     interests: normalizeInterests(experience.tags),
     address: experience.address,
     neighborhood: experience.locationName,
@@ -3587,6 +3593,19 @@ function mapExperienceToDomainPlace(
   };
 }
 
+function sanitizeProviderStartTimes(
+  values: string[] | undefined,
+  category: Place['category'],
+): string[] {
+  const daytime = ['beach', 'landmark', 'museum', 'park', 'shop', 'spa', 'tour'].includes(category);
+  return [...new Set((values ?? []).filter((value) => {
+    const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value.trim());
+    if (!match) return false;
+    const minute = Number(match[1]) * 60 + Number(match[2]);
+    return !daytime || minute >= 6 * 60;
+  }))].sort();
+}
+
 function hasNumericCoords(lat: unknown, lng: unknown): lat is number {
   return typeof lat === 'number' && Number.isFinite(lat) && typeof lng === 'number' && Number.isFinite(lng);
 }
@@ -3597,25 +3616,6 @@ function formatPaceLabel(pace: ActivityPace): string {
 
 function formatTokenLabel(value: string): string {
   return value.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function shiftClock(value: string, offsetMinutes: number): string {
-  const [hours = 0, minutes = 0] = value.split(':').map(Number);
-  const shifted = Math.max(0, Math.min(23 * 60 + 59, hours * 60 + minutes + offsetMinutes));
-  return `${String(Math.floor(shifted / 60)).padStart(2, '0')}:${String(shifted % 60).padStart(2, '0')}`;
-}
-
-function scheduledLocalTimestamps(startDate: string, day: number, time: string, durationMinutes: number) {
-  const [hours = 0, minutes = 0] = time.split(':').map(Number);
-  const start = new Date(`${startDate}T00:00:00Z`);
-  if (Number.isNaN(start.getTime())) return {};
-  start.setUTCDate(start.getUTCDate() + Math.max(0, day - 1));
-  start.setUTCHours(hours, minutes, 0, 0);
-  const end = new Date(start.getTime() + Math.max(1, durationMinutes) * 60_000);
-  return {
-    startsAt: start.toISOString().slice(0, 19),
-    endsAt: end.toISOString().slice(0, 19),
-  };
 }
 
 function normalizeBusinessStatus(value?: string): Place['businessStatus'] {

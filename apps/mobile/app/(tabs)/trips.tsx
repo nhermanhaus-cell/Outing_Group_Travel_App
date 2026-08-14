@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { type Href, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useAuth, useTrips } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
@@ -23,6 +24,13 @@ export default function TripsScreen() {
   const insets = useSafeAreaInsets();
   const [renamingTrip, setRenamingTrip] = useState<LocalTrip | null>(null);
   const [deletingTripId, setDeletingTripId] = useState<string | null>(null);
+  const orderedTrips = useMemo(() => [...trips].sort((left, right) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const leftPast = Boolean(left.endDate && left.endDate < today);
+    const rightPast = Boolean(right.endDate && right.endDate < today);
+    if (leftPast !== rightPast) return leftPast ? 1 : -1;
+    return (left.startDate ?? '9999-12-31').localeCompare(right.startDate ?? '9999-12-31');
+  }), [trips]);
 
   const handleNewTrip = () => {
     router.push('/trips/new');
@@ -69,15 +77,23 @@ export default function TripsScreen() {
           paddingHorizontal: spacing.base,
           paddingBottom: spacing.md,
           backgroundColor: colors.background,
-          borderBottomWidth: 1,
-          borderBottomColor: colors.border,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}
       >
-        <Text variant="displaySm">Trips</Text>
-        <Button size="sm" onPress={handleNewTrip}>+ New trip</Button>
+        <View style={{ gap: 2 }}>
+          <Text variant="displaySm">Trips</Text>
+          <Text variant="caption" style={{ color: colors.textSecondary }}>Plans, people, and everything you’ve saved</Text>
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Plan a new trip"
+          onPress={handleNewTrip}
+          style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Text variant="h2" style={{ color: colors.white }}>+</Text>
+        </Pressable>
       </View>
 
       {!user ? (
@@ -101,13 +117,19 @@ export default function TripsScreen() {
       ) : null}
 
       <FlatList
-        data={trips}
+        data={orderedTrips}
         keyExtractor={(t) => t.tripId}
         contentContainerStyle={{
           padding: spacing.base,
           gap: spacing.md,
           paddingBottom: insets.bottom + spacing['4xl'],
         }}
+        ListHeaderComponent={trips.length > 0 ? (
+          <View style={{ paddingBottom: spacing.sm, gap: spacing.xs }}>
+            <Text variant="h2">Your plans</Text>
+            <Text variant="bodySm" style={{ color: colors.textSecondary }}>{trips.length} trip{trips.length === 1 ? '' : 's'} ready whenever you are</Text>
+          </View>
+        ) : null}
         ListEmptyComponent={
           <View style={{ paddingTop: spacing['2xl'], alignItems: 'center', gap: spacing.lg }}>
             <View style={{ width: 220, height: 150, borderRadius: radius['2xl'], backgroundColor: colors.poolLight, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
@@ -126,13 +148,19 @@ export default function TripsScreen() {
             <Button variant="ghost" onPress={() => router.push('/quiz')}>Help me choose where</Button>
           </View>
         }
-        ListFooterComponent={trips.length > 0 ? <NextTripIdeas /> : null}
+        ListFooterComponent={<InspirationFeature />}
         renderItem={({ item }) => (
           <TripCard
             trip={item}
             deleting={deletingTripId === item.tripId}
-            onRename={() => setRenamingTrip(item)}
-            onDelete={canDeleteTrip(item, user?.id) ? () => confirmDelete(item) : undefined}
+            onManage={() => {
+              const allowDelete = canDeleteTrip(item, user?.id);
+              Alert.alert(item.name, 'Manage this trip', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Rename', onPress: () => setRenamingTrip(item) },
+                ...(allowDelete ? [{ text: 'Delete trip', style: 'destructive' as const, onPress: () => confirmDelete(item) }] : []),
+              ]);
+            }}
           />
         )}
       />
@@ -143,11 +171,10 @@ export default function TripsScreen() {
   );
 }
 
-function TripCard({ trip, deleting, onRename, onDelete }: {
+function TripCard({ trip, deleting, onManage }: {
   trip: LocalTrip;
   deleting: boolean;
-  onRename: () => void;
-  onDelete?: () => void;
+  onManage: () => void;
 }) {
   const { colors, spacing, radius, shadows } = useTheme();
   const router = useRouter();
@@ -155,9 +182,9 @@ function TripCard({ trip, deleting, onRename, onDelete }: {
   const destination = trip.destinationSlug ? getBySlug(trip.destinationSlug) : undefined;
 
   const dateRange = trip.startDate && trip.endDate
-    ? `${formatDate(trip.startDate)} – ${formatDate(trip.endDate)}`
+    ? formatTripDateRange(trip.startDate, trip.endDate)
     : trip.startDate
-    ? `From ${formatDate(trip.startDate)}`
+    ? `From ${formatDate(trip.startDate, true)}`
     : 'Dates TBD';
 
   return (
@@ -170,143 +197,110 @@ function TripCard({ trip, deleting, onRename, onDelete }: {
         borderWidth: 1,
         borderColor: colors.cardBorder,
         overflow: 'hidden',
-        minHeight: 124,
+        minHeight: 142,
         flexDirection: 'row',
         opacity: pressed ? 0.85 : 1,
         ...shadows.sm,
       })}
     >
       {destination ? (
-        <DestinationHeroImage destination={destination} style={{ width: 118, alignSelf: 'stretch' }} />
+        <DestinationHeroImage destination={destination} style={{ width: 126, alignSelf: 'stretch' }} />
       ) : (
         <View style={{ width: 100, backgroundColor: colors.plumLight, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           <RouteLine color={colors.plum} width={150} />
         </View>
       )}
-      <View style={{ flex: 1, padding: spacing.md, gap: spacing.xs, justifyContent: 'center' }}>
+      <View style={{ flex: 1, padding: spacing.md, gap: spacing.sm, justifyContent: 'center' }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <Text variant="h3" numberOfLines={1} style={{ flex: 1 }}>{trip.name}</Text>
+        <Text variant="h2" numberOfLines={2} style={{ flex: 1 }}>{trip.name}</Text>
         {deleting ? <ActivityIndicator size="small" color={colors.accent} /> : null}
+        {!deleting ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Manage ${trip.name}`}
+            hitSlop={10}
+            onPress={(event) => { event.stopPropagation(); onManage(); }}
+            style={{ paddingLeft: spacing.sm, paddingBottom: spacing.sm }}
+          >
+            <Text variant="h3" style={{ color: colors.textTertiary }}>•••</Text>
+          </Pressable>
+        ) : null}
       </View>
       {trip.destinationName ? (
         <Text variant="bodySm" numberOfLines={1} style={{ color: colors.textSecondary }}>
           {trip.destinationName}
         </Text>
       ) : null}
-      <View style={{ flexDirection: 'row', gap: spacing.md }}>
-        <Text variant="caption" style={{ color: colors.textTertiary }}>{dateRange}</Text>
-        {trip.travelers > 1 ? (
-          <Text variant="caption" style={{ color: colors.textTertiary }}>
-            {trip.travelers} travelers
-          </Text>
-        ) : null}
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.xs }}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Rename ${trip.name}`}
-          hitSlop={8}
-          onPress={(event) => { event.stopPropagation(); onRename(); }}
-          style={{ paddingVertical: spacing.xs, paddingRight: spacing.sm }}
-        >
-          <Text variant="captionBold" style={{ color: colors.textSecondary }}>Rename</Text>
-        </Pressable>
-        {onDelete ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Delete ${trip.name}`}
-            disabled={deleting}
-            hitSlop={8}
-            onPress={(event) => { event.stopPropagation(); onDelete(); }}
-            style={{ paddingVertical: spacing.xs, paddingHorizontal: spacing.sm }}
-          >
-            <Text variant="captionBold" style={{ color: colors.error }}>{deleting ? 'Deleting…' : 'Delete'}</Text>
-          </Pressable>
-        ) : (
-          <Text variant="caption" style={{ color: colors.textTertiary }}>Only an organizer can delete this group trip</Text>
-        )}
-        <OutingIcon name="arrow" size={16} color={colors.accent} />
+      <Text variant="caption" style={{ color: colors.textTertiary }}>{dateRange}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, paddingTop: spacing.xs }}>
+        <TripPeople trip={trip} />
+        <OutingIcon name="arrow" size={17} color={colors.accent} />
       </View>
       </View>
     </Pressable>
   );
 }
 
-function NextTripIdeas() {
-  const { colors, spacing, radius } = useTheme();
-  const router = useRouter();
-  const ideas = [
-    {
-      key: 'match',
-      eyebrow: 'PERSONALIZED MATCH',
-      title: 'Find somewhere that fits you',
-      summary: 'Turn your pace, interests, budget, and travel mood into destination matches.',
-      icon: 'spark' as const,
-      onPress: () => router.push('/quiz'),
-    },
-    {
-      key: 'ask',
-      eyebrow: 'ASK OUTING',
-      title: 'Start with a feeling or a season',
-      summary: 'Try “a warm long weekend in March” or “food, nightlife, and easy transit.”',
-      icon: 'ask' as const,
-      onPress: () => router.push({ pathname: '/ask', params: { prompt: 'Help me ideate on my next trip using my preferences, the time of year, and a few different budget levels.' } }),
-    },
-    {
-      key: 'browse',
-      eyebrow: 'EXPLORE',
-      title: 'Browse places worth saving',
-      summary: 'Collect a few possibilities, then compare their timing, cost, and tradeoffs.',
-      icon: 'discover' as const,
-      onPress: () => router.push('/discover'),
-    },
-  ];
-
+function TripPeople({ trip }: { trip: LocalTrip }) {
+  const { colors } = useTheme();
+  const members = trip.members?.slice(0, 3) ?? [];
+  if (!members.length) return <Text variant="caption" style={{ color: colors.textTertiary }}>{trip.travelers > 1 ? `${trip.travelers} travelers` : 'Your trip'}</Text>;
   return (
-    <View style={{ marginTop: spacing.xl, paddingTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border, gap: spacing.sm }}>
-      <View style={{ gap: spacing.xs }}>
-        <Text variant="h2">Where to next?</Text>
-        <Text variant="bodySm" style={{ color: colors.textSecondary }}>
-          You don’t need a destination yet. Start with what you want the trip to feel like.
-        </Text>
-      </View>
-      {ideas.map((idea) => (
-        <Pressable
-          key={idea.key}
-          accessibilityRole="button"
-          onPress={idea.onPress}
-          style={({ pressed }) => ({
-            padding: spacing.md,
-            borderRadius: radius.xl,
-            backgroundColor: colors.backgroundSecondary,
-            borderWidth: 1,
-            borderColor: colors.border,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: spacing.md,
-            opacity: pressed ? 0.78 : 1,
-          })}
-        >
-          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
-            <OutingIcon name={idea.icon} size={21} color={colors.accent} />
-          </View>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text variant="labelSm" style={{ color: colors.accent }}>{idea.eyebrow}</Text>
-            <Text variant="h4">{idea.title}</Text>
-            <Text variant="caption" numberOfLines={2} style={{ color: colors.textSecondary }}>{idea.summary}</Text>
-          </View>
-          <Text style={{ color: colors.accent, fontSize: 20 }}>→</Text>
-        </Pressable>
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      {members.map((member, index) => member.avatarUrl ? (
+        <Image key={member.id} source={{ uri: member.avatarUrl }} style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: colors.cardBackground, marginLeft: index ? -7 : 0 }} />
+      ) : (
+        <View key={member.id} style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: colors.cardBackground, backgroundColor: colors.plumLight, marginLeft: index ? -7 : 0, alignItems: 'center', justifyContent: 'center' }}>
+          <Text variant="labelSm" style={{ color: colors.plum }}>{member.displayName.slice(0, 1).toUpperCase()}</Text>
+        </View>
       ))}
-      <Button variant="secondary" onPress={() => router.push('/trips/new')}>Plan from scratch</Button>
+      {trip.travelers > members.length ? <Text variant="caption" style={{ color: colors.textTertiary, paddingLeft: 6 }}>+{trip.travelers - members.length}</Text> : null}
     </View>
   );
 }
 
-function formatDate(iso: string): string {
+function InspirationFeature() {
+  const { colors, spacing, radius } = useTheme();
+  const router = useRouter();
+  return (
+    <View style={{ marginTop: spacing.xl, paddingTop: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border, gap: spacing.md }}>
+      <View style={{ gap: spacing.xs }}><Text variant="h2">Inspiration</Text><Text variant="bodySm" style={{ color: colors.textSecondary }}>A private folder for everything that might belong on a future trip.</Text></View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Open your inspiration folder"
+        onPress={() => router.push('/inspiration' as Href)}
+        style={({ pressed }) => ({ padding: spacing.lg, minHeight: 174, borderRadius: radius['2xl'], borderCurve: 'continuous', backgroundColor: colors.plumLight, overflow: 'hidden', gap: spacing.md, opacity: pressed ? 0.82 : 1 })}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ width: 48, height: 48, borderRadius: 16, borderCurve: 'continuous', backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}><OutingIcon name="image" size={24} color={colors.plum} /></View>
+          <OutingIcon name="arrow" size={18} color={colors.plum} />
+        </View>
+        <View style={{ gap: spacing.xs }}>
+          <Text variant="h2">Share it with Outing.</Text>
+          <Text variant="bodySm" style={{ color: colors.textSecondary }}>Screenshots, articles, Maps links, and public social-video links become organized places. After you confirm them, Mistral can find patterns and suggest trips that fit what caught your eye.</Text>
+        </View>
+        <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+          {['Screenshots', 'Links', 'Video links'].map((label) => <View key={label} style={{ paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: radius.full, backgroundColor: colors.surface }}><Text variant="labelSm" style={{ color: colors.plum }}>{label}</Text></View>)}
+        </View>
+      </Pressable>
+    </View>
+  );
+}
+
+function formatDate(iso: string, includeYear = false): string {
   try {
-    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return new Date(`${iso}T12:00:00`).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', ...(includeYear ? { year: 'numeric' } : {}),
+    });
   } catch {
     return iso;
   }
+}
+
+function formatTripDateRange(start: string, end: string): string {
+  const startYear = start.slice(0, 4);
+  const endYear = end.slice(0, 4);
+  return startYear === endYear
+    ? `${formatDate(start)} – ${formatDate(end)}, ${endYear}`
+    : `${formatDate(start, true)} – ${formatDate(end, true)}`;
 }

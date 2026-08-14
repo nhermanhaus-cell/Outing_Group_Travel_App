@@ -15,7 +15,9 @@ export type OutingIconName =
   | 'close'
   | 'image'
   | 'link'
-  | 'pin';
+  | 'pin'
+  | 'heart'
+  | 'undo';
 
 export function OutingIcon({
   name,
@@ -93,6 +95,8 @@ export function OutingIcon({
           <Circle cx="12" cy="9" r="2.2" {...common} />
         </>
       ) : null}
+      {name === 'heart' ? <Path d="M12 20.5 4.7 13.7A5.2 5.2 0 0 1 12 6.4a5.2 5.2 0 0 1 7.3 7.3z" {...common} /> : null}
+      {name === 'undo' ? <Path d="M9 7 4 12l5 5M5 12h7.5a6.5 6.5 0 0 1 6.5 6.5" {...common} /> : null}
     </Svg>
   );
 }

@@ -82,7 +82,10 @@ async function googleCitySearch(query: string): Promise<Json[]> {
     headers: googleHeaders('places.id,places.displayName,places.formattedAddress,places.addressComponents,places.location,places.types'),
     body: JSON.stringify({
       textQuery: query,
-      includedType: '(cities)',
+      // `(cities)` is a legacy Autocomplete collection and is rejected by the
+      // current Places Text Search API. `locality` returns canonical city/town
+      // identities that can be safely deduplicated by Google place ID.
+      includedType: 'locality',
       strictTypeFiltering: true,
       maxResultCount: 5,
       languageCode: 'en',
@@ -404,14 +407,25 @@ Deno.serve(async (request) => {
       const basePayload = record(candidate.payload) ?? {};
       const lat = numeric(basePayload.lat);
       const lng = numeric(basePayload.lng);
-      const placesData = await bestEffort(travelApi(authorization, 'placeTextSearch', { query: `top attractions and landmarks in ${candidate.name}, ${candidate.country}`, limit: 5, ...(lat !== undefined && lng !== undefined ? { lat, lng, radiusMeters: 20_000 } : {}) }), { places: [] });
+      const placesData = await bestEffort(travelApi(authorization, 'placeIntelligenceSearch', { query: `top attractions and landmarks in ${candidate.name}, ${candidate.country}`, limit: 5, ...(lat !== undefined && lng !== undefined ? { lat, lng, radiusMeters: 20_000 } : {}) }), { places: [] });
       const rawPlaces = Array.isArray(placesData.places) ? placesData.places.map(record).filter((item): item is Json => item !== null) : [];
       const places = rawPlaces.slice(0, 12).map((place) => ({
         id: text(place.providerPlaceId) ?? crypto.randomUUID(),
         name: clean(text(place.name) ?? 'Place', 200),
         category: Array.isArray(place.types) && typeof place.types[0] === 'string' ? clean(place.types[0], 80) : 'place',
+        ...(text(place.primaryType) ? { primaryType: clean(text(place.primaryType)!, 80) } : {}),
         ...(numeric(place.rating) !== undefined ? { rating: numeric(place.rating) } : {}),
+        ...(numeric(place.reviewCount) !== undefined ? { reviewCount: numeric(place.reviewCount) } : {}),
+        ...(text(place.priceLevel) ? { priceLevel: clean(text(place.priceLevel)!, 80) } : {}),
+        ...(text(place.businessStatus) ? { businessStatus: clean(text(place.businessStatus)!, 80) } : {}),
         ...(text(place.address) ? { address: clean(text(place.address)!, 300) } : {}),
+        ...(Array.isArray(place.weekdayDescriptions) ? { weekdayDescriptions: place.weekdayDescriptions.slice(0, 7) } : {}),
+        ...(Array.isArray(place.currentWeekdayDescriptions) ? { currentWeekdayDescriptions: place.currentWeekdayDescriptions.slice(0, 7) } : {}),
+        ...(typeof place.openNow === 'boolean' ? { openNow: place.openNow } : {}),
+        ...(record(place.accessibilityOptions) ? { accessibilityOptions: record(place.accessibilityOptions) } : {}),
+        ...(record(place.attributes) ? { attributes: record(place.attributes) } : {}),
+        ...(text(place.websiteUri) ? { websiteUri: text(place.websiteUri) } : {}),
+        verifiedAt: text(place.verifiedAt) ?? new Date().toISOString(),
         ...(Array.isArray(place.photos) && text(record(place.photos[0])?.url) ? { imageUrl: text(record(place.photos[0])?.url) } : {}),
         ...(text(place.googleMapsUri) ? { sourceUrl: text(place.googleMapsUri) } : {}),
       }));

@@ -81,6 +81,7 @@ export const assistantFocusSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('group_decision'), tripId: z.string().uuid(), pollId: z.string().min(1).max(240).optional() }),
   z.object({ kind: z.literal('today'), tripId: z.string().uuid(), situation: z.enum(['closed', 'tired', 'raining', 'hungry', 'crowded', 'changed_mood']).optional() }),
   z.object({ kind: z.literal('inspiration_import'), importId: z.string().uuid() }),
+  z.object({ kind: z.literal('inspiration_library') }),
 ]);
 export type AssistantFocus = z.infer<typeof assistantFocusSchema>;
 
@@ -99,6 +100,7 @@ export const inspirationItemStatusSchema = z.enum(['candidate', 'confirmed', 'di
 export const inspirationItemSchema = z.object({
   id: z.string().uuid(),
   importId: z.string().uuid(),
+  tripId: z.string().uuid().optional(),
   inputKind: inspirationInputKindSchema,
   title: z.string().min(1).max(240),
   summary: z.string().max(800).optional(),

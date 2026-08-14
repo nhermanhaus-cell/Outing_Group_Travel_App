@@ -5,6 +5,7 @@ const apply = process.argv.includes('--apply');
 const apiKey = process.env.MISTRAL_API_KEY ?? '';
 const agentId = process.env.MISTRAL_AGENT_ID ?? '';
 const config = JSON.parse(readFileSync(resolve(process.cwd(), 'config/mistral-agent.json'), 'utf8'));
+const completionArgs = config.completionArgs ?? { temperature: 0.2, maxTokens: 500 };
 const edgeSource = readFileSync(resolve(process.cwd(), 'supabase/functions/travel-assistant/index.ts'), 'utf8');
 const toolSchemaBlock = edgeSource.match(/const toolSchemas = \{([\s\S]*?)\n\} satisfies/)?.[1] ?? '';
 const runtimeTools = [...toolSchemaBlock.matchAll(/^  ([a-z][a-z0-9_]+): (?:z\.|proposalSchema)/gm)].map((match) => match[1]);
@@ -50,7 +51,7 @@ if (!apply) {
       description: config.description,
       instructions: config.instructions,
       tools: config.builtInTools.map((type) => ({ type })),
-      completion_args: { temperature: 0.2, max_tokens: 1200 },
+      completion_args: { temperature: completionArgs.temperature, max_tokens: completionArgs.maxTokens },
     }),
   });
   if (!update.ok) throw new Error(`Could not update Mistral agent (${update.status}): ${(await update.text()).slice(0, 300)}`);

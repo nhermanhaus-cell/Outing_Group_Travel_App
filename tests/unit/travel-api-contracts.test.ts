@@ -12,6 +12,16 @@ describe('travel API contracts', () => {
     expect(value.places).toHaveLength(1);
   });
 
+  it('accepts resolved and user-authored itinerary essentials', () => {
+    const value = validateTravelApiContract<{ essentials: Array<{ source: string }> }>('resolveTripEssentials', {
+      essentials: [
+        { id: 'google-1', label: 'The Louvre', kind: 'place', source: 'google_places', providerPlaceId: '1', lat: 48.86, lng: 2.33, category: 'museum' },
+        { id: 'custom-1', label: 'A pastry class', kind: 'activity', source: 'user', category: 'tour' },
+      ],
+    });
+    expect(value.essentials.map((item) => item.source)).toEqual(['google_places', 'user']);
+  });
+
   it('rejects malformed provider payloads', () => {
     expect(() => validateTravelApiContract('placeSearch', { places: [{ id: 'missing-fields' }] })).toThrow(/malformed/i);
     expect(() => validateTravelApiContract('route', { routes: 'not-an-array' })).toThrow(/malformed/i);

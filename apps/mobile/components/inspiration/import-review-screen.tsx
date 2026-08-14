@@ -77,7 +77,7 @@ export function ImportReviewScreen({ importId }: { importId: string }) {
       <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', padding: spacing.xl, gap: spacing.md }}>
         <Text variant="h1">This import isn’t available</Text>
         <Text variant="bodyMd" style={{ color: colors.textSecondary }}>{error}</Text>
-        <Button onPress={() => router.replace('/inspiration' as Href)}>Start another import</Button>
+        <Button onPress={() => router.replace('/inspiration/new' as Href)}>Start another import</Button>
       </View>
     );
   }
@@ -102,7 +102,7 @@ export function ImportReviewScreen({ importId }: { importId: string }) {
       <View style={{ padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.poolLight, gap: spacing.sm }}>
         <Text variant="h3">Outing verified the identities</Text>
         <Text variant="bodySm" style={{ color: colors.textSecondary }}>
-          Confirm only what you recognize. Nothing joins a trip until you approve it.
+          Confirm only what you recognize. Only confirmed places can shape future Ask Outing recommendations, and nothing joins a trip until you approve it.
         </Text>
       </View>
 
@@ -154,13 +154,13 @@ export function ImportReviewScreen({ importId }: { importId: string }) {
       {!pending.length ? (
         <View style={{ gap: spacing.md }}>
           <Button size="lg" onPress={() => router.replace('/discover')}>Explore with these ideas</Button>
-          <Button variant="secondary" onPress={() => router.push({ pathname: '/ask', params: { importId, prompt: 'Help me decide what to do with these imported places' } })}>Ask Outing about this import</Button>
-          <Button variant="secondary" onPress={() => router.replace('/inspiration' as Href)}>Import something else</Button>
+          <Button variant="secondary" onPress={() => router.push({ pathname: '/ask', params: { importId, prompt: 'Use the places I confirmed here to suggest destinations, activities, or a trip direction that fits the patterns.' } })}>Ask Outing about these ideas</Button>
+          <Button variant="secondary" onPress={() => router.replace('/inspiration/new' as Href)}>Import something else</Button>
         </View>
       ) : null}
       <Button variant="ghost" onPress={() => Alert.alert('Delete this import?', 'Confirmed places already added to trips stay there.', [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => void deleteInspirationImport(importId).then(() => router.replace('/discover')) },
+        { text: 'Delete', style: 'destructive', onPress: () => void deleteInspirationImport(importId).then(() => router.replace('/inspiration')) },
       ])}>Delete import record</Button>
     </ScrollView>
   );

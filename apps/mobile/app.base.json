@@ -32,6 +32,7 @@
     "expo-secure-store",
     ["expo-web-browser", { "experimentalLauncherActivity": false }],
     "expo-font",
+    "expo-sqlite",
     "expo-apple-authentication",
     ["expo-calendar", { "calendarPermission": "Outing uses calendar access only when you choose to add or update itinerary events." }],
     ["expo-contacts", { "contactsPermission": "Outing uses contacts only when you choose travel buddies to invite. Phone numbers stay on this device." }],

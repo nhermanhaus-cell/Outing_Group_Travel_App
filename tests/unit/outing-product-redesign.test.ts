@@ -17,6 +17,7 @@ import {
   normalizeSavedDestinationSlugs,
 } from '../../apps/mobile/src/lib/savedDestinationsState';
 import { applyAssistantProposalToTrip } from '../../apps/mobile/src/lib/assistantProposals';
+import type { TripPlan } from '@gayi/domain';
 
 const proposal: AssistantProposal = {
   id: '10000000-0000-4000-8000-000000000001',
@@ -165,6 +166,38 @@ describe('assistant proposal review', () => {
       { itineraryItems: [] },
       { ...proposal, kind: 'save_destination', payload: { destinationSlug: 'lisbon' } },
     )).toEqual({});
+  });
+
+  it('replaces the focused open slot in the trip-plan source of truth', () => {
+    const plan: TripPlan = {
+      planId: 'plan', revision: 1, schemaVersion: 2, algorithmVersion: 'test', generatedAt: 'before',
+      inputHash: 'hash', destinationName: 'New York City', durationDays: 1, summary: '',
+      items: [{
+        itemId: 'dinner-slot', day: 1, time: '18:00', title: 'Open meal time', category: 'restaurant',
+        placeId: 'meal-1-18:00', duration: 90, estimatedCost: 0, bookingRequired: false,
+        source: 'schedule', confidence: 1, coords: { lat: 40.73, lng: -73.99 },
+        whySelected: 'Held open', kind: 'meal', slotRole: 'meal',
+      }],
+      days: [{ day: 1, title: 'Day 1', summary: '', itemIds: ['dinner-slot'], sharedAnchorItemIds: [], freeWindowSuggestions: [] }],
+      bookingTimeline: [], feedback: [], sources: [],
+    };
+    const update = applyAssistantProposalToTrip(
+      { tripPlan: plan, itineraryItems: plan.items as unknown as Array<Record<string, unknown>> },
+      {
+        ...proposal,
+        kind: 'replace_itinerary_item',
+        payload: { itemId: 'dinner-slot', title: 'Momoya SoHo', placeId: 'google-momoya' },
+      },
+      {
+        placeId: 'google-momoya', title: 'Momoya SoHo', category: 'restaurant',
+        coords: { lat: 40.724, lng: -74.001 }, estimatedCost: 40, rating: 4.6,
+      },
+    );
+    expect(update.tripPlan?.revision).toBe(2);
+    expect(update.tripPlan?.items[0]).toMatchObject({
+      itemId: 'dinner-slot', title: 'Momoya SoHo', placeId: 'google-momoya', kind: 'place', slotRole: 'meal',
+    });
+    expect(update.itineraryItems?.[0]).toMatchObject({ title: 'Momoya SoHo' });
   });
 });
 

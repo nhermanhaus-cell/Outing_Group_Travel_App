@@ -8,7 +8,6 @@ import {
   queueGuestInspiration,
   type InspirationSourceInput,
 } from '../../src/lib/inspiration-imports';
-import { featureFlags } from '../../src/lib/featureFlags';
 
 function sourcesFromText(text: string | null | undefined): InspirationSourceInput[] {
   const matches = text?.match(/https:\/\/[^\s<>"']+/gi) ?? [];
@@ -24,7 +23,6 @@ export function IncomingShareHandler() {
   const processing = useRef(false);
 
   useEffect(() => {
-    if (!featureFlags.outingFullExperienceV1) return;
     if (!hasShareIntent || processing.current) return;
     processing.current = true;
     const fileSources = (shareIntent.files ?? []).flatMap((file) => {
@@ -57,7 +55,7 @@ export function IncomingShareHandler() {
           has_link: uniqueSources.some((source) => Boolean(source.url)),
         });
         resetShareIntent();
-        router.push('/inspiration' as Href);
+        router.push('/inspiration/new' as Href);
       })
       .catch(() => {
         posthog.capture('inspiration_share_failed', { stage: 'local_queue' });

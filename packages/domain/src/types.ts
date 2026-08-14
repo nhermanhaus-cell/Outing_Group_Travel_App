@@ -189,6 +189,8 @@ export interface ItineraryItem {
   timezone?: string;
   locked?: boolean;
   kind?: 'place' | 'experience' | 'downtime' | 'meal';
+  /** Preserves the purpose of a flexible slot after a traveler fills it. */
+  slotRole?: 'meal' | 'free_time';
   arrivalBufferMinutes?: number;
   scheduleStatus?: 'verified' | 'estimated' | 'fallback';
   travelFromPrevious?: ItineraryTravelLeg;
@@ -276,10 +278,20 @@ export type TripPlanDayReworkAction =
   | 'later_start'
   | 'lighter_pace';
 
+export type TripPlanItemEditAction =
+  | 'fill_open_slot'
+  | 'replace_item'
+  | 'move_item'
+  | 'add_custom_item'
+  | 'clear_item';
+
+export type TripPlanProposalAction = TripPlanDayReworkAction | TripPlanItemEditAction;
+
 export interface TripPlanPreviewProposal {
   proposalId: string;
   tripId?: string;
-  action: TripPlanDayReworkAction;
+  action: TripPlanProposalAction;
+  proposalKind?: 'day_rework' | 'item_edit';
   day: number;
   priorPlanId: string;
   priorRevision: number;

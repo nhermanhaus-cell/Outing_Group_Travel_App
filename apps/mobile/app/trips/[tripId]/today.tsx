@@ -20,6 +20,8 @@ import { Text } from '../../../components/ui/Text';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { OutingIcon } from '../../../components/ui/OutingIcon';
+import { formatClockRange, formatClockTime, formatTemperature } from '../../../src/lib/display-format';
+import { useDisplayPreferences } from '../../../src/lib/display-preferences';
 
 const SITUATIONS: Array<{ value: TodaySituation; label: string }> = [
   { value: 'closed', label: 'It’s closed' },
@@ -41,6 +43,7 @@ export default function TodayScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const { colors, spacing, radius, shadows } = useTheme();
+  const [displayPreferences] = useDisplayPreferences();
   const trip = getTrip(tripId);
   const timezone = trip?.destinationSlug ? getBySlug(trip.destinationSlug)?.timezone ?? 'UTC' : 'UTC';
   const [snapshot, setSnapshot] = useState<TodaySnapshot>();
@@ -129,9 +132,9 @@ export default function TodayScreen() {
             <Text variant="labelSm" style={{ color: colors.coral300 }}>{snapshot.current ? 'HAPPENING NOW' : 'UP NEXT'}</Text>
             <Text variant="displayMd" style={{ color: colors.white }}>{snapshot.current?.title ?? snapshot.next?.title ?? 'A little room to wander'}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-              {snapshot.current ? <Badge label={`${snapshot.current.startTime}–${snapshot.current.endTime ?? ''}`} variant="info" /> : null}
-              {!snapshot.current && snapshot.next ? <Badge label={snapshot.next.startTime} variant="info" /> : null}
-              {snapshot.leaveBy ? <Badge label={`Leave by ${snapshot.leaveBy}`} variant="warning" /> : null}
+              {snapshot.current ? <Badge label={formatClockRange(snapshot.current.startTime, snapshot.current.endTime, displayPreferences.timeFormat)} variant="info" /> : null}
+              {!snapshot.current && snapshot.next ? <Badge label={formatClockTime(snapshot.next.startTime, displayPreferences.timeFormat)} variant="info" /> : null}
+              {snapshot.leaveBy ? <Badge label={`Leave by ${formatClockTime(snapshot.leaveBy, displayPreferences.timeFormat)}`} variant="warning" /> : null}
               {(snapshot.current ?? snapshot.next)?.routeMinutes !== undefined ? <Badge label={`${(snapshot.current ?? snapshot.next)!.routeMinutes} min route`} variant="default" /> : null}
             </View>
             {(snapshot.current ?? snapshot.next)?.reservationSummary ? <Text variant="bodySm" style={{ color: colors.white }}>{(snapshot.current ?? snapshot.next)?.reservationSummary}</Text> : null}
@@ -141,11 +144,11 @@ export default function TodayScreen() {
           {snapshot.weather ? (
             <View style={{ flexDirection: 'row', padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.poolLight, gap: spacing.md, alignItems: 'center' }}>
               <OutingIcon name="spark" color={colors.pool} size={28} />
-              <View style={{ flex: 1 }}><Text variant="h3">{snapshot.weather.summary}</Text><Text variant="caption" style={{ color: colors.textSecondary }}>{snapshot.weather.temperatureC !== undefined ? `${Math.round(snapshot.weather.temperatureC)}°C · ` : ''}{snapshot.weather.source}</Text></View>
+              <View style={{ flex: 1 }}><Text variant="h3">{snapshot.weather.summary}</Text><Text variant="caption" style={{ color: colors.textSecondary }}>{snapshot.weather.temperatureC !== undefined ? `${formatTemperature(snapshot.weather.temperatureC, displayPreferences.temperatureUnit)} · ` : ''}{snapshot.weather.source}</Text></View>
             </View>
           ) : null}
 
-          {snapshot.next && snapshot.current ? <TodayStop title="Next" name={snapshot.next.title} time={snapshot.next.startTime} routeMinutes={snapshot.next.routeMinutes} /> : null}
+          {snapshot.next && snapshot.current ? <TodayStop title="Next" name={snapshot.next.title} time={formatClockTime(snapshot.next.startTime, displayPreferences.timeFormat)} routeMinutes={snapshot.next.routeMinutes} /> : null}
           {snapshot.nearbySavedPlaces.length ? (
             <View style={{ gap: spacing.md }}>
               <Text variant="h2">Saved nearby</Text>

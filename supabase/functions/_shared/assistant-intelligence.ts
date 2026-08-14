@@ -1,5 +1,7 @@
 export type Json = Record<string, unknown>;
 
+import { climateEligibility, type ClimatePreference } from './seasonal-intent.ts';
+
 export type PreferenceSignal = {
   subjectType: 'destination' | 'destination_region' | 'activity_category' | 'pace' | 'provider';
   subjectKey: string;
@@ -46,6 +48,14 @@ export type PersonalizationContext = {
   };
   inferred: PreferenceSignal[];
   savedDestinationSlugs: string[];
+  inspirationSignals?: Array<{
+    title: string;
+    destinationName?: string;
+    destinationSlug?: string;
+    category?: string;
+    tripId?: string;
+    confidence: number;
+  }>;
   trip?: {
     tripId: string;
     destinationSlug?: string;
@@ -70,6 +80,7 @@ export type RankedDestination = {
   kind: 'destination';
   title: string;
   summary: string;
+  imageUrl?: string;
   destinationSlug: string;
   fitScore: number;
   fitReasons: string[];
@@ -174,6 +185,16 @@ function scoringPayload(row: Json): Json {
   return payload;
 }
 
+function destinationImageUrl(row: Json): string | undefined {
+  const payload = row.payload && typeof row.payload === 'object' ? row.payload as Json : {};
+  const candidates = [
+    row.hero_image_url,
+    payload.heroImageUrl,
+    Array.isArray(payload.galleryImageUrls) ? payload.galleryImageUrls[0] : undefined,
+  ];
+  return candidates.find((value): value is string => typeof value === 'string' && /^https:\/\//i.test(value));
+}
+
 function destinationSignal(context: PersonalizationContext, slug: string): number {
   const signal = context.inferred.find((item) => item.subjectType === 'destination' && item.subjectKey === slug);
   return signal ? Math.max(-10, Math.min(10, signal.score * signal.confidence * 10)) : 0;
@@ -219,6 +240,7 @@ function outingDeterministicScore(
   context: PersonalizationContext,
   requestedInterests: string[],
   months: number[],
+  climate?: ClimatePreference,
 ): number {
   const costs = recordValue(scoring.costPerDay);
   const stay = recordValue(scoring.typicalStayDays);
@@ -288,6 +310,10 @@ function outingDeterministicScore(
   if (reviewCount < 5) dataConfidence -= 15;
   if (Object.keys(recordValue(scoring.avgTempCByMonth)).length < 6) dataConfidence -= 10;
   dataConfidence = Math.max(0, dataConfidence);
+  const climateFit = climateEligibility(scoring.avgTempCByMonth, months, climate);
+  const weatherMatch = !climate || !months.length
+    ? 80
+    : climateFit.eligible ? 100 : 0;
   const scores = {
     budgetFit,
     seasonalFit,
@@ -297,7 +323,7 @@ function outingDeterministicScore(
     communityActivity: communityScore,
     nightlifeMatch,
     interestMatch,
-    weatherMatch: 80,
+    weatherMatch,
     tripDurationFit: durationScore(stay, context.explicit.tripLengthDays),
     eventAlignment,
     accessibilityMatch,
@@ -323,7 +349,14 @@ function durationScore(stay: Json, duration?: number): number {
 export function rankDestinationRows(
   rows: Json[],
   context: PersonalizationContext,
-  options: { interests?: string[]; month?: number; limit?: number; communitySignals?: CommunitySignal[] } = {},
+  options: {
+    interests?: string[];
+    month?: number;
+    months?: number[];
+    climate?: ClimatePreference;
+    limit?: number;
+    communitySignals?: CommunitySignal[];
+  } = {},
 ): RankedDestination[] {
   const requested = normalizedInterests([
     ...context.explicit.interests,
@@ -335,14 +368,17 @@ export function rankDestinationRows(
     ...(context.trip?.interests ?? []),
     ...(options.interests ?? []),
   ])];
-  const months = options.month ? [options.month] : context.explicit.preferredMonths;
+  const months = options.months?.length
+    ? [...new Set(options.months.filter((month) => month >= 1 && month <= 12))]
+    : options.month ? [options.month] : context.explicit.preferredMonths;
   const safetyIsHardConstraint = (context.explicit.lgbtqSafetyPriority ?? 0) >= 0.8;
-  const eligibleRows = safetyIsHardConstraint
-    ? rows.filter((row) => {
+  const eligibleRows = rows.filter((row) => {
+      if (safetyIsHardConstraint) {
         const legalStatus = String(scoringPayload(row).legalStatus ?? '');
-        return !['criminalized', 'heavily_criminalized'].includes(legalStatus);
-      })
-    : rows;
+        if (['criminalized', 'heavily_criminalized'].includes(legalStatus)) return false;
+      }
+      return climateEligibility(scoringPayload(row).avgTempCByMonth, months, options.climate).eligible;
+    });
 
   return eligibleRows.map((row) => {
     const scoring = scoringPayload(row);
@@ -359,7 +395,8 @@ export function rankDestinationRows(
     const stay = scoring.typicalStayDays && typeof scoring.typicalStayDays === 'object' ? scoring.typicalStayDays as Json : {};
     const communityScore = numberValue(scoring.communityScore, 60);
     const safetyScore = numberValue(scoring.safetyScore, 60);
-    const base = outingDeterministicScore(scoring, context, requestedRaw, months);
+    const climateFit = climateEligibility(scoring.avgTempCByMonth, months, options.climate);
+    const base = outingDeterministicScore(scoring, context, requestedRaw, months, options.climate);
     const inferredAdjustment = Math.max(-10, Math.min(10,
       destinationSignal(context, slug) + categorySignal(context, destinationInterests),
     ));
@@ -391,6 +428,9 @@ export function rankDestinationRows(
     const reasons = [
       ...(interestHits.length ? [`Matches ${interestHits.slice(0, 3).join(', ')}`] : []),
       ...(seasonalScore >= 70 ? ['Your timing overlaps a stronger season'] : []),
+      ...(options.climate && climateFit.averageHighC !== undefined
+        ? [`Average daytime highs around ${Math.round(climateFit.averageHighC)}°C for your timing`]
+        : []),
       ...(communityScore >= 75 ? ['Strong community activity'] : []),
       ...(safetyScore >= 80 ? ['Stronger reviewed LGBTQ+ context'] : []),
       ...(inferredAdjustment >= 3 ? ['Reflects places and activities you have engaged with'] : []),
@@ -410,6 +450,7 @@ export function rankDestinationRows(
       kind: 'destination' as const,
       title: name,
       summary: String(row.editorial_summary ?? scoring.editorialSummary ?? `A potential match in ${String(row.country ?? '')}.`),
+      ...(destinationImageUrl(row) ? { imageUrl: destinationImageUrl(row) } : {}),
       destinationSlug: slug,
       fitScore,
       fitReasons: reasons.length ? reasons : ['A balanced match across your current preferences'],

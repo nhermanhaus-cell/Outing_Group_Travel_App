@@ -967,7 +967,7 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
             const { error } = await tripClient.from('trip_plan_proposals').insert(added.map((proposal) => ({
               trip_id: tripId,
               created_by: authenticatedUserId,
-              proposal_kind: 'day_rework',
+              proposal_kind: proposal.proposalKind ?? 'day_rework',
               action: proposal.action,
               day_index: proposal.day,
               prior_plan_id: proposal.priorPlanId,

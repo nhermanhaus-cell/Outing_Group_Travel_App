@@ -30,6 +30,10 @@ export interface ApiPlace {
   businessStatus?: string;
   openingHours?: unknown[];
   weekdayDescriptions?: string[];
+  currentWeekdayDescriptions?: string[];
+  openNow?: boolean;
+  accessibilityOptions?: Record<string, boolean>;
+  attributes?: Record<string, boolean>;
   photos: ApiPhoto[];
   googleMapsUri?: string;
   websiteUri?: string;

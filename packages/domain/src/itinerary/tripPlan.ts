@@ -202,7 +202,8 @@ function stableToken(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-function stableItemId(item: ItineraryItem): string {
+/** Canonical route-safe identity for generated and legacy itinerary items. */
+export function itineraryItemId(item: ItineraryItem): string {
   return item.itemId ?? `item-${item.day}-${stableToken(item.placeId)}-${item.time.replace(':', '')}`;
 }
 
@@ -262,7 +263,7 @@ function feedbackSignals(
 
 function canonicalizeItems(items: ItineraryItem[]): ItineraryItem[] {
   return items.map((item) => {
-    const itemId = stableItemId(item);
+    const itemId = itineraryItemId(item);
     const windowEndTime =
       item.kind === 'downtime'
         ? clockFromMinutes(minutesFromClock(item.time) + item.duration)

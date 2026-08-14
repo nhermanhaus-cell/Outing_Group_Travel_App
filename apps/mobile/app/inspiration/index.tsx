@@ -1,5 +1,5 @@
-import { ImportCaptureScreen } from '../../components/inspiration/import-capture-screen';
+import { InspirationLibraryScreen } from '../../components/inspiration/inspiration-library-screen';
 
 export default function InspirationImportRoute() {
-  return <ImportCaptureScreen />;
+  return <InspirationLibraryScreen />;
 }

@@ -77,6 +77,11 @@ describe('Mistral decision intelligence', () => {
     expect(ranked[0]?.fitScore).toBeLessThanOrEqual(20);
   });
 
+  it('includes the saved catalog hero image in destination recommendations', () => {
+    const ranked = rankDestinationRows(rows.slice(0, 1), context(), { limit: 1 });
+    expect(ranked[0]?.imageUrl).toBe(catalogBySlug.get(ranked[0]!.destinationSlug)?.heroImageUrl);
+  });
+
   it('builds a source-backed comparison across the same dimensions', () => {
     const comparison = compareDestinationRows(rows, context(), ['lisbon', 'madrid']);
     expect(comparison?.options).toHaveLength(2);

@@ -62,6 +62,23 @@ export type VacationStyle =
   | 'spontaneous'
   | 'photogenic';
 
+export interface TripEssential {
+  id: string;
+  label: string;
+  kind: 'place' | 'activity';
+  source: 'google_places' | 'user';
+  providerPlaceId?: string;
+  address?: string;
+  lat?: number;
+  lng?: number;
+  category?: PlaceCategory;
+  summary?: string;
+  imageUrl?: string;
+  imageAttribution?: string;
+  googleMapsUri?: string;
+  verifiedAt?: string;
+}
+
 export interface TripPlanningPreferences {
   goals: TripGoal[];
   vacationStyles: VacationStyle[];
@@ -70,6 +87,7 @@ export interface TripPlanningPreferences {
   avoidances: string[];
   hallmarkIds: string[];
   hallmarkNames: string[];
+  customEssentials?: TripEssential[];
   freeformWish?: string;
 }
 

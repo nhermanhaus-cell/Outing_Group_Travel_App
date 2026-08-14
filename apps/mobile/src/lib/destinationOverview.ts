@@ -22,8 +22,50 @@ const INTEREST_ALIASES: Partial<Record<Interest, string[]>> = {
   wellness: ['wellness', 'spa'],
 };
 
+const INTEREST_COPY: Record<string, string> = {
+  adventure: 'adventure',
+  architecture: 'architecture',
+  art: 'art',
+  art_culture: 'art and culture',
+  beach: 'beach time',
+  circuit_parties: 'big dance weekends',
+  coast: 'coastal time',
+  culture: 'culture',
+  culinary: 'food-led days',
+  drag: 'drag and performance',
+  festivals: 'festivals',
+  food: 'food-led days',
+  hiking: 'hiking',
+  history: 'history',
+  local_immersion: 'neighborhood wandering',
+  lgbtq_venues: 'queer community and nightlife',
+  luxury: 'polished stays',
+  museums: 'museums',
+  music: 'live music',
+  nightlife: 'late nights',
+  outdoors: 'outdoor time',
+  pride: 'queer history and community',
+  quiet_retreat: 'quiet escapes',
+  relaxed_queer: 'a relaxed queer social scene',
+  romance: 'romantic time away',
+  sex_positive: 'sex-positive nightlife',
+  shopping: 'shopping and design',
+  spa: 'spa time',
+  tropical_escape: 'tropical downtime',
+  wellness: 'slow, restorative days',
+};
+
 function readable(value: string): string {
-  return value.replaceAll('_', ' ');
+  return INTEREST_COPY[value] ?? value.replaceAll('_', ' ');
+}
+
+function capitalize(value: string): string {
+  return value ? `${value[0]!.toUpperCase()}${value.slice(1)}` : value;
+}
+
+function templateIndex(value: string, templateCount: number): number {
+  const total = [...value].reduce((sum, character) => sum + character.charCodeAt(0), 0);
+  return total % templateCount;
 }
 
 function joinNatural(values: string[]): string {
@@ -56,20 +98,39 @@ export function buildDestinationOverview(
     destination.editorialSummary
       ?? destination.sampleItineraryHint
       ?? `${destination.name} works best as a mix of ${joinNatural(highlights.length ? highlights : ['local neighborhoods', 'food', 'culture'])}.`,
-    900,
+    360,
   );
 
-  const preferenceLead = matchingPreferences.length
-    ? `Your interest in ${joinNatural(matchingPreferences.slice(0, 3).map(readable))} lines up especially well here.`
-    : `The strongest reasons to consider ${destination.name} are ${joinNatural(highlights.length ? highlights : ['its local character and signature experiences'])}.`;
-  const neighborhoodDetail = neighborhoods.length
-    ? ` Neighborhoods such as ${joinNatural(neighborhoods)} give the trip distinct moods instead of one generic city experience.`
-    : destination.sampleItineraryHint
-      ? ` ${destination.sampleItineraryHint}`
-      : '';
+  const signature = highlights.length ? highlights : ['local character', 'signature experiences'];
+  const primary = signature[0]!;
+  const secondary = signature[1] ?? 'neighborhood character';
+  const neighborhood = neighborhoods[0];
+  const matched = joinNatural(matchingPreferences.slice(0, 3).map(readable));
+  const preferenceTemplates = [
+    `A natural match for your interest in ${matched}.`,
+    `${destination.name} pairs well with your interest in ${matched}.`,
+    `Start with ${matched}; leave room for ${primary}.`,
+    `Your taste for ${matched} fits the rhythm here.`,
+    `${capitalize(matched)} can anchor this trip without making it feel one-note.`,
+    `This is an easy place to build around ${matched}.`,
+  ];
+  const generalTemplates = [
+    `Expect ${primary} up front, with ${secondary} adding range.`,
+    `${destination.name} stands out for ${joinNatural(signature)}.`,
+    `Come for ${primary}; stay for ${secondary}.`,
+    `${capitalize(joinNatural(signature))} shape the appeal.`,
+    `${destination.name} makes it easy to mix ${primary} with ${secondary}.`,
+    `Best for travelers drawn to ${joinNatural(signature)}.`,
+  ];
+  const lead = matchingPreferences.length
+    ? preferenceTemplates[templateIndex(destination.name, preferenceTemplates.length)]!
+    : generalTemplates[templateIndex(destination.name, generalTemplates.length)]!;
+  const neighborhoodDetail = neighborhood
+    ? ` ${neighborhood} ${templateIndex(destination.name, 2) === 0 ? 'is an easy place to start' : 'adds a distinct local angle'}.`
+    : '';
 
   return {
     overview,
-    personalizedReason: clampCopy(`${preferenceLead}${neighborhoodDetail}`, 300),
+    personalizedReason: clampCopy(`${lead}${neighborhoodDetail}`, 190),
   };
 }

@@ -5,7 +5,26 @@ const place = z.object({
   providerPlaceId: z.string(), name: z.string(), address: z.string().optional(), lat: z.number(), lng: z.number(), types: z.array(z.string()),
   rating: z.number().optional(), reviewCount: z.number().optional(), priceLevel: z.string().optional(), businessStatus: z.string().optional(),
   openingHours: z.array(z.unknown()).optional(), weekdayDescriptions: z.array(z.string()).optional(), photos: z.array(photo),
+  primaryType: z.string().optional(), primaryTypeDisplayName: z.string().optional(),
+  currentWeekdayDescriptions: z.array(z.string()).optional(), openNow: z.boolean().optional(),
+  accessibilityOptions: z.record(z.boolean()).optional(), attributes: z.record(z.boolean()).optional(),
   googleMapsUri: z.string().optional(), websiteUri: z.string().optional(), verifiedAt: z.string(),
+});
+const tripEssential = z.object({
+  id: z.string(),
+  label: z.string(),
+  kind: z.enum(['place', 'activity']),
+  source: z.enum(['google_places', 'user']),
+  providerPlaceId: z.string().optional(),
+  address: z.string().optional(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+  category: z.enum(['bar', 'club', 'restaurant', 'cafe', 'museum', 'park', 'beach', 'spa', 'hotel', 'tour', 'event', 'shop', 'landmark', 'other']).optional(),
+  summary: z.string().optional(),
+  imageUrl: z.string().url().optional(),
+  imageAttribution: z.string().optional(),
+  googleMapsUri: z.string().optional(),
+  verifiedAt: z.string().optional(),
 });
 const experience = z.object({
   productCode: z.string(), title: z.string(), description: z.string().optional(), productUrl: z.string().url().optional(),
@@ -146,7 +165,9 @@ const scrappaRoundTripEstimate = z.object({
 }).refine((value) => value.lowPrice <= value.typicalPrice && value.typicalPrice <= value.highPrice);
 
 const schemas: Record<string, z.ZodTypeAny> = {
-  placeSearch: z.object({ places: z.array(place) }), placeTextSearch: z.object({ places: z.array(place) }), placeDetails: z.object({ place: place.nullable() }),
+  placeSearch: z.object({ places: z.array(place) }), placeTextSearch: z.object({ places: z.array(place) }),
+  placeIntelligenceSearch: z.object({ places: z.array(place) }), placeDetails: z.object({ place: place.nullable() }),
+  resolveTripEssentials: z.object({ essentials: z.array(tripEssential).max(5) }),
   geocode: z.object({ result: z.object({ formattedAddress: z.string().optional(), lat: z.number(), lng: z.number() }).nullable() }),
   routeMatrix: z.object({ elements: z.array(z.unknown()) }), route: z.object({ routes: z.array(z.unknown()) }),
   viatorSearch: z.object({

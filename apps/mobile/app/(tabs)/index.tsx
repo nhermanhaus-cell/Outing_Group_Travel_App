@@ -168,7 +168,7 @@ export default function HomeScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
           <ActionCard title="Find a place" detail="Match" icon="spark" accent={colors.accent} tint={colors.accentLight} onPress={() => router.push('/quiz')} />
           <ActionCard title="Plan a trip" detail="Start" icon="route" accent={colors.pool} tint={colors.poolLight} onPress={() => router.push('/trips/new')} />
-          {featureFlags.outingFullExperienceV1 ? <ActionCard title="Import idea" detail="Save it" icon="image" accent={colors.pool} tint={colors.poolLight} onPress={() => router.push('/inspiration' as Href)} /> : null}
+          {featureFlags.outingFullExperienceV1 ? <ActionCard title="Import idea" detail="Save it" icon="image" accent={colors.pool} tint={colors.poolLight} onPress={() => router.push('/inspiration/new' as Href)} /> : null}
           {featureFlags.assistantV1 ? <ActionCard title="Ask Outing" detail="Get advice" icon="ask" accent={colors.plum} tint={colors.plumLight} onPress={() => router.push('/ask')} /> : null}
         </ScrollView>
       </View>
@@ -269,15 +269,6 @@ export default function HomeScreen() {
         </Section>
       ) : null}
 
-      <Section title="Outing notes">
-        <View style={{ backgroundColor: colors.backgroundSecondary, padding: spacing.lg, borderRadius: radius['2xl'], gap: spacing.sm }}>
-          <Text variant="labelSm" style={{ color: colors.pool, textTransform: 'uppercase', letterSpacing: 1.2 }}>PLAN BETTER TOGETHER</Text>
-          <Text variant="h2">Anchor the day. Leave room for a side quest.</Text>
-          <Text variant="bodyMd" style={{ color: colors.textSecondary }}>
-            A group plan works best when one shared highlight gives the day shape and personal suggestions fill the open windows.
-          </Text>
-        </View>
-      </Section>
     </ScrollView>
   );
 }

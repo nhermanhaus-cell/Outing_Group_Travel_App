@@ -46,6 +46,12 @@ import { loadAssistantInsights } from '../../src/lib/assistant-api';
 import { DecisionBriefCard } from '../../components/assistant/DecisionBriefCard';
 import { buildDestinationPulse } from '../../src/lib/communityPulse';
 import { buildDestinationOverview } from '../../src/lib/destinationOverview';
+import {
+  buildTrustedDestinationSources,
+  type TrustedDestinationSource,
+} from '../../src/lib/destinationSources';
+import { formatMoneyRange, formatTemperature } from '../../src/lib/display-format';
+import { useDisplayPreferences } from '../../src/lib/display-preferences';
 
 type TabKey = 'overview' | 'lgbtq' | 'places' | 'events';
 
@@ -94,6 +100,99 @@ function InfoRow({ label, value, accent }: { label: string; value: string; accen
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.borderSubtle }}>
       <Text variant="bodyMd" style={{ color: colors.textSecondary, flex: 1 }}>{label}</Text>
       <Text variant="labelMd" style={{ color: accent ? colors.accent : colors.textPrimary, textAlign: 'right', flex: 1 }}>{value}</Text>
+    </View>
+  );
+}
+
+function TrustedSourcesDisclosure({
+  destinationName,
+  sources,
+}: {
+  destinationName: string;
+  sources: TrustedDestinationSource[];
+}) {
+  const { colors, spacing, radius } = useTheme();
+  const [expanded, setExpanded] = useState(false);
+  if (sources.length === 0) return null;
+  return (
+    <View style={{ gap: spacing.sm }}>
+      <SectionTitle>Research & sources</SectionTitle>
+      <View
+        style={{
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: radius.xl,
+          borderCurve: 'continuous',
+          overflow: 'hidden',
+          backgroundColor: colors.cardBackground,
+        }}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          accessibilityLabel={`${expanded ? 'Hide' : 'See'} trusted sources for ${destinationName}`}
+          onPress={() => setExpanded((value) => !value)}
+          style={({ pressed }) => ({
+            minHeight: 68,
+            paddingHorizontal: spacing.md,
+            paddingVertical: spacing.md,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.md,
+            backgroundColor: pressed ? colors.backgroundSecondary : colors.cardBackground,
+          })}
+        >
+          <View style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accentLight }}>
+            <OutingIcon name="link" size={19} color={colors.accent} />
+          </View>
+          <View style={{ flex: 1, gap: spacing.xxs }}>
+            <Text variant="labelLg" style={{ color: colors.textPrimary }}>
+              {expanded ? 'Trusted sources' : 'See our trusted sources for more information'}
+            </Text>
+            <Text variant="caption" style={{ color: colors.textTertiary }}>
+              {sources.length} destination-specific {sources.length === 1 ? 'reference' : 'references'}
+            </Text>
+          </View>
+          <Text
+            variant="h3"
+            style={{ color: colors.accent, transform: [{ rotate: expanded ? '90deg' : '0deg' }] }}
+          >
+            →
+          </Text>
+        </Pressable>
+
+        {expanded ? (
+          <View style={{ borderTopWidth: 1, borderTopColor: colors.borderSubtle }}>
+            <View style={{ paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.xs }}>
+              <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                These links are attached specifically to {destinationName}. Global datasets and generic publisher homepages are not shown here.
+              </Text>
+            </View>
+            {sources.map((source, index) => (
+              <Pressable
+                key={source.id}
+                accessibilityRole="link"
+                accessibilityLabel={`Open ${source.label}${source.publisher ? ` from ${source.publisher}` : ''}`}
+                onPress={() => void Linking.openURL(source.url)}
+                style={({ pressed }) => ({
+                  paddingHorizontal: spacing.md,
+                  paddingVertical: spacing.md,
+                  gap: spacing.xxs,
+                  borderTopWidth: index === 0 ? 0 : 1,
+                  borderTopColor: colors.borderSubtle,
+                  backgroundColor: pressed ? colors.backgroundSecondary : colors.cardBackground,
+                })}
+              >
+                <Text variant="labelMd" style={{ color: colors.textPrimary }}>{source.label}</Text>
+                <Text variant="caption" style={{ color: colors.textTertiary }}>
+                  {[source.publisher, source.categoryLabel].filter(Boolean).join(' · ')}
+                </Text>
+                <Text variant="caption" style={{ color: colors.accent }}>Open source ↗</Text>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -258,6 +357,7 @@ function DestinationPlaceCard({ place, destinationName, center, index }: { place
 
 export default function DestinationDetailScreen() {
   const { colors, spacing, radius } = useTheme();
+  const [displayPreferences] = useDisplayPreferences();
   const { isSaved, toggleSaved } = useSavedDestinations();
   const { user } = useAuth();
   const { profile } = useTravelProfile();
@@ -420,6 +520,13 @@ export default function DestinationDetailScreen() {
     return selected;
   }, [slug]);
 
+  const trustedSources = useMemo(
+    () => destination
+      ? buildTrustedDestinationSources(destination, editorialGuides)
+      : [],
+    [destination, editorialGuides],
+  );
+
   const hasExternalExperienceBookings = useMemo(
     () =>
       destinationExperiences.some(
@@ -513,7 +620,17 @@ export default function DestinationDetailScreen() {
           <QuickFact label="Best time" value={(destination.bestMonths ?? []).slice(0, 3).map((month) => MONTH_NAMES[month]).join(', ') || 'Year-round'} />
           <QuickFact label="Trip shape" value={practical?.typicalStay ?? 'Flexible stay'} />
           <QuickFact label="Currency" value={destination.currency} />
-          {destination.priceBands?.mid?.perPersonPerDayUsd ? <QuickFact label="Typical day" value={`$${destination.priceBands.mid.perPersonPerDayUsd.low}–${destination.priceBands.mid.perPersonPerDayUsd.high}`} /> : null}
+          {destination.priceBands?.mid?.perPersonPerDayUsd ? (
+            <QuickFact
+              label="Typical day"
+              value={formatMoneyRange(
+                destination.priceBands.mid.perPersonPerDayUsd.low,
+                destination.priceBands.mid.perPersonPerDayUsd.high,
+                'USD',
+                displayPreferences.currency,
+              )}
+            />
+          ) : null}
         </ScrollView>
 
         <View style={{ paddingHorizontal: spacing.base }}>
@@ -668,13 +785,15 @@ export default function DestinationDetailScreen() {
                   <Card elevated padded>
                     <View style={{ gap: spacing.xs }}>
                       <Text variant="h3">
-                        {weatherQuery.data.weather.currentTemperatureC == null ? '—' : `${Math.round(weatherQuery.data.weather.currentTemperatureC)}°C`} · {weatherLabel(weatherQuery.data.weather.currentWeatherCode)}
+                        {weatherQuery.data.weather.currentTemperatureC == null ? '—' : formatTemperature(weatherQuery.data.weather.currentTemperatureC, displayPreferences.temperatureUnit)} · {weatherLabel(weatherQuery.data.weather.currentWeatherCode)}
                       </Text>
                       <View style={{ flexDirection: 'row', gap: spacing.sm }}>
                         {weatherQuery.data.weather.daily.slice(0, 4).map((day) => (
                           <View key={day.date} style={{ flex: 1, gap: spacing.xxs }}>
                             <Text variant="caption" style={{ color: colors.textTertiary }}>{new Date(`${day.date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short' })}</Text>
-                            <Text variant="labelSm">{day.temperatureMaxC == null ? '—' : `${Math.round(day.temperatureMaxC)}°`} / {day.temperatureMinC == null ? '—' : `${Math.round(day.temperatureMinC)}°`}</Text>
+                            <Text variant="labelSm">
+                              {day.temperatureMaxC == null ? '—' : formatTemperature(day.temperatureMaxC, displayPreferences.temperatureUnit, false)} / {day.temperatureMinC == null ? '—' : formatTemperature(day.temperatureMinC, displayPreferences.temperatureUnit, false)} {displayPreferences.temperatureUnit === 'fahrenheit' ? 'F' : 'C'}
+                            </Text>
                             <Text variant="caption" style={{ color: colors.textTertiary }}>{day.precipitationProbabilityMax ?? 0}% rain</Text>
                           </View>
                         ))}
@@ -704,12 +823,13 @@ export default function DestinationDetailScreen() {
                 </View>
               ) : null}
 
-              <SectionTitle>Budget</SectionTitle>
+              <SectionTitle>Budget · {displayPreferences.currency} estimates</SectionTitle>
               {destination.priceBands && (
                 <View style={{ gap: spacing.xs }}>
-                  <InfoRow label="Budget / day" value={`$${destination.priceBands.shoestring?.perPersonPerDayUsd?.low}–${destination.priceBands.shoestring?.perPersonPerDayUsd?.high}`} />
-                  <InfoRow label="Mid / day" value={`$${destination.priceBands.mid?.perPersonPerDayUsd?.low}–${destination.priceBands.mid?.perPersonPerDayUsd?.high}`} />
-                  <InfoRow label="Luxury / day" value={`$${destination.priceBands.luxury?.perPersonPerDayUsd?.low}–${destination.priceBands.luxury?.perPersonPerDayUsd?.high}`} />
+                  {destination.priceBands.shoestring?.perPersonPerDayUsd ? <InfoRow label="Budget / day" value={formatMoneyRange(destination.priceBands.shoestring.perPersonPerDayUsd.low, destination.priceBands.shoestring.perPersonPerDayUsd.high, 'USD', displayPreferences.currency)} /> : null}
+                  {destination.priceBands.mid?.perPersonPerDayUsd ? <InfoRow label="Mid / day" value={formatMoneyRange(destination.priceBands.mid.perPersonPerDayUsd.low, destination.priceBands.mid.perPersonPerDayUsd.high, 'USD', displayPreferences.currency)} /> : null}
+                  {destination.priceBands.luxury?.perPersonPerDayUsd ? <InfoRow label="Luxury / day" value={formatMoneyRange(destination.priceBands.luxury.perPersonPerDayUsd.low, destination.priceBands.luxury.perPersonPerDayUsd.high, 'USD', displayPreferences.currency)} /> : null}
+                  {displayPreferences.currency !== 'USD' ? <Text variant="caption" style={{ color: colors.textTertiary }}>Approximate display conversion from Outing’s USD planning estimates.</Text> : null}
                 </View>
               )}
 
@@ -791,41 +911,6 @@ export default function DestinationDetailScreen() {
                 </>
               )}
 
-              {editorialGuides.length > 0 && (
-                <>
-                  <SectionTitle>From queer travel writers</SectionTitle>
-                  <Text variant="bodySm" style={{ color: colors.textTertiary, marginBottom: spacing.sm }}>
-                    Independent perspectives for deeper trip research. Open the original article to verify current venue details and dates.
-                  </Text>
-                  {editorialGuides.map((article) => (
-                    <Pressable
-                      key={article.id}
-                      onPress={() => void Linking.openURL(article.url)}
-                      accessibilityRole="link"
-                      accessibilityLabel={`Read ${article.title} on ${article.sourceName}`}
-                      style={{
-                        paddingVertical: spacing.md,
-                        borderBottomWidth: 1,
-                        borderBottomColor: colors.borderSubtle,
-                        gap: spacing.xs,
-                      }}
-                    >
-                      <Text variant="h4">{article.title}</Text>
-                      <Text variant="caption" style={{ color: colors.accent }}>
-                        {article.sourceName} ↗
-                      </Text>
-                      {article.signals.length > 0 ? (
-                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
-                          {article.signals.slice(0, 4).map((signal) => (
-                            <Badge key={signal} label={signal} variant="default" />
-                          ))}
-                        </View>
-                      ) : null}
-                    </Pressable>
-                  ))}
-                </>
-              )}
-
               {(parksQuery.data?.parks.length ?? 0) > 0 ? (
                 <>
                   <SectionTitle>Official outdoor ideas nearby</SectionTitle>
@@ -839,31 +924,10 @@ export default function DestinationDetailScreen() {
                 </>
               ) : null}
 
-              {(destination.sources?.length ?? 0) > 0 && (
-                <>
-                  <SectionTitle>Sources</SectionTitle>
-                  <Text variant="bodySm" style={{ color: colors.textTertiary, marginBottom: spacing.sm }}>
-                    Attribution for editorial further reading and public datasets. Outing never claims a destination is universally safe.
-                  </Text>
-                  {(destination.sources as Array<{ type: string; label: string; url: string }>).map((s, i) => (
-                    <Pressable
-                      key={`${s.type}-${i}`}
-                      accessibilityRole="link"
-                      onPress={() => void Linking.openURL(s.url)}
-                      style={{
-                        paddingVertical: spacing.sm,
-                        borderBottomWidth: 1,
-                        borderBottomColor: colors.borderSubtle,
-                        gap: spacing.xxs,
-                      }}
-                    >
-                      <Text variant="labelMd">{s.label}</Text>
-                      <Text variant="caption" style={{ color: colors.textTertiary }}>{s.type.replace('_', ' ')}</Text>
-                      <Text variant="caption" style={{ color: colors.accent }}>Open source ↗</Text>
-                    </Pressable>
-                  ))}
-                </>
-              )}
+              <TrustedSourcesDisclosure
+                destinationName={destination.name}
+                sources={trustedSources}
+              />
             </View>
           )}
 
@@ -1092,13 +1156,12 @@ export default function DestinationDetailScreen() {
               path: 'recommendations',
               entryPoint: 'destination_detail',
             });
-            router.push(destinationPlanHref(
-              {
-                destinationSlug: destination.slug,
-                destinationName: destination.name,
-              },
+            const href = destinationPlanHref(
+              { destinationSlug: destination.slug, destinationName: destination.name },
               quizAnswers,
-            ));
+            );
+            if (quizAnswers) router.replace(href);
+            else router.push(href);
           }}
         >
           Plan a trip to {destination.name}

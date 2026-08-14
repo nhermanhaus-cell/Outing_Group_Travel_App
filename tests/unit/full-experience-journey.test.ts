@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildActivityPreferenceSignals, deriveHomeJourney, isActivityPreferenceSessionComplete } from '@gayi/domain';
-import type { ActivityPreferenceVote } from '@gayi/shared';
+import { assistantFocusSchema, type ActivityPreferenceVote } from '@gayi/shared';
 
 const now = new Date('2026-08-12T08:30:00Z');
 
@@ -14,6 +14,10 @@ function trip(overrides: Partial<Parameters<typeof deriveHomeJourney>[0][number]
 }
 
 describe('full-experience Home journey', () => {
+  it('supports a private inspiration-library focus for Ask Outing', () => {
+    expect(assistantFocusSchema.parse({ kind: 'inspiration_library' })).toEqual({ kind: 'inspiration_library' });
+  });
+
   it('uses the destination timezone at an in-trip boundary', () => {
     const result = deriveHomeJourney([trip()], { now });
     expect(result.state).toBe('in_trip');
