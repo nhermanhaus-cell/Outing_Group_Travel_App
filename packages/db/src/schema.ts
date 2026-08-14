@@ -409,6 +409,96 @@ export const tripItemFeedback = pgTable(
   ],
 );
 
+export const activityPreferenceSessions = pgTable(
+  'activity_preference_sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tripId: uuid('trip_id').notNull().references(() => trips.id, { onDelete: 'cascade' }),
+    memberId: uuid('member_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+    reviewedPlaceIds: jsonb('reviewed_place_ids').notNull().default([]),
+    reviewedCategories: jsonb('reviewed_categories').notNull().default([]),
+    reactionCount: integer('reaction_count').notNull().default(0),
+    isComplete: boolean('is_complete').notNull().default(false),
+    startedAt: timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [uniqueIndex('activity_preference_sessions_trip_member_unique').on(table.tripId, table.memberId)],
+);
+
+export const tripPlanProposals = pgTable('trip_plan_proposals', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tripId: uuid('trip_id').notNull().references(() => trips.id, { onDelete: 'cascade' }),
+  createdBy: uuid('created_by').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+  proposalKind: text('proposal_kind').notNull(),
+  action: text('action').notNull(),
+  dayIndex: integer('day_index'),
+  priorPlanId: text('prior_plan_id').notNull(),
+  priorRevision: integer('prior_revision').notNull(),
+  previewPlan: jsonb('preview_plan').notNull(),
+  summary: text('summary').notNull(),
+  status: text('status').notNull().default('preview'),
+  pollId: uuid('poll_id').references(() => tripPolls.id, { onDelete: 'set null' }),
+  decidedBy: uuid('decided_by').references(() => profiles.id, { onDelete: 'set null' }),
+  decidedAt: timestamp('decided_at', { withTimezone: true }),
+  ...timestamps,
+});
+
+export const inspirationImports = pgTable('inspiration_imports', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ownerId: uuid('owner_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+  tripId: uuid('trip_id').references(() => trips.id, { onDelete: 'set null' }),
+  status: text('status').notNull().default('queued'),
+  sourceCount: integer('source_count').notNull(),
+  confirmedCount: integer('confirmed_count').notNull().default(0),
+  storagePrefix: text('storage_prefix'),
+  failureCode: text('failure_code'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  ...timestamps,
+});
+
+export const inspirationItems = pgTable('inspiration_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  importId: uuid('import_id').notNull().references(() => inspirationImports.id, { onDelete: 'cascade' }),
+  ownerId: uuid('owner_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+  inputKind: text('input_kind').notNull(),
+  title: text('title').notNull(),
+  summary: text('summary'),
+  destinationName: text('destination_name'),
+  destinationSlug: text('destination_slug'),
+  canonicalPlaceId: text('canonical_place_id'),
+  providerPlaceId: text('provider_place_id'),
+  sourceUrl: text('source_url'),
+  category: text('category'),
+  confidence: numeric('confidence', { precision: 5, scale: 4 }).notNull().default('0'),
+  status: text('status').notNull().default('candidate'),
+  ...timestamps,
+});
+
+export const tripAwarenessSettings = pgTable('trip_awareness_settings', {
+  tripId: uuid('trip_id').notNull().references(() => trips.id, { onDelete: 'cascade' }),
+  ownerId: uuid('owner_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+  enabled: boolean('enabled').notNull().default(false),
+  backgroundLocationEnabled: boolean('background_location_enabled').notNull().default(false),
+  itineraryRemindersEnabled: boolean('itinerary_reminders_enabled').notNull().default(true),
+  consentedAt: timestamp('consented_at', { withTimezone: true }),
+  monitoringEndsAt: timestamp('monitoring_ends_at', { withTimezone: true }),
+  ...timestamps,
+}, (table) => [uniqueIndex('trip_awareness_settings_trip_owner_unique').on(table.tripId, table.ownerId)]);
+
+export const tripVisitEvents = pgTable('trip_visit_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tripId: uuid('trip_id').notNull().references(() => trips.id, { onDelete: 'cascade' }),
+  ownerId: uuid('owner_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+  itemId: text('item_id'),
+  placeId: text('place_id'),
+  event: text('event').notNull(),
+  occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
+  source: text('source').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const tripSavedPlaces = pgTable(
   'trip_saved_places',
   {
@@ -557,5 +647,100 @@ export const notificationPreferences = pgTable('notification_preferences', {
     .notNull()
     .references(() => profiles.id, { onDelete: 'cascade' }),
   preferences: jsonb('preferences').notNull().default({}),
+  lastDiscoveryDigestAt: timestamp('last_discovery_digest_at', { withTimezone: true }),
   ...timestamps,
 });
+
+export const devicePushTokens = pgTable('device_push_tokens', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+  installationId: text('installation_id').notNull(),
+  platform: text('platform').notNull(),
+  expoPushToken: text('expo_push_token').notNull(),
+  timezone: text('timezone').notNull(),
+  enabled: boolean('enabled').notNull().default(true),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).defaultNow().notNull(),
+  ...timestamps,
+}, (table) => [uniqueIndex('device_push_tokens_user_installation_unique').on(table.userId, table.installationId)]);
+
+export const notificationDeliveries = pgTable('notification_deliveries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+  kind: text('kind').notNull(),
+  dedupeKey: text('dedupe_key').notNull(),
+  status: text('status').notNull(),
+  providerMessageId: text('provider_message_id'),
+  sentAt: timestamp('sent_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [uniqueIndex('notification_deliveries_user_kind_dedupe_unique').on(table.userId, table.kind, table.dedupeKey)]);
+
+export const savedDestinations = pgTable(
+  'saved_destinations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+    destinationSlug: text('destination_slug').notNull(),
+    source: text('source').notNull().default('user'),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex('saved_destinations_user_slug_idx').on(table.userId, table.destinationSlug)],
+);
+
+export const assistantConversations = pgTable(
+  'assistant_conversations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    ownerId: uuid('owner_id').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+    tripId: uuid('trip_id').references(() => trips.id, { onDelete: 'cascade' }),
+    scopeKind: text('scope_kind').notNull(),
+    destinationSlug: text('destination_slug'),
+    visibility: text('visibility').notNull(),
+    title: text('title'),
+    provider: text('provider').notNull().default('mistral'),
+    model: text('model').notNull().default('mistral-small-2603'),
+    ...timestamps,
+  },
+  (table) => [
+    index('assistant_conversations_owner_idx').on(table.ownerId, table.updatedAt),
+    index('assistant_conversations_trip_idx').on(table.tripId, table.updatedAt),
+  ],
+);
+
+export const assistantMessages = pgTable(
+  'assistant_messages',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    conversationId: uuid('conversation_id').notNull().references(() => assistantConversations.id, { onDelete: 'cascade' }),
+    authorId: uuid('author_id').references(() => profiles.id, { onDelete: 'set null' }),
+    role: text('role').notNull(),
+    content: text('content').notNull(),
+    sources: jsonb('sources').notNull().default([]),
+    toolName: text('tool_name'),
+    latencyMs: integer('latency_ms'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index('assistant_messages_conversation_idx').on(table.conversationId, table.createdAt)],
+);
+
+export const assistantProposals = pgTable(
+  'assistant_proposals',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    conversationId: uuid('conversation_id').notNull().references(() => assistantConversations.id, { onDelete: 'cascade' }),
+    tripId: uuid('trip_id').references(() => trips.id, { onDelete: 'cascade' }),
+    createdBy: uuid('created_by').notNull().references(() => profiles.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    title: text('title').notNull(),
+    summary: text('summary').notNull(),
+    payload: jsonb('payload').notNull().default({}),
+    sources: jsonb('sources').notNull().default([]),
+    status: text('status').notNull().default('proposed'),
+    pollId: uuid('poll_id').references(() => tripPolls.id, { onDelete: 'set null' }),
+    decidedBy: uuid('decided_by').references(() => profiles.id, { onDelete: 'set null' }),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    index('assistant_proposals_conversation_idx').on(table.conversationId, table.createdAt),
+    index('assistant_proposals_trip_idx').on(table.tripId, table.status),
+  ],
+);

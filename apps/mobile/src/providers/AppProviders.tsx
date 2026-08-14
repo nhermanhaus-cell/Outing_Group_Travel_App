@@ -7,11 +7,15 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import * as Linking from 'expo-linking';
+import * as QueryParams from 'expo-auth-session/build/QueryParams';
+import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 import { posthog } from '../config/posthog';
 import {
   createLegacyTripPlan,
+  normalizeActivityPreferenceChoice,
   type ItineraryItem,
   type TripPlan,
   type TripPlanFeedback,
@@ -19,11 +23,18 @@ import {
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { supabase } from '../lib/supabase';
 import { featureFlags } from '../lib/featureFlags';
+import { loadAssistantInsights } from '../lib/assistant-api';
+import {
+  clearLocalAccountData,
+  requestRemoteAccountDeletion,
+} from '../lib/account-deletion';
 import {
   AnalyticsProvider,
   useAnalytics,
 } from '../analytics/analytics-provider';
 import type {
+  ActivityPreferenceVote,
+  AssistantProposal,
   Interest,
   LookingFor,
   PendingInvite,
@@ -34,6 +45,7 @@ import type {
 } from '@gayi/shared';
 import destinationsCatalog from '../../assets/seed/destinations.json';
 import destinationsScoring from '../../assets/seed/destinations.scoring.json';
+import { SavedDestinationsProvider } from './SavedDestinationsProvider';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -42,19 +54,32 @@ export interface User {
   email: string;
   displayName?: string;
   avatarUrl?: string;
+  providers?: string[];
+}
+
+export interface AuthActionResult {
+  error?: string;
+  cancelled?: boolean;
+  appleManualRevokeRequired?: boolean;
 }
 
 export interface AuthContext {
   user: User | null;
   loading: boolean;
-  signInWithMagicLink: (email: string, returnTo?: string) => Promise<{ error?: string }>;
-  signInWithApple: () => Promise<{ error?: string }>;
+  accountDataRevision: number;
+  signInWithMagicLink: (email: string, returnTo?: string) => Promise<AuthActionResult>;
+  signInWithApple: () => Promise<AuthActionResult>;
+  signInWithGoogle: () => Promise<AuthActionResult>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<AuthActionResult>;
 }
+
+void WebBrowser.maybeCompleteAuthSession();
 
 export interface LocalTrip {
   tripId: string;
   destinationSlug?: string;
+  destinationCandidateId?: string;
   destinationName?: string;
   name: string;
   startDate?: string;
@@ -91,6 +116,11 @@ export interface LocalTrip {
   itineraryItems?: Array<Record<string, unknown>>;
   tripPlan?: TripPlan;
   itineraryFeedback?: TripPlanFeedback[];
+  activityPreferences?: ActivityPreferenceVote[];
+  /** V2 source of truth; legacy activityPreferences remains yes/no for old clients. */
+  activityPreferencesV2?: ActivityPreferenceVote[];
+  activityPreferenceSessionComplete?: boolean;
+  tripPlanProposals?: import('@gayi/domain').TripPlanPreviewProposal[];
   /** Local-first draft that will be synced after authentication. */
   localOnly?: boolean;
 }
@@ -115,12 +145,16 @@ export interface TripPoll {
   question: string;
   options: Array<{ id: string; label: string; votes: string[] }>;
   createdAt: string;
+  assistantProposal?: AssistantProposal;
+  planProposalId?: string;
+  resolution?: 'accepted' | 'dismissed' | 'tie';
 }
 
 export interface TripsContext {
   trips: LocalTrip[];
   createTrip: (trip: Omit<LocalTrip, 'tripId' | 'createdAt'>) => Promise<LocalTrip>;
   updateTrip: (tripId: string, updates: Partial<LocalTrip>) => Promise<void>;
+  castPollVote: (tripId: string, pollId: string, optionId: string) => Promise<TripPoll[]>;
   deleteTrip: (tripId: string) => Promise<void>;
   getTrip: (tripId: string) => LocalTrip | undefined;
 }
@@ -212,6 +246,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   const { resetIdentity: resetAnalyticsIdentity } = useAnalytics();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accountDataRevision, setAccountDataRevision] = useState(0);
   const prevUserIdRef = useRef<string | null>(null);
   const initialLoadDoneRef = useRef(false);
 
@@ -304,7 +339,9 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
           token: cred.identityToken,
         });
         if (error) {
-          const providerDisabled = error.message.includes('issuer https://appleid.apple.com') || error.message.toLowerCase().includes('provider is not enabled');
+          const providerDisabled = error.message.includes('issuer https://appleid.apple.com')
+            || error.message.toLowerCase().includes('provider is not enabled')
+            || error.message.toLowerCase().includes('missing oauth secret');
           return { error: providerDisabled ? 'Apple sign-in is not enabled for this project yet. Your trip is still saved on this phone; use email sign-in to sync it.' : error.message };
         }
         if (data.user) {
@@ -329,13 +366,72 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(newUser);
       return {};
     } catch (err: unknown) {
-      if ((err as { code?: string }).code === 'ERR_REQUEST_CANCELED') return {};
+      if ((err as { code?: string }).code === 'ERR_REQUEST_CANCELED') return { cancelled: true };
       if (supabase) return { error: err instanceof Error ? err.message : 'Apple sign-in could not be completed. Your local trips are unaffected.' };
       // Offline fixture fallback for simulator-only development.
       const newUser: User = { id: 'apple-mock', email: 'apple@example.com', displayName: 'Apple User' };
       await storeSet('gayi:user', JSON.stringify(newUser));
       setUser(newUser);
       return {};
+    }
+  }, []);
+
+  const signInWithGoogle = useCallback(async (): Promise<AuthActionResult> => {
+    if (!supabase) {
+      const newUser: User = { id: 'google-mock', email: 'google@example.com', displayName: 'Google User' };
+      await storeSet('gayi:user', JSON.stringify(newUser));
+      setUser(newUser);
+      return {};
+    }
+
+    try {
+      const redirectTo = Linking.createURL('/auth/callback');
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+          queryParams: { prompt: 'select_account' },
+        },
+      });
+      if (error) {
+        const providerDisabled = error.message.toLowerCase().includes('provider is not enabled')
+          || error.message.toLowerCase().includes('unsupported provider')
+          || error.message.toLowerCase().includes('missing oauth secret');
+        return {
+          error: providerDisabled
+            ? 'Google sign-in is not enabled for this project yet. You can browse as a guest in the meantime.'
+            : error.message,
+        };
+      }
+      if (!data.url) return { error: 'Google sign-in could not be started.' };
+
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      if (result.type !== 'success') return { cancelled: true };
+
+      const { params, errorCode } = QueryParams.getQueryParams(result.url);
+      if (errorCode) {
+        return { error: params.error_description ?? params.error ?? errorCode };
+      }
+
+      const sessionResult = params.code
+        ? await supabase.auth.exchangeCodeForSession(params.code)
+        : params.access_token && params.refresh_token
+          ? await supabase.auth.setSession({
+              access_token: params.access_token,
+              refresh_token: params.refresh_token,
+            })
+          : { data: { user: null }, error: new Error('Google did not return a valid sign-in token.') };
+
+      if (sessionResult.error) return { error: sessionResult.error.message };
+      if (sessionResult.data.user) setUser(userFromSupabase(sessionResult.data.user));
+      return {};
+    } catch (err: unknown) {
+      return {
+        error: err instanceof Error
+          ? err.message
+          : 'Google sign-in could not be completed. Your local trips are unaffected.',
+      };
     }
   }, []);
 
@@ -346,9 +442,60 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, [resetAnalyticsIdentity]);
 
+  const deleteAccount = useCallback(async (): Promise<AuthActionResult> => {
+    if (!user) return { error: 'Sign in before deleting your account.' };
+    let remoteResult: AuthActionResult;
+    try {
+      let appleAuthorizationCode: string | undefined;
+      if (user.providers?.includes('apple') && Platform.OS === 'ios') {
+        try {
+          const AppleAuth = await import('expo-apple-authentication');
+          const credential = await AppleAuth.signInAsync({ requestedScopes: [] });
+          appleAuthorizationCode = credential.authorizationCode ?? undefined;
+        } catch (error) {
+          if ((error as { code?: string }).code === 'ERR_REQUEST_CANCELED') return { cancelled: true };
+        }
+      }
+      remoteResult = supabase
+        ? await requestRemoteAccountDeletion({ appleAuthorizationCode })
+        : { appleManualRevokeRequired: false };
+    } catch (error) {
+      return {
+        error: error instanceof Error
+          ? error.message
+          : 'Outing could not delete your account. Try again.',
+      };
+    }
+    await resetAnalyticsIdentity().catch(() => undefined);
+    if (supabase) await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+    await clearLocalAccountData().catch(() => undefined);
+    queryClient.clear();
+    setUser(null);
+    setAccountDataRevision((value) => value + 1);
+    return remoteResult;
+  }, [resetAnalyticsIdentity, user]);
+
   const value = useMemo(
-    () => ({ user, loading, signInWithMagicLink, signInWithApple, signOut }),
-    [user, loading, signInWithMagicLink, signInWithApple, signOut],
+    () => ({
+      user,
+      loading,
+      accountDataRevision,
+      signInWithMagicLink,
+      signInWithApple,
+      signInWithGoogle,
+      signOut,
+      deleteAccount,
+    }),
+    [
+      user,
+      loading,
+      accountDataRevision,
+      signInWithMagicLink,
+      signInWithApple,
+      signInWithGoogle,
+      signOut,
+      deleteAccount,
+    ],
   );
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
@@ -358,6 +505,8 @@ function userFromSupabase(value: {
   id: string;
   email?: string;
   user_metadata?: Record<string, unknown>;
+  app_metadata?: Record<string, unknown>;
+  identities?: Array<{ provider?: string }>;
 }): User {
   const metadata = value.user_metadata ?? {};
   const displayName =
@@ -367,19 +516,71 @@ function userFromSupabase(value: {
         ? metadata['full_name']
         : undefined;
   const avatarUrl = typeof metadata['avatar_url'] === 'string' ? metadata['avatar_url'] : undefined;
+  const appProviders = Array.isArray(value.app_metadata?.['providers'])
+    ? value.app_metadata.providers.filter((provider): provider is string => typeof provider === 'string')
+    : [];
+  const providers = [...new Set([
+    ...appProviders,
+    ...(value.identities ?? []).flatMap((identity) => identity.provider ? [identity.provider] : []),
+  ])];
   return {
     id: value.id,
     email: value.email ?? '',
     ...(displayName ? { displayName } : {}),
     ...(avatarUrl ? { avatarUrl } : {}),
+    ...(providers.length ? { providers } : {}),
   };
 }
 
 // ─── Destinations Provider ────────────────────────────────────────────────────
 
 function DestinationsProvider({ children }: { children: React.ReactNode }) {
-  const catalog = destinationsCatalog as CatalogDestination[];
-  const scoring = destinationsScoring as ScoringDestination[];
+  const remoteCatalog = useQuery({
+    queryKey: ['destination-catalog', 'published'],
+    queryFn: async () => {
+      if (!supabase) return [];
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('payload')
+        .eq('published', true)
+        .is('deleted_at', null)
+        .order('name');
+      if (error) throw error;
+      return (data ?? []).flatMap((row) => {
+        const payload = row.payload && typeof row.payload === 'object'
+          ? row.payload as Record<string, unknown>
+          : null;
+        if (!payload || typeof payload.slug !== 'string') return [];
+        return [payload];
+      });
+    },
+    enabled: Boolean(supabase),
+    staleTime: 30 * 60_000,
+    retry: 1,
+  });
+  const catalog = useMemo(() => {
+    const bundled = (destinationsCatalog as CatalogDestination[]).filter((destination) =>
+      featureFlags.catalogExpansionV1 || destination.publicationStatus === 'published');
+    const remote = (remoteCatalog.data ?? []) as CatalogDestination[];
+    const selected = featureFlags.catalogExpansionV1
+      ? [...new Map([...bundled, ...remote].map((destination) => [destination.slug, destination])).values()]
+      : remote.length ? remote : bundled;
+    return selected.map((destination) => ({
+      ...destination,
+      interests: [...new Set(destination.interests ?? [])],
+    }));
+  }, [remoteCatalog.data]);
+  const scoring = useMemo(() => {
+    const remote = (remoteCatalog.data ?? []).flatMap((destination) => {
+      const value = destination.scoring;
+      return value && typeof value === 'object' ? [value as ScoringDestination] : [];
+    });
+    const bundled = (destinationsScoring as ScoringDestination[]).filter((destination) =>
+      catalog.some((entry) => entry.slug === destination.slug));
+    return featureFlags.catalogExpansionV1
+      ? [...new Map([...bundled, ...remote].map((destination) => [destination.slug, destination])).values()]
+      : remote.length ? remote : bundled;
+  }, [catalog, remoteCatalog.data]);
 
   const getBySlug = useCallback(
     (slug: string) => catalog.find((d) => d.slug === slug),
@@ -402,7 +603,7 @@ function DestinationsProvider({ children }: { children: React.ReactNode }) {
 // ─── Trips Provider ───────────────────────────────────────────────────────────
 
 const TRIPS_KEY = 'gayi:trips';
-const LOCAL_TRIP_MIGRATION_VERSION = 3;
+const LOCAL_TRIP_MIGRATION_VERSION = 4;
 
 function generateId() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (character) => {
@@ -430,6 +631,10 @@ function TravelProfileProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
+      if (!cancelled) {
+        setLoading(true);
+        setProfile(DEFAULT_TRAVEL_PROFILE);
+      }
       const local = await storeGet(PROFILE_KEY);
       if (local) {
         try {
@@ -452,7 +657,7 @@ function TravelProfileProvider({ children }: { children: React.ReactNode }) {
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [auth?.user?.id]);
+  }, [auth?.accountDataRevision, auth?.user?.id]);
 
   const updateProfile = useCallback(async (updates: Partial<UserTravelProfile>) => {
     const next: UserTravelProfile = {
@@ -479,6 +684,7 @@ type TripRow = {
   id: string;
   name: string;
   destination_slug?: string | null;
+  destination_candidate_id?: string | null;
   start_date?: string | null;
   end_date?: string | null;
   origin?: string | null;
@@ -495,6 +701,7 @@ function rowToLocalTrip(row: TripRow): LocalTrip {
     tripId: row.id,
     name: row.name,
     destinationSlug: row.destination_slug ?? (payload.destinationSlug as string | undefined),
+    destinationCandidateId: row.destination_candidate_id ?? (payload.destinationCandidateId as string | undefined),
     startDate: row.start_date?.slice(0, 10) ?? (payload.startDate as string | undefined),
     endDate: row.end_date?.slice(0, 10) ?? (payload.endDate as string | undefined),
     origin: row.origin ?? (payload.origin as string | undefined),
@@ -506,22 +713,48 @@ function rowToLocalTrip(row: TripRow): LocalTrip {
 }
 
 function migrateLegacyTrip(trip: LocalTrip): LocalTrip {
-  if (trip.tripPlan || !trip.itineraryItems?.length) return trip;
-  return {
+  const preferences = trip.activityPreferencesV2 ?? trip.activityPreferences;
+  const normalized: LocalTrip = {
     ...trip,
+    activityPreferences: preferences?.map((vote) => ({
+      ...vote,
+      choice: normalizeActivityPreferenceChoice(vote.choice),
+    })),
+    activityPreferencesV2: preferences?.map((vote) => ({
+      ...vote,
+      choice: normalizeActivityPreferenceChoice(vote.choice),
+    })),
+  };
+  if (normalized.tripPlan || !normalized.itineraryItems?.length) return normalized;
+  return {
+    ...normalized,
     tripPlan: createLegacyTripPlan(
-      trip.destinationName ?? trip.name,
-      trip.itineraryItems as unknown as ItineraryItem[],
-      trip.createdAt,
+      normalized.destinationName ?? normalized.name,
+      normalized.itineraryItems as unknown as ItineraryItem[],
+      normalized.createdAt,
     ),
   };
 }
 
 function tripPayload(trip: Omit<LocalTrip, 'tripId' | 'createdAt'> | LocalTrip): Record<string, unknown> {
-  const { name: _name, destinationSlug: _destinationSlug, startDate: _startDate,
+  const { name: _name, destinationSlug: _destinationSlug, destinationCandidateId: _destinationCandidateId, startDate: _startDate,
     endDate: _endDate, origin: _origin, travelers: _travelers,
-    glamourLevel: _glamourLevel, localOnly: _localOnly, ...payload } = trip;
-  return payload;
+    glamourLevel: _glamourLevel, localOnly: _localOnly,
+    activityPreferences: preferences, activityPreferencesV2: preferencesV2,
+    ...payload } = trip;
+  const normalized = preferencesV2 ?? preferences;
+  return {
+    ...payload,
+    ...(normalized ? {
+      activityPreferencesV2: normalized,
+      activityPreferences: normalized.map((vote) => ({
+        ...vote,
+        choice: ['very_interested', 'interested', 'must_do'].includes(vote.choice)
+          ? 'interested'
+          : 'not_interested',
+      })),
+    } : {}),
+  };
 }
 
 function TripsProvider({ children }: { children: React.ReactNode }) {
@@ -544,6 +777,7 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           owner_id: auth.user.id,
           name: local.name,
           destination_slug: local.destinationSlug ?? null,
+          destination_candidate_id: local.destinationCandidateId ?? null,
           start_date: local.startDate ?? null,
           end_date: local.endDate ?? null,
           origin: local.origin ?? null,
@@ -562,7 +796,29 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
     if (!error && data) {
-      const remote = (data as TripRow[]).map(rowToLocalTrip);
+      const tripIds = (data as TripRow[]).map((row) => row.id);
+      const { data: memberRows } = tripIds.length
+        ? await tripClient
+          .from('trip_members')
+          .select('trip_id,user_id,role')
+          .in('trip_id', tripIds)
+        : { data: [] };
+      const remote = (data as TripRow[]).map((row) => {
+        const trip = rowToLocalTrip(row);
+        const syncedMembers = (memberRows ?? [])
+          .filter((member) => member.trip_id === row.id)
+          .map((member) => ({
+            id: member.user_id,
+            displayName: member.user_id === auth.user?.id
+              ? auth.user?.displayName ?? 'You'
+              : 'Trip member',
+            role: member.role === 'viewer' ? 'member' : member.role as TripMember['role'],
+          }));
+        return {
+          ...trip,
+          members: syncedMembers.length > 0 ? syncedMembers : trip.members,
+        };
+      });
       setTrips(remote);
       await storeSet(TRIPS_KEY, JSON.stringify(remote));
     }
@@ -576,9 +832,9 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           setTrips(stored);
           void storeSet(TRIPS_KEY, JSON.stringify(stored));
         } catch { /* ignore */ }
-      }
+      } else setTrips([]);
     });
-  }, []);
+  }, [auth?.accountDataRevision]);
 
   useEffect(() => {
     if (!tripClient || !auth?.user) return;
@@ -601,6 +857,16 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
     await storeSet(TRIPS_KEY, JSON.stringify(updated));
   }, []);
 
+  const patchLocalTrip = useCallback((tripId: string, updates: Partial<LocalTrip>) => {
+    setTrips((currentTrips) => {
+      const updated = currentTrips.map((trip) =>
+        trip.tripId === tripId ? { ...trip, ...updates } : trip,
+      );
+      void storeSet(TRIPS_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   const createTrip = useCallback(
     async (data: Omit<LocalTrip, 'tripId' | 'createdAt'>) => {
       if (tripClient && auth?.user) {
@@ -608,6 +874,7 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           owner_id: auth.user.id,
           name: data.name,
           destination_slug: data.destinationSlug ?? null,
+          destination_candidate_id: data.destinationCandidateId ?? null,
           start_date: data.startDate ?? null,
           end_date: data.endDate ?? null,
           origin: data.origin ?? null,
@@ -621,8 +888,18 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           user_id: auth.user.id,
           role: 'owner',
         });
-        const trip = rowToLocalTrip(row as TripRow);
+        const trip = {
+          ...rowToLocalTrip(row as TripRow),
+          members: [{
+            id: auth.user.id,
+            displayName: auth.user.displayName ?? 'You',
+            role: 'owner' as const,
+          }],
+        };
         await persist([trip, ...trips]);
+        if (featureFlags.proactiveInsightsV1) {
+          void loadAssistantInsights({ surface: 'trip', tripId: trip.tripId, trigger: 'trip_changed', force: true }).catch(() => undefined);
+        }
         return trip;
       }
       const trip: LocalTrip = { ...data, tripId: generateId(), createdAt: new Date().toISOString(), localOnly: true };
@@ -645,11 +922,29 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           'itineraryItems',
           'memberPrefs',
           'tripPlan',
+          'tripPlanProposals',
           'itineraryFeedback',
         ]);
         const patch = Object.fromEntries(Object.entries(updates).filter(([key]) => collaborativeKeys.has(key)));
         if (Object.keys(patch).length > 0) {
           const { error } = await tripClient.rpc('update_trip_collaboration_payload', { p_trip_id: tripId, p_patch: patch });
+          if (error) throw error;
+        }
+        if (updates.activityPreferences !== undefined) {
+          const ownVotes = updates.activityPreferences.filter(
+            (vote) => vote.memberId === authenticatedUserId,
+          );
+          let { error } = await tripClient.rpc('update_trip_activity_preferences_v2', {
+            p_trip_id: tripId,
+            p_votes: ownVotes,
+            p_completed: updates.activityPreferenceSessionComplete ?? false,
+          });
+          if (error?.code === 'PGRST202') {
+            ({ error } = await tripClient.rpc('update_trip_activity_preferences', {
+              p_trip_id: tripId,
+              p_votes: ownVotes,
+            }));
+          }
           if (error) throw error;
         }
         if (updates.tripPlan) {
@@ -664,6 +959,25 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
             is_current: true,
           }, { onConflict: 'trip_id,revision' });
           if (error) throw error;
+        }
+        if (updates.tripPlanProposals !== undefined) {
+          const currentIds = new Set((current?.tripPlanProposals ?? []).map((proposal) => proposal.proposalId));
+          const added = updates.tripPlanProposals.filter((proposal) => !currentIds.has(proposal.proposalId));
+          if (added.length) {
+            const { error } = await tripClient.from('trip_plan_proposals').insert(added.map((proposal) => ({
+              trip_id: tripId,
+              created_by: authenticatedUserId,
+              proposal_kind: proposal.proposalKind ?? 'day_rework',
+              action: proposal.action,
+              day_index: proposal.day,
+              prior_plan_id: proposal.priorPlanId,
+              prior_revision: proposal.priorRevision,
+              preview_plan: proposal.preview,
+              summary: proposal.summary,
+              status: proposal.status,
+            })));
+            if (error) throw error;
+          }
         }
         if (updates.itineraryFeedback !== undefined) {
           const ownFeedback = updates.itineraryFeedback.filter(
@@ -693,11 +1007,19 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
             if (error) throw error;
           }
         }
-        const hasOrganizerUpdates = Object.keys(updates).some((key) => !collaborativeKeys.has(key));
+        const rpcOnlyKeys = new Set([
+          'activityPreferences',
+          'activityPreferencesV2',
+          'activityPreferenceSessionComplete',
+        ]);
+        const hasOrganizerUpdates = Object.keys(updates).some((key) =>
+          !collaborativeKeys.has(key) && !rpcOnlyKeys.has(key),
+        );
         if (hasOrganizerUpdates) {
           const { error } = await tripClient.from('trips').update({
             name: next.name,
             destination_slug: next.destinationSlug ?? null,
+            destination_candidate_id: next.destinationCandidateId ?? null,
             start_date: next.startDate ?? null,
             end_date: next.endDate ?? null,
             origin: next.origin ?? null,
@@ -709,18 +1031,82 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
           if (error) throw error;
         }
       }
-      await persist(trips.map((t) => (t.tripId === tripId ? { ...t, ...updates } : t)));
+      patchLocalTrip(tripId, updates);
+      if (auth?.user && featureFlags.proactiveInsightsV1) {
+        void loadAssistantInsights({
+          surface: 'trip',
+          tripId,
+          trigger: updates.itineraryFeedback !== undefined ? 'feedback_submitted' : 'trip_changed',
+          force: true,
+        }).catch(() => undefined);
+      }
     },
-    [auth?.user, trips, persist],
+    [auth?.user, patchLocalTrip, trips],
   );
+
+  const castPollVote = useCallback(async (
+    tripId: string,
+    pollId: string,
+    optionId: string,
+  ): Promise<TripPoll[]> => {
+    const trip = trips.find((item) => item.tripId === tripId);
+    if (!trip || !auth?.user) return trip?.polls ?? [];
+
+    let polls: TripPoll[];
+    if (tripClient && !trip.localOnly) {
+      const { data, error } = await tripClient.rpc('cast_trip_payload_poll_vote', {
+        p_trip_id: tripId,
+        p_poll_id: pollId,
+        p_option_id: optionId,
+      });
+      if (error) throw error;
+      polls = (data ?? []) as TripPoll[];
+    } else {
+      polls = (trip.polls ?? []).map((poll) => {
+        if (poll.id !== pollId) return poll;
+        const togglingOff = poll.options.some((option) =>
+          option.id === optionId && option.votes.includes(auth.user!.id),
+        );
+        const options = poll.options.map((option) => ({
+          ...option,
+          votes: [
+            ...option.votes.filter((memberId) => memberId !== auth.user!.id),
+            ...(option.id === optionId && !togglingOff ? [auth.user!.id] : []),
+          ],
+        }));
+        if (!poll.assistantProposal && !poll.planProposalId) {
+          return { ...poll, options };
+        }
+        const memberCount = Math.max(1, trip.members?.length ?? 1);
+        const majority = Math.floor(memberCount / 2) + 1;
+        const accepts = options[0]?.votes.length ?? 0;
+        const dismisses = options[1]?.votes.length ?? 0;
+        const voterCount = new Set(options.flatMap((option) => option.votes)).size;
+        const resolution = accepts >= majority
+          ? 'accepted' as const
+          : dismisses >= majority
+            ? 'dismissed' as const
+            : voterCount >= memberCount && accepts === dismisses
+              ? 'tie' as const
+              : undefined;
+        const { resolution: _oldResolution, ...unresolved } = poll;
+        return resolution ? { ...unresolved, options, resolution } : { ...unresolved, options };
+      });
+    }
+    patchLocalTrip(tripId, { polls });
+    return polls;
+  }, [auth?.user, patchLocalTrip, trips]);
 
   const deleteTrip = useCallback(
     async (tripId: string) => {
-      if (tripClient && auth?.user) {
-        const { error } = await tripClient.from('trips')
-          .update({ deleted_at: new Date().toISOString() })
-          .eq('id', tripId);
+      const target = trips.find((trip) => trip.tripId === tripId);
+      if (!target) return;
+      const isRemoteTrip = tripClient && auth?.user && !target.localOnly
+        && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(tripId);
+      if (isRemoteTrip) {
+        const { data, error } = await tripClient.rpc('soft_delete_trip', { p_trip_id: tripId });
         if (error) throw error;
+        if (data !== true) throw new Error('This trip could not be deleted. It may already have been removed.');
       }
       await persist(trips.filter((t) => t.tripId !== tripId));
     },
@@ -730,8 +1116,8 @@ function TripsProvider({ children }: { children: React.ReactNode }) {
   const getTrip = useCallback((tripId: string) => trips.find((t) => t.tripId === tripId), [trips]);
 
   const value = useMemo(
-    () => ({ trips, createTrip, updateTrip, deleteTrip, getTrip }),
-    [trips, createTrip, updateTrip, deleteTrip, getTrip],
+    () => ({ trips, createTrip, updateTrip, castPollVote, deleteTrip, getTrip }),
+    [trips, createTrip, updateTrip, castPollVote, deleteTrip, getTrip],
   );
 
   return <TripsCtx.Provider value={value}>{children}</TripsCtx.Provider>;
@@ -771,9 +1157,11 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           <AuthProvider>
             <TravelProfileProvider>
               <DestinationsProvider>
-                <TripsProvider>
-                  <IntegrationsProvider>{children}</IntegrationsProvider>
-                </TripsProvider>
+                <SavedDestinationsProvider>
+                  <TripsProvider>
+                    <IntegrationsProvider>{children}</IntegrationsProvider>
+                  </TripsProvider>
+                </SavedDestinationsProvider>
               </DestinationsProvider>
             </TravelProfileProvider>
           </AuthProvider>

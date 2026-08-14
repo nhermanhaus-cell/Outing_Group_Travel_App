@@ -59,7 +59,7 @@ export default function ProfileScreen() {
         gap: spacing.xl,
       }}
     >
-      <Text variant="h1">Profile</Text>
+      <Text variant="displaySm">You</Text>
 
       {/* Account status */}
       <View
@@ -97,9 +97,14 @@ export default function ProfileScreen() {
           Account
         </Text>
         <RowLink
-          label="Integrations"
-          subtitle="Manage provider plug-ins"
+          label="Travel connections"
+          subtitle="Manage services used for your plans"
           onPress={() => router.push('/settings/integrations')}
+        />
+        <RowLink
+          label="Replay the Outing tour"
+          subtitle="See how matching, groups, and Ask work"
+          onPress={() => router.push('/welcome?replay=1')}
         />
         <RowLink
           label="Settings"
@@ -108,29 +113,9 @@ export default function ProfileScreen() {
         />
       </View>
 
-      <View style={{ gap: spacing.sm }}>
-        <Text variant="labelMd" style={{ color: colors.textSecondary, marginBottom: spacing.xs }}>
-          About
-        </Text>
-        <View
-          style={{
-            padding: spacing.base,
-            backgroundColor: colors.backgroundSecondary,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: colors.border,
-            gap: spacing.xs,
-          }}
-        >
-          <Text variant="labelMd">Outing MVP</Text>
-          <Text variant="caption" style={{ color: colors.textTertiary }}>
-            Destination data is editorial sample data. Not live.
-          </Text>
-          <Text variant="caption" style={{ color: colors.textTertiary }}>
-            v0.1.0 · editorial_demo
-          </Text>
-        </View>
-      </View>
+      <Text variant="caption" style={{ color: colors.textTertiary, textAlign: 'center' }}>
+        Outing · Plan something worth going out for.
+      </Text>
     </ScrollView>
   );
 }

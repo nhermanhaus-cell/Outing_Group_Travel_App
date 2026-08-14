@@ -1,0 +1,10 @@
+appId: com.gayi.app
+---
+- launchApp
+- tapOn: "Trips"
+- tapOn:
+    index: 0
+- tapOn: "Plan"
+- tapOn: "Daily map"
+- assertVisible: "Trip map"
+- assertVisible: "Day 1"

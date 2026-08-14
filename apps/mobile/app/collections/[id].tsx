@@ -28,7 +28,6 @@ export default function CollectionDetailScreen() {
         <DestinationHeroImage
           destination={heroDestination}
           style={{ flex: 1 }}
-          attributionTop={insets.top + 56}
         />
         <View style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)' }} />
         <Pressable onPress={() => router.back()} style={{ position: 'absolute', top: insets.top + spacing.sm, left: spacing.base, padding: spacing.sm }}>

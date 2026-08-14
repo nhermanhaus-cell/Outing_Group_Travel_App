@@ -12,6 +12,16 @@ describe('travel API contracts', () => {
     expect(value.places).toHaveLength(1);
   });
 
+  it('accepts resolved and user-authored itinerary essentials', () => {
+    const value = validateTravelApiContract<{ essentials: Array<{ source: string }> }>('resolveTripEssentials', {
+      essentials: [
+        { id: 'google-1', label: 'The Louvre', kind: 'place', source: 'google_places', providerPlaceId: '1', lat: 48.86, lng: 2.33, category: 'museum' },
+        { id: 'custom-1', label: 'A pastry class', kind: 'activity', source: 'user', category: 'tour' },
+      ],
+    });
+    expect(value.essentials.map((item) => item.source)).toEqual(['google_places', 'user']);
+  });
+
   it('rejects malformed provider payloads', () => {
     expect(() => validateTravelApiContract('placeSearch', { places: [{ id: 'missing-fields' }] })).toThrow(/malformed/i);
     expect(() => validateTravelApiContract('route', { routes: 'not-an-array' })).toThrow(/malformed/i);
@@ -19,7 +29,42 @@ describe('travel API contracts', () => {
 
   it('requires Viator product codes and provider attribution', () => {
     expect(() => validateTravelApiContract('viatorSearch', { products: [{ title: 'No product code' }] })).toThrow(/malformed/i);
-    expect(validateTravelApiContract<{ products: unknown[] }>('viatorSearch', { products: [{ productCode: '123P1', title: 'Tour', images: [], provider: 'viator', bookingMode: 'none' }] }).products).toHaveLength(1);
+    const value = validateTravelApiContract<{ products: unknown[]; resolvedDestination?: { destinationId: string } }>('viatorSearch', {
+      products: [{ productCode: '123P1', title: 'Tour', images: [], provider: 'viator', bookingMode: 'none' }],
+      resolvedDestination: { destinationId: '684', name: 'San Francisco', type: 'CITY', distanceKm: 0.8, matchScore: 248 },
+      source: 'viator_live',
+    });
+    expect(value.products).toHaveLength(1);
+    expect(value.resolvedDestination?.destinationId).toBe('684');
+  });
+
+  it('accepts planning-ready Viator enrichment without weakening provider attribution', () => {
+    const value = validateTravelApiContract<{ products: Array<Record<string, unknown>> }>('viatorSearch', {
+      products: [{
+        productCode: '479P1',
+        title: 'Architecture and food walk',
+        description: 'A guided city experience.',
+        productUrl: 'https://www.viator.com/tours/example',
+        images: [{ url: 'https://dynamic-media-cdn.tripadvisor.com/media/photo-o/example.jpg' }],
+        provider: 'viator',
+        bookingMode: 'external',
+        category: 'landmark',
+        interestTags: ['history', 'food'],
+        lat: 48.861,
+        lng: 2.335,
+        address: 'Paris, France',
+        confirmationType: 'INSTANT',
+        freeCancellation: true,
+        flags: ['FREE_CANCELLATION'],
+      }],
+      source: 'viator_live',
+    });
+    expect(value.products[0]).toMatchObject({
+      provider: 'viator',
+      category: 'landmark',
+      lat: 48.861,
+      freeCancellation: true,
+    });
   });
 
   it('accepts attributed public images and rejects unattributed files', () => {
@@ -70,5 +115,20 @@ describe('travel API contracts', () => {
       indicative: true,
     }).deals).toHaveLength(1);
     expect(() => validateTravelApiContract('skyscannerIndicative', { deals: [], observedAt: 'now', indicative: false })).toThrow(/malformed/i);
+  });
+
+  it('validates normalized Scrappa round-trip estimates without provider tokens', () => {
+    const value = validateTravelApiContract<{ estimate: { lowPrice: number } }>('scrappaRoundTrip', {
+      estimate: {
+        originIata: 'SFO', destinationIata: 'LAX', departureDate: '2026-09-15', returnDate: '2026-09-22', adults: 1,
+        currency: 'USD', lowPrice: 56, typicalPrice: 147, highPrice: 147, optionCount: 30, nonstopOptionCount: 30,
+        observedAt: '2026-08-12T12:00:00.000Z', source: 'scrappa_google_flights', pricingScope: 'round_trip_search',
+        returnSelectionRequired: true, priceIsPerTraveler: true,
+        googleFlightsUrl: 'https://www.google.com/travel/flights?q=SFO%20LAX',
+        message: 'Select a return flight to confirm the final fare.',
+        options: [{ price: 56, currency: 'USD', airlineName: 'Frontier', stops: 0 }],
+      },
+    });
+    expect(value.estimate.lowPrice).toBe(56);
   });
 });

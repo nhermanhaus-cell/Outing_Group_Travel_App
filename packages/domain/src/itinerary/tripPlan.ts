@@ -1,4 +1,5 @@
 import type {
+  ActivityPreferenceVote,
   Interest,
   MemberPreferenceSnapshot,
   Place,
@@ -13,13 +14,16 @@ import type {
   TripPlanBookingAction,
   TripPlanDay,
   TripPlanFeedback,
+  TripPlanDayReworkAction,
+  TripPlanPreviewProposal,
 } from '../types';
 import {
   generateItinerary,
   type ItineraryInput,
 } from './engine';
 
-const ALGORITHM_VERSION = 'trip-plan-v1';
+const ALGORITHM_VERSION_V1 = 'trip-plan-v1';
+const ALGORITHM_VERSION_V2 = 'trip-plan-v2';
 const MIN_PRICE_OBSERVATIONS = 5;
 
 export interface PlannerTraveler {
@@ -33,14 +37,21 @@ export interface PlannerTraveler {
 
 export interface TripPlanFlightPriceContext {
   currentPrice?: number;
+  lowPrice?: number;
+  highPrice?: number;
   baselinePrice?: number;
   currency?: string;
   savingsPercent?: number;
   observationCount?: number;
   observedAt?: string;
+  source?: 'scrappa_google_flights' | 'skyscanner_indicative';
+  trackingUrl?: string;
+  message?: string;
+  returnSelectionRequired?: boolean;
 }
 
 export interface TripPlanInput extends ItineraryInput {
+  planSchemaVersion?: 1 | 2;
   owner?: PlannerTraveler;
   members?: MemberPreferenceSnapshot[];
   budget?: BudgetResult;
@@ -49,6 +60,124 @@ export interface TripPlanInput extends ItineraryInput {
   /** Only these days are regenerated; all other prior-plan days remain unchanged. */
   regenerateDays?: number[];
   flightPriceContext?: TripPlanFlightPriceContext;
+  anchorCandidatePlaceIds?: string[];
+  minorityFavoriteMemberIdsByPlace?: Record<string, string[]>;
+}
+
+export interface ActivityPreferenceSignals {
+  excludedPlaceIds: string[];
+  scoreAdjustments: Record<string, number>;
+  tallies: Record<string, {
+    veryInterested: number;
+    interested: number;
+    neutral: number;
+    uninterested: number;
+    veryUninterested: number;
+    weightedScore: number;
+  }>;
+  anchorCandidatePlaceIds: string[];
+  pollPlaceIds: string[];
+  minorityFavoritePlaceIds: string[];
+  minorityFavoriteMemberIdsByPlace: Record<string, string[]>;
+}
+
+const PREFERENCE_WEIGHTS = {
+  very_interested: 3,
+  interested: 1,
+  neutral: 0,
+  uninterested: -1,
+  very_uninterested: -3,
+} as const;
+
+export function normalizeActivityPreferenceChoice(
+  choice: ActivityPreferenceVote['choice'],
+): keyof typeof PREFERENCE_WEIGHTS {
+  if (choice === 'must_do') return 'very_interested';
+  if (choice === 'maybe') return 'neutral';
+  if (choice === 'not_for_this_trip' || choice === 'not_interested') return 'uninterested';
+  return choice;
+}
+
+export function isActivityPreferenceSessionComplete(
+  votes: ActivityPreferenceVote[],
+  candidateCount: number,
+): boolean {
+  const latest = new Map<string, ActivityPreferenceVote>();
+  for (const vote of votes) {
+    const current = latest.get(vote.placeId);
+    if (!current || current.createdAt <= vote.createdAt) latest.set(vote.placeId, vote);
+  }
+  const categories = new Set([...latest.values()].map((vote) => vote.category));
+  return latest.size >= candidateCount || (latest.size >= 10 && categories.size >= 4);
+}
+
+/**
+ * Turn solo or group activity choices into deterministic planner inputs.
+ * Positive interest strongly affects ordering. A rejection becomes a hard
+ * exclusion only when it represents a solo traveler or a known group majority.
+ */
+export function buildActivityPreferenceSignals(
+  votes: ActivityPreferenceVote[],
+  eligibleMemberCount = 1,
+): ActivityPreferenceSignals {
+  const tallies: ActivityPreferenceSignals['tallies'] = {};
+  const latestByMemberAndPlace = new Map<string, ActivityPreferenceVote>();
+  for (const vote of votes) {
+    const key = `${vote.placeId}:${vote.memberId}`;
+    const existing = latestByMemberAndPlace.get(key);
+    if (!existing || existing.createdAt <= vote.createdAt) latestByMemberAndPlace.set(key, vote);
+  }
+  for (const vote of latestByMemberAndPlace.values()) {
+    const tally = tallies[vote.placeId] ?? {
+      veryInterested: 0,
+      interested: 0,
+      neutral: 0,
+      uninterested: 0,
+      veryUninterested: 0,
+      weightedScore: 0,
+    };
+    const choice = normalizeActivityPreferenceChoice(vote.choice);
+    if (choice === 'very_interested') tally.veryInterested += 1;
+    if (choice === 'interested') tally.interested += 1;
+    if (choice === 'neutral') tally.neutral += 1;
+    if (choice === 'uninterested') tally.uninterested += 1;
+    if (choice === 'very_uninterested') tally.veryUninterested += 1;
+    tally.weightedScore += PREFERENCE_WEIGHTS[choice];
+    tallies[vote.placeId] = tally;
+  }
+
+  const excludedPlaceIds: string[] = [];
+  const scoreAdjustments: Record<string, number> = {};
+  const anchorCandidatePlaceIds: string[] = [];
+  const pollPlaceIds: string[] = [];
+  const minorityFavoritePlaceIds: string[] = [];
+  const minorityFavoriteMemberIdsByPlace: Record<string, string[]> = {};
+  const majority = Math.floor(Math.max(1, eligibleMemberCount) / 2) + 1;
+  for (const [placeId, tally] of Object.entries(tallies)) {
+    const positive = tally.veryInterested + tally.interested;
+    const negative = tally.uninterested + tally.veryUninterested;
+    scoreAdjustments[placeId] = Math.max(-45, Math.min(90, tally.weightedScore * 24));
+    const soloRejected = eligibleMemberCount <= 1 && negative > 0 && positive === 0;
+    const groupRejected = negative >= majority && negative > positive;
+    if (soloRejected || groupRejected) excludedPlaceIds.push(placeId);
+    if (positive >= majority && tally.weightedScore > 0) anchorCandidatePlaceIds.push(placeId);
+    else if (tally.weightedScore === 0 && positive > 0 && negative > 0) pollPlaceIds.push(placeId);
+    else if (tally.veryInterested > 0 && positive < majority) {
+      minorityFavoritePlaceIds.push(placeId);
+      minorityFavoriteMemberIdsByPlace[placeId] = [...latestByMemberAndPlace.values()]
+        .filter((vote) => vote.placeId === placeId && normalizeActivityPreferenceChoice(vote.choice) === 'very_interested')
+        .map((vote) => vote.memberId);
+    }
+  }
+  return {
+    excludedPlaceIds,
+    scoreAdjustments,
+    tallies,
+    anchorCandidatePlaceIds,
+    pollPlaceIds,
+    minorityFavoritePlaceIds,
+    minorityFavoriteMemberIdsByPlace,
+  };
 }
 
 function minutesFromClock(value: string): number {
@@ -73,7 +202,8 @@ function stableToken(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-function stableItemId(item: ItineraryItem): string {
+/** Canonical route-safe identity for generated and legacy itinerary items. */
+export function itineraryItemId(item: ItineraryItem): string {
   return item.itemId ?? `item-${item.day}-${stableToken(item.placeId)}-${item.time.replace(':', '')}`;
 }
 
@@ -133,7 +263,7 @@ function feedbackSignals(
 
 function canonicalizeItems(items: ItineraryItem[]): ItineraryItem[] {
   return items.map((item) => {
-    const itemId = stableItemId(item);
+    const itemId = itineraryItemId(item);
     const windowEndTime =
       item.kind === 'downtime'
         ? clockFromMinutes(minutesFromClock(item.time) + item.duration)
@@ -149,7 +279,7 @@ function canonicalizeItems(items: ItineraryItem[]): ItineraryItem[] {
   });
 }
 
-function chooseAnchorIds(items: ItineraryItem[]): string[] {
+function chooseAnchorIds(items: ItineraryItem[], preferred = new Set<string>()): string[] {
   return items
     .filter(
       (item) =>
@@ -158,6 +288,8 @@ function chooseAnchorIds(items: ItineraryItem[]): string[] {
         !item.placeId.startsWith('meal-'),
     )
     .sort((a, b) => {
+      const preferredDelta = Number(preferred.has(b.placeId)) - Number(preferred.has(a.placeId));
+      if (preferredDelta) return preferredDelta;
       const aPriority = (a.bookingRequired ? 3 : 0) + (a.kind === 'experience' ? 2 : 0);
       const bPriority = (b.bookingRequired ? 3 : 0) + (b.kind === 'experience' ? 2 : 0);
       return bPriority - aPriority || b.confidence - a.confidence || a.time.localeCompare(b.time);
@@ -286,9 +418,10 @@ function buildFreeWindowSuggestions(
           place.businessStatus !== 'closed_temporarily',
       )
       .flatMap((place) => {
+        const minorityMemberIds = new Set(input.minorityFavoriteMemberIdsByPlace?.[place.placeId] ?? []);
         const eligible = travelers
           .map((traveler) => ({ traveler, utility: utilityForTraveler(place, traveler) }))
-          .filter((entry) => entry.utility >= 18);
+          .filter((entry) => minorityMemberIds.has(entry.traveler.memberId) || entry.utility >= 18);
         if (eligible.length === 0) return [];
         if (groupSize > 1 && eligible.length >= groupSize) return [];
 
@@ -374,6 +507,25 @@ function buildFlightPriceGuidance(input: TripPlanInput): FlightPriceGuidance | u
   const context = input.flightPriceContext;
   const observationCount = context?.observationCount ?? 0;
   if (
+    context?.source === 'scrappa_google_flights'
+    && context.lowPrice !== undefined
+    && context.highPrice !== undefined
+  ) {
+    return {
+      status: 'indicative',
+      currentPrice: context.currentPrice ?? context.lowPrice,
+      priceRange: { low: context.lowPrice, high: context.highPrice },
+      ...(context.currency !== undefined && { currency: context.currency }),
+      observationCount,
+      ...(context.observedAt !== undefined && { observedAt: context.observedAt }),
+      message: context.message ?? 'Starting prices observed from a round-trip Google Flights search. Confirm the return selection before booking.',
+      trackingUrl: context.trackingUrl ?? trackingUrl,
+      confidence: context.returnSelectionRequired ? 0.55 : 0.72,
+      source: 'scrappa_google_flights',
+      ...(context.returnSelectionRequired !== undefined && { returnSelectionRequired: context.returnSelectionRequired }),
+    };
+  }
+  if (
     context?.currentPrice !== undefined &&
     context.baselinePrice !== undefined &&
     observationCount >= MIN_PRICE_OBSERVATIONS &&
@@ -390,6 +542,7 @@ function buildFlightPriceGuidance(input: TripPlanInput): FlightPriceGuidance | u
       message: 'This indicative fare is below recent comparable observations. Prices can still change.',
       trackingUrl,
       confidence: Math.min(0.8, 0.45 + observationCount * 0.03),
+      source: context.source ?? 'skyscanner_indicative',
     };
   }
   if (context?.currentPrice !== undefined && observationCount >= MIN_PRICE_OBSERVATIONS) {
@@ -404,6 +557,7 @@ function buildFlightPriceGuidance(input: TripPlanInput): FlightPriceGuidance | u
       message: 'This is an indicative recently observed fare, not a live bookable quote.',
       trackingUrl,
       confidence: 0.55,
+      source: context.source ?? 'skyscanner_indicative',
     };
   }
   return {
@@ -415,6 +569,7 @@ function buildFlightPriceGuidance(input: TripPlanInput): FlightPriceGuidance | u
     message: 'There is not enough comparable history to recommend when to book. Track this route for changes.',
     trackingUrl,
     confidence: 0.25,
+    source: context?.source ?? 'skyscanner_indicative',
   };
 }
 
@@ -473,17 +628,60 @@ function buildBookingTimeline(
 }
 
 function buildDays(
-  input: Pick<TripPlanInput, 'startDate' | 'tripDurationDays'>,
+  input: Pick<TripPlanInput, 'startDate' | 'tripDurationDays' | 'anchorCandidatePlaceIds'>,
   items: ItineraryItem[],
   suggestions: FreeWindowSuggestion[],
+  context?: Pick<TripPlanInput, 'places' | 'preferences'>,
 ): TripPlanDay[] {
   const days: TripPlanDay[] = [];
+  const selectedPlaceIds = new Set(items.map((item) => item.placeId));
   for (let day = 1; day <= input.tripDurationDays; day += 1) {
     const dayItems = items.filter((item) => item.day === day);
-    const anchorIds = chooseAnchorIds(dayItems);
+    const anchorIds = chooseAnchorIds(dayItems, new Set(input.anchorCandidatePlaceIds ?? []));
     for (const item of dayItems) item.anchor = Boolean(item.itemId && anchorIds.includes(item.itemId));
     const title = themeForDay(dayItems, day, input.tripDurationDays);
     const anchorNames = dayItems.filter((item) => item.anchor).map((item) => item.title);
+    const travelMinutes = dayItems.reduce(
+      (total, item) => total + (item.travelFromPrevious?.durationMinutes ?? 0),
+      0,
+    );
+    const reservationCount = dayItems.filter((item) => item.bookingRequired).length;
+    const fitReasons = [...new Set(dayItems.map((item) => item.whySelected).filter(Boolean))].slice(0, 4);
+    const tradeoffs = [
+      ...(travelMinutes > 90 ? [`About ${travelMinutes} minutes of estimated travel.`] : []),
+      ...(reservationCount >= 2 ? [`${reservationCount} activities may need reservations.`] : []),
+      ...(dayItems.some((item) => item.scheduleStatus === 'fallback') ? ['Some timing is estimated until live hours are confirmed.'] : []),
+    ].slice(0, 3);
+    const dayCategories = new Set(dayItems.map((item) => item.category));
+    const backups = context?.places
+      .filter((place) => !selectedPlaceIds.has(place.placeId) && place.businessStatus !== 'closed_permanently')
+      .map((place) => ({
+        place,
+        score: place.interests.filter((interest) => context.preferences.interests.includes(interest)).length * 10
+          + (dayCategories.has(place.category) ? 8 : 0)
+          - Math.min(10, place.estimatedCostPerPerson / 20),
+      }))
+      .sort((a, b) => b.score - a.score || a.place.name.localeCompare(b.place.name))
+      .slice(0, 2)
+      .map(({ place }) => ({
+        placeId: place.placeId,
+        title: place.name,
+        reason: place.fitReasons?.[0] ?? `A flexible ${place.category.replace(/_/g, ' ')} backup that still matches this day.`,
+        source: place.source,
+      })) ?? [];
+    const freshnessValues = dayItems.map((item) =>
+      context?.places.find((place) => place.placeId === item.placeId)?.freshness ??
+      (item.scheduleStatus === 'verified' ? 'recent' : 'limited'),
+    );
+    const freshness = freshnessValues.includes('stale')
+      ? 'stale' as const
+      : freshnessValues.includes('limited')
+        ? 'limited' as const
+        : freshnessValues.includes('cached')
+          ? 'cached' as const
+          : freshnessValues.includes('live')
+            ? 'live' as const
+            : 'recent' as const;
     days.push({
       day,
       ...(dateForDay(input.startDate, day) !== undefined && {
@@ -497,6 +695,22 @@ function buildDays(
       itemIds: dayItems.flatMap((item) => (item.itemId ? [item.itemId] : [])),
       sharedAnchorItemIds: anchorIds,
       freeWindowSuggestions: suggestions.filter((suggestion) => suggestion.day === day),
+      ...(context ? {
+        rationale: anchorNames.length
+          ? `${anchorNames.join(' and ')} create the day’s shared spine; meals, travel, and breathing room are spaced around them.`
+          : 'This intentionally lighter day protects flexibility while keeping meals and travel realistic.',
+        pace: context.preferences.activityPace === 'packed'
+          ? 'packed' as const
+          : context.preferences.activityPace === 'downtime'
+            ? 'light' as const
+            : 'balanced' as const,
+        estimatedTravelMinutes: travelMinutes,
+        fitReasons,
+        tradeoffs,
+        backups,
+        reservationRisk: reservationCount >= 2 ? 'high' as const : reservationCount === 1 ? 'medium' as const : 'low' as const,
+        freshness,
+      } : {}),
     });
   }
   return days;
@@ -516,6 +730,7 @@ export function generateTripPlan(input: TripPlanInput): TripPlan {
     excludedPlaceIds: [
       ...(input.excludedPlaceIds ?? []),
       ...signals.excludedPlaceIds,
+      ...Object.keys(input.minorityFavoriteMemberIdsByPlace ?? {}),
     ],
     scoreAdjustments: {
       ...(input.scoreAdjustments ?? {}),
@@ -535,9 +750,9 @@ export function generateTripPlan(input: TripPlanInput): TripPlan {
   const suggestions = buildFreeWindowSuggestions(
     input,
     items,
-    new Set(signals.excludedPlaceIds),
+    new Set([...(input.excludedPlaceIds ?? []), ...signals.excludedPlaceIds]),
   );
-  const days = buildDays(input, items, suggestions);
+  const days = buildDays(input, items, suggestions, input);
   const priceGuidance = buildFlightPriceGuidance(input);
   const bookingTimeline = buildBookingTimeline(input, items, priceGuidance);
   const inputHash = simpleHash(
@@ -552,19 +767,23 @@ export function generateTripPlan(input: TripPlanInput): TripPlan {
         memberId,
         reaction,
       })),
+      schemaVersion: input.planSchemaVersion ?? 2,
     }),
   );
   const generatedAt = new Date().toISOString();
+  const schemaVersion = input.planSchemaVersion ?? 2;
   const plan: TripPlan = {
     planId: `plan-${inputHash}-${generatedAt.slice(0, 10)}`,
     revision: (input.priorPlan?.revision ?? 0) + 1,
-    schemaVersion: 1,
-    algorithmVersion: ALGORITHM_VERSION,
+    schemaVersion,
+    algorithmVersion: schemaVersion === 2 ? ALGORITHM_VERSION_V2 : ALGORITHM_VERSION_V1,
     generatedAt,
     inputHash,
     destinationName: input.destination.name,
     durationDays: input.tripDurationDays,
-    summary: `${input.tripDurationDays}-day ${input.preferences.activityPace ?? 'balanced'} plan with shared anchors, protected free time, and preference-aware options.`,
+    summary: schemaVersion === 2
+      ? `${input.tripDurationDays}-day ${input.preferences.activityPace ?? 'balanced'} plan with shared anchors, protected free time, and preference-aware options.`
+      : `${input.tripDurationDays}-day ${input.preferences.activityPace ?? 'balanced'} itinerary with group anchors and open windows.`,
     items,
     days,
     bookingTimeline,
@@ -658,6 +877,70 @@ export function createLegacyTripPlan(
     feedback: [],
     sources: [...new Set(items.map((item) => item.source))].sort(),
   };
+}
+
+function reworkAdjustments(input: TripPlanInput, action: TripPlanDayReworkAction): Record<string, number> {
+  const adjustments: Record<string, number> = { ...(input.scoreAdjustments ?? {}) };
+  for (const place of input.places) {
+    let delta = 0;
+    if (action === 'less_walking') delta -= Math.max(0, (place.routeTimeMinutes ?? 0) - 15) * 1.5;
+    if (action === 'cheaper') delta += Math.max(-35, 24 - place.estimatedCostPerPerson * 0.8);
+    if (action === 'more_spontaneous') delta += place.bookingRequired || place.fixedStartTimes?.length ? -28 : 18;
+    if (action === 'rainy_day') {
+      delta += ['museum', 'restaurant', 'cafe', 'spa', 'shop'].includes(place.category) ? 28 : 0;
+      delta -= ['beach', 'park'].includes(place.category) ? 45 : 0;
+    }
+    adjustments[place.placeId] = (adjustments[place.placeId] ?? 0) + delta;
+  }
+  return adjustments;
+}
+
+/**
+ * Builds a reviewable day-only preview. Callers must explicitly accept and save
+ * `preview`; this function never mutates the prior plan.
+ */
+export function createTripPlanReworkPreview(
+  input: Omit<TripPlanInput, 'priorPlan' | 'regenerateDays'>,
+  priorPlan: TripPlan,
+  day: number,
+  action: TripPlanDayReworkAction,
+  tripId?: string,
+): TripPlanPreviewProposal {
+  const preferences = {
+    ...input.preferences,
+    ...(action === 'later_start' ? { dayRhythm: 'late' as const } : {}),
+    ...(action === 'lighter_pace' ? { activityPace: 'downtime' as const } : {}),
+  };
+  const preview = generateTripPlan({
+    ...input,
+    preferences,
+    scoreAdjustments: reworkAdjustments(input, action),
+    priorPlan,
+    regenerateDays: [day],
+  });
+  const label = action.replace(/_/g, ' ');
+  return {
+    proposalId: `rework-${priorPlan.planId}-${day}-${action}-${Date.now()}`,
+    ...(tripId ? { tripId } : {}),
+    action,
+    day,
+    priorPlanId: priorPlan.planId,
+    priorRevision: priorPlan.revision,
+    preview,
+    summary: `Preview Day ${day} with ${label}. Review the route, timing, and tradeoffs before applying it.`,
+    createdAt: new Date().toISOString(),
+    status: 'preview',
+  };
+}
+
+/** Decode stored plans without rewriting schema-v1 records. */
+export function decodeTripPlan(value: unknown): TripPlan | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const candidate = value as Partial<TripPlan>;
+  if (!Array.isArray(candidate.items) || !Array.isArray(candidate.days)) return undefined;
+  if (candidate.schemaVersion !== 1 && candidate.schemaVersion !== 2) return undefined;
+  if (typeof candidate.planId !== 'string' || typeof candidate.revision !== 'number') return undefined;
+  return candidate as TripPlan;
 }
 
 export type { Interest };

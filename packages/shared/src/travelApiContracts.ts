@@ -5,14 +5,45 @@ const place = z.object({
   providerPlaceId: z.string(), name: z.string(), address: z.string().optional(), lat: z.number(), lng: z.number(), types: z.array(z.string()),
   rating: z.number().optional(), reviewCount: z.number().optional(), priceLevel: z.string().optional(), businessStatus: z.string().optional(),
   openingHours: z.array(z.unknown()).optional(), weekdayDescriptions: z.array(z.string()).optional(), photos: z.array(photo),
+  primaryType: z.string().optional(), primaryTypeDisplayName: z.string().optional(),
+  currentWeekdayDescriptions: z.array(z.string()).optional(), openNow: z.boolean().optional(),
+  accessibilityOptions: z.record(z.boolean()).optional(), attributes: z.record(z.boolean()).optional(),
   googleMapsUri: z.string().optional(), websiteUri: z.string().optional(), verifiedAt: z.string(),
+});
+const tripEssential = z.object({
+  id: z.string(),
+  label: z.string(),
+  kind: z.enum(['place', 'activity']),
+  source: z.enum(['google_places', 'user']),
+  providerPlaceId: z.string().optional(),
+  address: z.string().optional(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+  category: z.enum(['bar', 'club', 'restaurant', 'cafe', 'museum', 'park', 'beach', 'spa', 'hotel', 'tour', 'event', 'shop', 'landmark', 'other']).optional(),
+  summary: z.string().optional(),
+  imageUrl: z.string().url().optional(),
+  imageAttribution: z.string().optional(),
+  googleMapsUri: z.string().optional(),
+  verifiedAt: z.string().optional(),
 });
 const experience = z.object({
   productCode: z.string(), title: z.string(), description: z.string().optional(), productUrl: z.string().url().optional(),
   images: z.array(z.object({ url: z.string().url(), width: z.number().optional(), height: z.number().optional() })),
   rating: z.number().optional(), reviewCount: z.number().optional(), priceFrom: z.number().optional(), currency: z.string().optional(), durationMinutes: z.number().optional(),
   itinerary: z.unknown().optional(), inclusions: z.unknown().optional(), exclusions: z.unknown().optional(), logistics: z.unknown().optional(),
-  cancellationPolicy: z.unknown().optional(), tags: z.unknown().optional(), provider: z.literal('viator'), bookingMode: z.enum(['external', 'none']),
+  cancellationPolicy: z.unknown().optional(), tags: z.unknown().optional(),
+  category: z.enum(['bar', 'club', 'restaurant', 'cafe', 'museum', 'park', 'beach', 'spa', 'hotel', 'tour', 'event', 'shop', 'landmark', 'other']).optional(),
+  interestTags: z.array(z.string()).optional(),
+  lat: z.number().optional(), lng: z.number().optional(), address: z.string().optional(), locationName: z.string().optional(),
+  confirmationType: z.string().optional(), freeCancellation: z.boolean().optional(), flags: z.array(z.string()).optional(),
+  provider: z.literal('viator'), bookingMode: z.enum(['external', 'none']),
+});
+const viatorDestination = z.object({
+  destinationId: z.string(),
+  name: z.string(),
+  type: z.string().optional(),
+  distanceKm: z.number().optional(),
+  matchScore: z.number(),
 });
 
 const attributedImage = z.object({
@@ -102,11 +133,49 @@ const flightDeal = z.object({
   source: z.literal('skyscanner_indicative'),
 });
 
+const scrappaFlightOption = z.object({
+  price: z.number().positive(),
+  currency: z.string().length(3),
+  airlineName: z.string().optional(),
+  durationMinutes: z.number().nonnegative().optional(),
+  stops: z.number().int().nonnegative().optional(),
+  emissionsDifferencePercent: z.number().optional(),
+});
+
+const scrappaRoundTripEstimate = z.object({
+  originIata: z.string().regex(/^[A-Z]{3}$/),
+  destinationIata: z.string().regex(/^[A-Z]{3}$/),
+  departureDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  returnDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  adults: z.number().int().min(1).max(9),
+  currency: z.string().length(3),
+  lowPrice: z.number().positive(),
+  typicalPrice: z.number().positive(),
+  highPrice: z.number().positive(),
+  optionCount: z.number().int().positive(),
+  nonstopOptionCount: z.number().int().nonnegative(),
+  observedAt: z.string(),
+  source: z.literal('scrappa_google_flights'),
+  pricingScope: z.literal('round_trip_search'),
+  returnSelectionRequired: z.boolean(),
+  priceIsPerTraveler: z.literal(true),
+  googleFlightsUrl: z.string().url(),
+  message: z.string(),
+  options: z.array(scrappaFlightOption).max(5),
+}).refine((value) => value.lowPrice <= value.typicalPrice && value.typicalPrice <= value.highPrice);
+
 const schemas: Record<string, z.ZodTypeAny> = {
-  placeSearch: z.object({ places: z.array(place) }), placeTextSearch: z.object({ places: z.array(place) }), placeDetails: z.object({ place: place.nullable() }),
+  placeSearch: z.object({ places: z.array(place) }), placeTextSearch: z.object({ places: z.array(place) }),
+  placeIntelligenceSearch: z.object({ places: z.array(place) }), placeDetails: z.object({ place: place.nullable() }),
+  resolveTripEssentials: z.object({ essentials: z.array(tripEssential).max(5) }),
   geocode: z.object({ result: z.object({ formattedAddress: z.string().optional(), lat: z.number(), lng: z.number() }).nullable() }),
   routeMatrix: z.object({ elements: z.array(z.unknown()) }), route: z.object({ routes: z.array(z.unknown()) }),
-  viatorSearch: z.object({ products: z.array(experience) }), viatorProduct: z.object({ product: experience.nullable() }), viatorSchedule: z.object({ schedule: z.unknown() }),
+  viatorSearch: z.object({
+    products: z.array(experience),
+    resolvedDestination: viatorDestination.nullable().optional(),
+    source: z.literal('viator_live').optional(),
+  }),
+  viatorProduct: z.object({ product: experience.nullable() }), viatorSchedule: z.object({ schedule: z.unknown() }),
   commonsImageSearch: z.object({ images: z.array(attributedImage) }),
   locationImageSearch: z.object({
     images: z.array(attributedImage),
@@ -119,6 +188,10 @@ const schemas: Record<string, z.ZodTypeAny> = {
   npsNearby: z.object({ parks: z.array(park) }),
   bookingStays: z.object({ stays: z.array(bookingStay), destinationId: z.string().optional() }),
   skyscannerIndicative: z.object({ deals: z.array(flightDeal), observedAt: z.string(), indicative: z.literal(true) }),
+  scrappaRoundTrip: z.object({
+    estimate: scrappaRoundTripEstimate.nullable(),
+    unavailableReason: z.string().optional(),
+  }),
 };
 
 export function validateTravelApiContract<T>(operation: string, data: unknown): T {

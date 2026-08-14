@@ -1,6 +1,6 @@
 {
   "name": "Outing",
-  "slug": "gayi",
+  "slug": "noah-herman",
   "version": "1.0.0",
   "orientation": "portrait",
   "icon": "./assets/images/outing-icon.png",
@@ -12,6 +12,7 @@
     "usesAppleSignIn": true
   },
   "android": {
+    "package": "com.gayi.app",
     "adaptiveIcon": {
       "backgroundColor": "#1A1611",
       "foregroundImage": "./assets/images/outing-android-foreground.png",
@@ -29,15 +30,39 @@
     "expo-router",
     ["expo-splash-screen", { "image": "./assets/images/outing-splash-icon.png", "resizeMode": "contain", "backgroundColor": "#1A1611" }],
     "expo-secure-store",
+    ["expo-web-browser", { "experimentalLauncherActivity": false }],
     "expo-font",
+    "expo-sqlite",
     "expo-apple-authentication",
     ["expo-calendar", { "calendarPermission": "Outing uses calendar access only when you choose to add or update itinerary events." }],
     ["expo-contacts", { "contactsPermission": "Outing uses contacts only when you choose travel buddies to invite. Phone numbers stay on this device." }],
-    ["expo-location", { "locationWhenInUsePermission": "Outing uses an approximate one-time location only when you ask for nearby airport suggestions." }]
+    ["expo-location", {
+      "locationWhenInUsePermission": "Outing uses your location when you ask for nearby ideas or Today routing.",
+      "locationAlwaysAndWhenInUsePermission": "Outing can privately recognize your next trip stops when you explicitly enable trip awareness.",
+      "isIosBackgroundLocationEnabled": true,
+      "isAndroidBackgroundLocationEnabled": true,
+      "isAndroidForegroundServiceEnabled": true
+    }],
+    ["expo-notifications", { "icon": "./assets/images/outing-android-monochrome.png", "color": "#EF765F", "defaultChannel": "outing-plans" }],
+    ["expo-image-picker", { "photosPermission": "Outing imports only the screenshots and photos you choose.", "cameraPermission": false, "microphonePermission": false }],
+    ["expo-share-intent", {
+      "iosShareExtensionName": "OutingShareExtension",
+      "iosShareExtensionBundleIdentifier": "com.gayi.app.shareextension",
+      "iosAppGroupIdentifier": "group.com.gayi.app",
+      "iosActivationRules": {
+        "NSExtensionActivationSupportsText": true,
+        "NSExtensionActivationSupportsWebURLWithMaxCount": 1,
+        "NSExtensionActivationSupportsWebPageWithMaxCount": 1,
+        "NSExtensionActivationSupportsImageWithMaxCount": 10,
+        "NSExtensionActivationSupportsFileWithMaxCount": 10
+      },
+      "androidIntentFilters": ["text/*", "image/*", "*/*"],
+      "androidMultiIntentFilters": ["image/*"]
+    }]
   ],
   "experiments": { "typedRoutes": true },
   "extra": { "eas": { "projectId": "1f156c64-1779-4117-9855-bd0800c987cf" } },
-  "owner": "noah-herman",
+  "owner": "nhermanhauss-team",
   "runtimeVersion": { "policy": "appVersion" },
   "updates": { "url": "https://u.expo.dev/1f156c64-1779-4117-9855-bd0800c987cf" }
 }

@@ -4,6 +4,7 @@ export type {
   BudgetCategoryKey,
   BudgetLineItem,
   BudgetResult,
+  CatalogPulseInputs,
   CategoryOverrides,
   ComponentScores,
   CostRange,
@@ -13,6 +14,8 @@ export type {
   ItineraryTravelLeg,
   PersonBudget,
   PulseComponentBreakdown,
+  PulseDataBasis,
+  PulseEvidenceItem,
   PulseInputs,
   PulseLabel,
   PulseResult,
@@ -22,6 +25,10 @@ export type {
   TripPlanBookingAction,
   TripPlanDay,
   TripPlanFeedback,
+  TripPlanDayReworkAction,
+  TripPlanItemEditAction,
+  TripPlanProposalAction,
+  TripPlanPreviewProposal,
   TripPlanReaction,
   TripPublicPayload,
   WeightConfig,
@@ -71,23 +78,37 @@ export type {
 } from './recommendation/nearby';
 
 // ─── Community Pulse ──────────────────────────────────────────────────────────
-export { computePulse, PULSE_MIN_THRESHOLDS } from './pulse/engine';
+export { computeCatalogPulse, computePulse, PULSE_MIN_THRESHOLDS } from './pulse/engine';
 
 // ─── Glamour Budget ───────────────────────────────────────────────────────────
 export { estimateBudget } from './budget/engine';
 export type { BudgetEngineInput } from './budget/engine';
 
 // ─── Itinerary ────────────────────────────────────────────────────────────────
-export { generateItinerary } from './itinerary/engine';
+export {
+  generateItinerary,
+  hasImplausibleItineraryTime,
+  isPlaceOpenForVisit,
+} from './itinerary/engine';
 export type { ItineraryInput } from './itinerary/engine';
 export type { ItineraryRouteEstimate } from './itinerary/engine';
 export {
   createLegacyTripPlan,
+  buildActivityPreferenceSignals,
+  isActivityPreferenceSessionComplete,
+  itineraryItemId,
+  normalizeActivityPreferenceChoice,
   generateTripPlan,
   refineTripPlan,
   replaceTripPlanItems,
+  createTripPlanReworkPreview,
+  decodeTripPlan,
 } from './itinerary/tripPlan';
+
+export { deriveHomeJourney } from './journey/homeJourney';
+export type { HomeJourneyResult, HomeJourneyTripInput } from './journey/homeJourney';
 export type {
+  ActivityPreferenceSignals,
   PlannerTraveler,
   TripPlanFlightPriceContext,
   TripPlanInput,

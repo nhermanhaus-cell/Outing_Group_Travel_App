@@ -1,6 +1,6 @@
 import { getGooglePlacesApiKey, getViatorApiKey } from './apiKeys';
 import { invokeTravelApi, type ApiPlace } from './travel-api';
-import { scorePlaceMatch } from '@gayi/shared';
+import { scorePlaceMatch, type TripEssential } from '@gayi/shared';
 
 export { getGooglePlacesApiKey, getViatorApiKey } from './apiKeys';
 
@@ -31,10 +31,16 @@ export interface NearbyPlaceResult {
   imageAttributions?: string[];
   address?: string;
   openingHours?: unknown[];
+  weekdayDescriptions?: string[];
+  currentWeekdayDescriptions?: string[];
+  openNow?: boolean;
   businessStatus?: string;
   priceLevel?: string;
+  accessibilityOptions?: Record<string, boolean>;
+  attributes?: Record<string, boolean>;
   verifiedAt?: string;
   googleMapsUri?: string;
+  websiteUri?: string;
   source: 'google_places';
 }
 
@@ -45,7 +51,10 @@ function mapType(types: string[] | undefined): string {
   if (t.has('cafe')) return 'cafe';
   if (t.has('restaurant')) return 'restaurant';
   if (t.has('museum')) return 'museum';
+  if (t.has('art_gallery')) return 'museum';
+  if (t.has('spa')) return 'spa';
   if (t.has('park')) return 'park';
+  if (t.has('shopping_mall')) return 'shop';
   if (t.has('tourist_attraction')) return 'landmark';
   return 'other';
 }
@@ -92,12 +101,35 @@ function mapApiPlace(r: ApiPlace): NearbyPlaceResult {
     imageUrls: r.photos.flatMap((photo) => photo.url ? [photo.url] : []),
     imageAttributions: r.photos.flatMap((photo) => photo.attribution ? [photo.attribution] : []),
     openingHours: r.openingHours,
+    weekdayDescriptions: r.weekdayDescriptions,
+    currentWeekdayDescriptions: r.currentWeekdayDescriptions,
+    openNow: r.openNow,
     businessStatus: r.businessStatus,
     priceLevel: r.priceLevel,
+    accessibilityOptions: r.accessibilityOptions,
+    attributes: r.attributes,
     verifiedAt: r.verifiedAt,
     googleMapsUri: r.googleMapsUri,
+    websiteUri: r.websiteUri,
     source: 'google_places',
   };
+}
+
+export async function lookupPlaceById(
+  placeId: string,
+  signal?: AbortSignal,
+): Promise<NearbyPlaceResult | null> {
+  if (!placeId.trim()) return null;
+  try {
+    const data = await invokeTravelApi<{ place: ApiPlace | null }>(
+      'placeDetails',
+      { placeId: placeId.trim() },
+      signal,
+    );
+    return data.place ? mapApiPlace(data.place) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Resolve an editorial place to its exact Google record for fresh photos and a Maps link. */
@@ -108,15 +140,20 @@ export async function lookupPlaceByName(
     center?: { lat: number; lng: number };
     address?: string;
   },
+  signal?: AbortSignal,
 ): Promise<NearbyPlaceResult | null> {
   try {
     const queryContext = context?.address || destinationName;
-    const data = await invokeTravelApi<{ places: ApiPlace[] }>('placeTextSearch', {
-      query: `${name}, ${queryContext}`,
-      limit: 5,
-      radiusMeters: context?.center ? 8_000 : 20_000,
-      ...(context?.center ? { lat: context.center.lat, lng: context.center.lng } : {}),
-    });
+    const data = await invokeTravelApi<{ places: ApiPlace[] }>(
+      'placeTextSearch',
+      {
+        query: `${name}, ${queryContext}`,
+        limit: 5,
+        radiusMeters: context?.center ? 8_000 : 20_000,
+        ...(context?.center ? { lat: context.center.lat, lng: context.center.lng } : {}),
+      },
+      signal,
+    );
     if (!context?.center) return null;
 
     const ranked = data.places
@@ -145,6 +182,19 @@ export async function lookupPlaceByName(
   } catch {
     return null;
   }
+}
+
+export async function resolveTripEssentials(input: {
+  text: string;
+  destinationName: string;
+  center?: { lat: number; lng: number };
+}): Promise<TripEssential[]> {
+  const data = await invokeTravelApi<{ essentials: TripEssential[] }>('resolveTripEssentials', {
+    input: input.text.trim(),
+    destination: input.destinationName,
+    ...(input.center ? { lat: input.center.lat, lng: input.center.lng } : {}),
+  });
+  return data.essentials;
 }
 
 async function fetchLivePlaces(
@@ -193,6 +243,27 @@ export async function fetchNearbyHighlyRated(
     .slice(0, limit);
 }
 
+/** Text search anchored to the itinerary's surrounding stops. */
+export async function searchPlacesNearContext(input: {
+  lat: number;
+  lng: number;
+  query: string;
+  limit?: number;
+  radiusMeters?: number;
+}): Promise<NearbyPlaceResult[]> {
+  const data = await invokeTravelApi<{ places: ApiPlace[] }>('placeIntelligenceSearch', {
+    query: input.query.trim(),
+    lat: input.lat,
+    lng: input.lng,
+    limit: Math.min(20, input.limit ?? 12),
+    radiusMeters: input.radiusMeters ?? 3_500,
+  });
+  return uniqueByPlaceId(data.places.map(mapApiPlace)).sort(
+    (left, right) => (right.rating ?? 0) - (left.rating ?? 0) ||
+      (right.userRatingsTotal ?? 0) - (left.userRatingsTotal ?? 0),
+  );
+}
+
 /**
  * Search Google Places around the destination center using trip interests.
  * Used as live candidates for itinerary generation; falls back to caller's seed places.
@@ -214,14 +285,11 @@ export async function searchPlacesForInterests(
   );
   if (types.length === 0) return [];
 
-  let batches: NearbyPlaceResult[][] = [];
-  try {
-    batches = await Promise.all(
-      types.map((type) => fetchLivePlaces(lat, lng, [type], limit, 5_000)),
-    );
-  } catch {
-    return [];
-  }
+  const results = await Promise.allSettled(
+    types.map((type) => fetchLivePlaces(lat, lng, [type], Math.min(20, limit), 12_000)),
+  );
+  const batches = results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
+  if (batches.length === 0) return [];
 
   return uniqueByPlaceId(batches.flat())
     .sort(

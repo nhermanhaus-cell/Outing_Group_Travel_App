@@ -1,0 +1,11 @@
+appId: com.gayi.app
+---
+- launchApp
+- tapOn: "You"
+- tapOn: "Settings"
+- assertVisible: "Weekly discovery"
+- assertVisible: "Active-trip reminders"
+- assertVisible: "Private visit history"
+- assertVisible:
+    text: "Wednesday at 6:00 PM"
+    optional: true

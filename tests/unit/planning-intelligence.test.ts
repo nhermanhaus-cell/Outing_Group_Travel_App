@@ -1,8 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
   blendGroupPreferences,
+  createTripPlanReworkPreview,
+  decodeTripPlan,
   generateTripPlan,
   generateItinerary,
+  hasImplausibleItineraryTime,
+  isPlaceOpenForVisit,
   rankPlacesNearLodging,
   refineTripPlan,
   suggestQueerNeighborhoods,
@@ -114,6 +118,25 @@ describe('generateItinerary pace', () => {
     expect(items.some((i) => i.title === 'Open downtime')).toBe(true);
   });
 
+  it('keeps a traveler-declared must-see in the itinerary ahead of soft-ranked choices', () => {
+    const mustSee: Place = {
+      ...places[0]!,
+      placeId: 'traveler-must-see',
+      name: 'Traveler must-see',
+      category: 'restaurant',
+      rating: 1,
+      interests: [],
+    };
+    const items = generateItinerary({
+      destination,
+      places: [...places, mustSee],
+      preferences: basePrefs,
+      tripDurationDays: 1,
+      requiredPlaceIds: [mustSee.placeId],
+    });
+    expect(items.some((item) => item.placeId === mustSee.placeId)).toBe(true);
+  });
+
   it('schedules more slots for packed pace than downtime', () => {
     const packed = generateItinerary({
       destination,
@@ -167,6 +190,105 @@ describe('generateItinerary pace', () => {
     expect(fixed?.arrivalBufferMinutes).toBe(15);
     expect(fixed?.travelFromPrevious?.durationMinutes).toBe(25);
     expect(fixed?.scheduleStatus).toBe('verified');
+  });
+
+  it('does not place a dated museum on the timeline until provider hours are known', () => {
+    const items = generateItinerary({
+      destination,
+      places: [{
+        ...places[0]!,
+        placeId: 'museum-without-hours',
+        name: 'Museum without hours',
+        category: 'museum',
+        interests: ['culture'],
+      }],
+      preferences: { ...basePrefs, interests: ['culture'], nightlifeImportance: 0 },
+      tripDurationDays: 1,
+      startDate: '2026-06-01',
+    });
+    expect(items.some((item) => item.placeId === 'museum-without-hours')).toBe(false);
+  });
+
+  it('keeps a museum visit inside its verified opening window', () => {
+    const museum: Place = {
+      ...places[0]!,
+      placeId: 'daytime-museum',
+      name: 'Daytime museum',
+      category: 'museum',
+      durationMinutes: 90,
+      interests: ['culture'],
+      openingHours: [{ dayOfWeek: 1, open: '10:00', close: '17:00' }],
+    };
+    const items = generateItinerary({
+      destination,
+      places: [museum],
+      preferences: { ...basePrefs, interests: ['culture'], nightlifeImportance: 0 },
+      tripDurationDays: 1,
+      startDate: '2026-06-01',
+    });
+    const scheduled = items.find((item) => item.placeId === museum.placeId);
+    expect(scheduled).toBeDefined();
+    expect(scheduled!.time >= '10:00').toBe(true);
+    expect(isPlaceOpenForVisit(museum, '2026-06-01', 14 * 60 + 45, 16 * 60 + 15)).toBe(true);
+    expect(isPlaceOpenForVisit(museum, '2026-06-01', 16 * 60, 17 * 60 + 30)).toBe(false);
+  });
+
+  it('rejects midnight provider sentinels for daytime activities', () => {
+    const items = generateItinerary({
+      destination,
+      places: [{
+        ...places[0]!,
+        placeId: 'timed-tour',
+        name: 'Timed tour',
+        category: 'tour',
+        bookingRequired: true,
+        interests: ['culture'],
+        fixedStartTimes: ['not-a-time', '00:00', '10:00'],
+      }],
+      preferences: { ...basePrefs, interests: ['culture'] },
+      tripDurationDays: 1,
+    });
+    const scheduled = items.find((item) => item.placeId === 'timed-tour');
+    expect(scheduled?.time).toBe('10:00');
+    expect(hasImplausibleItineraryTime({ ...scheduled!, time: '00:00' })).toBe(true);
+  });
+
+  it('keeps a coordinate-resolved Viator experience and exact booking handoff in the itinerary', () => {
+    const items = generateItinerary({
+      destination,
+      places: [{
+        placeId: 'experience-479P1',
+        name: 'Architecture walk',
+        summary: 'A provider-backed guided walk with a verified meeting point.',
+        category: 'tour',
+        coords: { lat: 48.861, lng: 2.335 },
+        durationMinutes: 120,
+        estimatedCostPerPerson: 85,
+        bookingRequired: true,
+        interests: ['culture', 'history'],
+        source: 'viator',
+        rating: 4.9,
+        reviewCount: 320,
+        bookingOffer: {
+          provider: 'viator',
+          url: 'https://www.viator.com/tours/example',
+          affiliate: true,
+          disclosure: 'Outing may earn a commission if you book through this link.',
+          price: 85,
+          currency: 'USD',
+        },
+      }],
+      preferences: { ...basePrefs, interests: ['culture', 'history'] },
+      tripDurationDays: 1,
+      lodging: { placeId: 'hotel', coords: { lat: 48.86, lng: 2.34 } },
+    });
+    const experience = items.find((item) => item.placeId === 'experience-479P1');
+    expect(experience).toMatchObject({
+      kind: 'experience',
+      source: 'viator',
+      bookingRequired: true,
+      bookingOffer: { provider: 'viator', affiliate: true, price: 85, currency: 'USD' },
+    });
   });
 
   it('preserves locked items and never overlaps generated stops with them', () => {
@@ -246,6 +368,7 @@ describe('generateTripPlan', () => {
       bookingRequired: index % 4 === 0,
       interests: index % 4 === 3 ? ['nightlife'] : ['food', 'culture'],
       source: index % 4 === 0 ? 'viator' : 'google_places',
+      openingHours: [{ open: '06:00', close: '23:59' }],
       ...(index % 4 === 0
         ? {
             bookingOffer: {
@@ -304,7 +427,7 @@ describe('generateTripPlan', () => {
 
   it('builds themed days around at most two shared anchors', () => {
     const plan = makePlan();
-    expect(plan.schemaVersion).toBe(1);
+    expect(plan.schemaVersion).toBe(2);
     expect(plan.days).toHaveLength(2);
     for (const day of plan.days) {
       expect(day.title.length).toBeGreaterThan(0);
@@ -312,11 +435,16 @@ describe('generateTripPlan', () => {
       for (const anchorId of day.sharedAnchorItemIds) {
         expect(plan.items.find((item) => item.itemId === anchorId)?.anchor).toBe(true);
       }
+      expect(day.rationale).toBeTruthy();
+      expect(day.pace).toBe('light');
+      expect(day.estimatedTravelMinutes).toBeGreaterThanOrEqual(0);
+      expect(day.reservationRisk).toMatch(/low|medium|high/);
+      expect(day.freshness).toBeTruthy();
     }
   });
 
   it('keeps solo/subgroup ideas optional and inside a group free window', () => {
-    const plan = makePlan();
+    const plan = makePlan({ minorityFavoriteMemberIdsByPlace: { 'member-wellness': ['member'] } });
     const suggestion = plan.days.flatMap((day) => day.freeWindowSuggestions)
       .find((candidate) => candidate.placeId === 'member-wellness');
     expect(suggestion).toBeDefined();
@@ -326,6 +454,24 @@ describe('generateTripPlan', () => {
     expect(window?.kind).toBe('downtime');
     expect(suggestion!.suggestedStartTime >= window!.time).toBe(true);
     expect(suggestion!.returnBy).toBe(window!.windowEndTime);
+    expect(plan.items.some((item) => item.placeId === 'member-wellness')).toBe(false);
+  });
+
+  it('creates day reworks as previews and preserves schema-v1 decoding', () => {
+    const initial = makePlan();
+    const preview = createTripPlanReworkPreview({
+      destination,
+      places: planPlaces,
+      preferences: { ...basePrefs, departureAirports: ['SFO'], groupSize: 2, activityPace: 'downtime' },
+      tripDurationDays: 2,
+      startDate: '2026-08-10',
+    }, initial, 1, 'rainy_day', 'trip-1');
+    expect(preview.status).toBe('preview');
+    expect(preview.preview.revision).toBe(initial.revision + 1);
+    expect(initial.revision).toBe(1);
+    const legacy = { ...initial, schemaVersion: 1 as const, algorithmVersion: 'legacy-import-v1' };
+    expect(decodeTripPlan(legacy)?.schemaVersion).toBe(1);
+    expect(decodeTripPlan({ schemaVersion: 3 })).toBeUndefined();
   });
 
   it('preserves unaffected days and removes a vetoed place when refining', () => {

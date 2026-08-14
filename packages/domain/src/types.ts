@@ -58,7 +58,27 @@ export type PulseLabel =
   | 'Emerging'
   | 'Connected'
   | 'Very active'
-  | 'Major queer hub';
+  | 'Major queer hub'
+  | 'Limited verified data'
+  | 'Some community signals'
+  | 'Visible community footprint'
+  | 'Strong community footprint'
+  | 'Deep community footprint';
+
+export type PulseDataBasis = 'outing_activity' | 'catalog_evidence';
+
+export interface CatalogPulseInputs {
+  communityPlaceCount: number;
+  communityEventCount: number;
+  communitySourceCount: number;
+  editoriallyReviewed: boolean;
+}
+
+export interface PulseEvidenceItem {
+  key: 'places' | 'events' | 'sources';
+  label: string;
+  count: number;
+}
 
 export interface PulseInputs {
   eventCount30d: number;
@@ -91,6 +111,10 @@ export interface PulseResult {
   /** 0–1 */
   confidence: number;
   explanation: string;
+  /** Distinguishes private, thresholded Outing activity from public catalog evidence. */
+  dataBasis?: PulseDataBasis;
+  /** Raw public evidence counts suitable for display. Never contains user activity. */
+  evidence?: PulseEvidenceItem[];
 }
 
 // ─── Glamour Budget ───────────────────────────────────────────────────────────
@@ -145,6 +169,7 @@ export interface ItineraryItem {
   /** HH:MM 24h format */
   time: string;
   title: string;
+  summary?: string;
   category: string;
   placeId: string;
   /** Duration in minutes */
@@ -164,6 +189,8 @@ export interface ItineraryItem {
   timezone?: string;
   locked?: boolean;
   kind?: 'place' | 'experience' | 'downtime' | 'meal';
+  /** Preserves the purpose of a flexible slot after a traveler fills it. */
+  slotRole?: 'meal' | 'free_time';
   arrivalBufferMinutes?: number;
   scheduleStatus?: 'verified' | 'estimated' | 'fallback';
   travelFromPrevious?: ItineraryTravelLeg;
@@ -227,6 +254,51 @@ export interface TripPlanDay {
   itemIds: string[];
   sharedAnchorItemIds: string[];
   freeWindowSuggestions: FreeWindowSuggestion[];
+  /** Schema-v2 explanation fields. Omitted on decoded schema-v1 plans. */
+  rationale?: string;
+  pace?: 'packed' | 'balanced' | 'light';
+  estimatedTravelMinutes?: number;
+  fitReasons?: string[];
+  tradeoffs?: string[];
+  backups?: Array<{
+    placeId: string;
+    title: string;
+    reason: string;
+    source: string;
+  }>;
+  reservationRisk?: 'low' | 'medium' | 'high';
+  freshness?: 'live' | 'recent' | 'cached' | 'stale' | 'limited';
+}
+
+export type TripPlanDayReworkAction =
+  | 'less_walking'
+  | 'cheaper'
+  | 'more_spontaneous'
+  | 'rainy_day'
+  | 'later_start'
+  | 'lighter_pace';
+
+export type TripPlanItemEditAction =
+  | 'fill_open_slot'
+  | 'replace_item'
+  | 'move_item'
+  | 'add_custom_item'
+  | 'clear_item';
+
+export type TripPlanProposalAction = TripPlanDayReworkAction | TripPlanItemEditAction;
+
+export interface TripPlanPreviewProposal {
+  proposalId: string;
+  tripId?: string;
+  action: TripPlanProposalAction;
+  proposalKind?: 'day_rework' | 'item_edit';
+  day: number;
+  priorPlanId: string;
+  priorRevision: number;
+  preview: TripPlan;
+  summary: string;
+  createdAt: string;
+  status: 'preview' | 'polling' | 'accepted' | 'dismissed';
 }
 
 export interface TripPlanBookingAction {
@@ -246,6 +318,7 @@ export interface TripPlanBookingAction {
 export interface FlightPriceGuidance {
   status: 'below_recent_observations' | 'indicative' | 'insufficient_history';
   currentPrice?: number;
+  priceRange?: { low: number; high: number };
   baselinePrice?: number;
   currency?: string;
   savingsPercent?: number;
@@ -254,12 +327,14 @@ export interface FlightPriceGuidance {
   message: string;
   trackingUrl?: string;
   confidence: number;
+  source?: 'scrappa_google_flights' | 'skyscanner_indicative';
+  returnSelectionRequired?: boolean;
 }
 
 export interface TripPlan {
   planId: string;
   revision: number;
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   algorithmVersion: string;
   generatedAt: string;
   inputHash: string;

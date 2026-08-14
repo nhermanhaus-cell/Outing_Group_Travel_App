@@ -5,6 +5,8 @@ build
 .turbo
 .env
 .env.local
+.env.eas-simulator
+apps/mobile/.env.eas-simulator
 *.log
 .DS_Store
 coverage

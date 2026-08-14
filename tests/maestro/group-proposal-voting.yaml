@@ -1,0 +1,14 @@
+appId: com.gayi.app
+---
+- launchApp
+- tapOn: "Trips"
+- tapOn:
+    index: 0
+- tapOn: "Group"
+- tapOn: "Decisions"
+- assertVisible:
+    text: "Ask Outing proposal"
+    optional: true
+- assertVisible:
+    text: "An organizer makes the call."
+    optional: true

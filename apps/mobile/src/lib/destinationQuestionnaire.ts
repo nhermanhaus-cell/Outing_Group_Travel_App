@@ -4,17 +4,24 @@ export interface DestinationQuestionnaireSource {
   slug: string;
   name: string;
   interests?: string[] | null;
+  heroImageUrl?: string | null;
+  galleryImageUrls?: string[] | null;
   places?: Array<{
     id?: string;
     name?: string;
     category?: string;
     summary?: string;
+    lgbtqRelevance?: string | null;
+    imageUrl?: string | null;
+    imageUrls?: string[] | null;
   }> | null;
   events?: Array<{
     id?: string;
     title?: string;
     category?: string;
     summary?: string;
+    imageUrl?: string | null;
+    imageUrls?: string[] | null;
   }> | null;
 }
 
@@ -29,6 +36,18 @@ export interface DestinationHallmarkOption {
   label: string;
   kind: 'place' | 'event';
   category?: string;
+  description: string;
+  imageUrl?: string;
+  imageAttribution?: string;
+  imageProvider?: 'google_places' | 'editorial';
+  providerPlaceId?: string;
+}
+
+export interface DestinationHallmarkMedia {
+  hallmarkId: string;
+  providerPlaceId: string;
+  imageUrl?: string;
+  imageAttribution?: string;
 }
 
 const INTEREST_LABELS: Record<Interest, string> = {
@@ -157,13 +176,72 @@ export function getDestinationHallmarks(
   destination?: DestinationQuestionnaireSource | null,
 ): DestinationHallmarkOption[] {
   if (!destination) return [];
-  const places = (destination.places ?? []).flatMap((place) =>
+  const fallbackImages = [
+    ...(destination.galleryImageUrls ?? []),
+    destination.heroImageUrl,
+  ].filter((url): url is string => Boolean(url));
+  const fallbackDescription = (kind: 'place' | 'event', category?: string) => kind === 'event'
+    ? `A signature local event that offers a memorable way to experience ${destination.name}.`
+    : `A signature ${category?.replace(/_/g, ' ') ?? 'place'} that helps tell the story of ${destination.name}.`;
+  const conciseDescription = (values: Array<string | null | undefined>, fallback: string) => {
+    const clean = values
+      .filter((value): value is string => Boolean(value?.trim()))
+      .join(' ')
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!clean) return fallback;
+    const sentences = clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [clean];
+    const firstTwo = sentences.slice(0, 2).map((sentence) => sentence.trim()).join(' ');
+    return firstTwo.length <= 240 ? firstTwo : `${firstTwo.slice(0, 237).trimEnd()}…`;
+  };
+  const places = (destination.places ?? []).flatMap((place, index) =>
     place.id && place.name
-      ? [{ id: place.id, label: place.name, kind: 'place' as const, category: place.category }]
+      ? [{
+          id: place.id,
+          label: place.name,
+          kind: 'place' as const,
+          category: place.category,
+          description: conciseDescription(
+            [place.summary, place.lgbtqRelevance],
+            fallbackDescription('place', place.category),
+          ),
+          imageUrl: place.imageUrls?.[0] ?? place.imageUrl ?? fallbackImages[index % fallbackImages.length],
+        }]
       : []);
-  const events = (destination.events ?? []).flatMap((event) =>
+  const events = (destination.events ?? []).flatMap((event, index) =>
     event.id && event.title
-      ? [{ id: event.id, label: event.title, kind: 'event' as const, category: event.category }]
+      ? [{
+          id: event.id,
+          label: event.title,
+          kind: 'event' as const,
+          category: event.category,
+          description: conciseDescription(
+            [event.summary],
+            fallbackDescription('event', event.category),
+          ),
+          imageUrl: event.imageUrls?.[0]
+            ?? event.imageUrl
+            ?? fallbackImages[(places.length + index) % fallbackImages.length],
+        }]
       : []);
   return [...places.slice(0, 6), ...events.slice(0, 3)];
+}
+
+export function mergeDestinationHallmarkMedia(
+  hallmarks: DestinationHallmarkOption[],
+  media: DestinationHallmarkMedia[],
+): DestinationHallmarkOption[] {
+  const byHallmarkId = new Map(media.map((item) => [item.hallmarkId, item]));
+  return hallmarks.map((hallmark) => {
+    const match = hallmark.kind === 'place' ? byHallmarkId.get(hallmark.id) : undefined;
+    if (!match?.imageUrl) return hallmark;
+    return {
+      ...hallmark,
+      imageUrl: match.imageUrl,
+      imageAttribution: match.imageAttribution,
+      imageProvider: 'google_places',
+      providerPlaceId: match.providerPlaceId,
+    };
+  });
 }

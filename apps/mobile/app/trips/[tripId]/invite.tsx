@@ -20,7 +20,7 @@ export default function TripInviteScreen() {
   const { colors, spacing, radius } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { tripId } = useLocalSearchParams<{ tripId: string }>();
+  const { tripId, newTrip } = useLocalSearchParams<{ tripId: string; newTrip?: string }>();
   const { getTrip } = useTrips();
   const { user } = useAuth();
   const { track } = useAnalytics();
@@ -31,6 +31,16 @@ export default function TripInviteScreen() {
   const [loading, setLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const draftKey = `gayi:pending-invites:${tripId}`;
+  const continueFromInvite = () => {
+    if (newTrip === '1') {
+      router.replace({
+        pathname: '/trips/[tripId]',
+        params: { tripId, section: 'itinerary', building: '1' },
+      });
+      return;
+    }
+    router.back();
+  };
 
   useEffect(() => { setHydrated(false); void SecureStore.getItemAsync(draftKey).then((value) => { if (value) { try { setSelected(JSON.parse(value)); } catch { /* ignore */ } } setHydrated(true); }); }, [draftKey]);
   useEffect(() => { if (hydrated) void SecureStore.setItemAsync(draftKey, JSON.stringify(selected)); }, [draftKey, hydrated, selected]);
@@ -69,16 +79,16 @@ export default function TripInviteScreen() {
       }
       await SecureStore.deleteItemAsync(draftKey);
       setSelected([]);
-      router.back();
+      continueFromInvite();
     } finally { setLoading(false); }
   };
 
   if (!trip) return null;
   return (
     <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
-      <View style={{ padding: spacing.base, borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: spacing.md }}><Pressable onPress={() => router.back()}><Text style={{ fontSize: 22, color: colors.textSecondary }}>←</Text></Pressable><View style={{ flex: 1 }}><Text variant="h2">Add travel buddies</Text><Text variant="caption" style={{ color: colors.textSecondary }}>Phone numbers stay in this encrypted local draft and are never uploaded.</Text></View></View>
+      <View style={{ padding: spacing.base, borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: spacing.md }}><Pressable onPress={continueFromInvite}><Text style={{ fontSize: 22, color: colors.textSecondary }}>←</Text></Pressable><View style={{ flex: 1 }}><Text variant="h2">Add travel buddies</Text><Text variant="caption" style={{ color: colors.textSecondary }}>Phone numbers stay in this encrypted local draft and are never uploaded.</Text></View></View>
       {contacts.length === 0 && selected.length === 0 ? (
-        <View style={{ padding: spacing['2xl'], gap: spacing.md }}><Text variant="bodyLg" style={{ color: colors.textSecondary }}>Choose people from your contacts, then review each personalized message in the native SMS composer before sending.</Text><Button size="lg" onPress={requestContacts}>Choose from contacts</Button><Button variant="ghost" onPress={() => router.back()}>I’ll add them later</Button></View>
+        <View style={{ padding: spacing['2xl'], gap: spacing.md }}><Text variant="bodyLg" style={{ color: colors.textSecondary }}>Choose people from your contacts, then review each personalized message in the native SMS composer before sending.</Text><Button size="lg" onPress={requestContacts}>Choose from contacts</Button><Button variant="ghost" onPress={continueFromInvite}>I’ll add them later</Button></View>
       ) : (
         <>
           <View style={{ margin: spacing.base, gap: spacing.sm }}><TextInput value={query} onChangeText={setQuery} placeholder="Search contacts…" placeholderTextColor={colors.textTertiary} style={{ borderWidth: 1, borderColor: colors.border, backgroundColor: colors.backgroundSecondary, borderRadius: radius.md, padding: spacing.md, color: colors.textPrimary }} />{contacts.length === 0 ? <Button size="sm" variant="secondary" onPress={requestContacts}>Add more contacts</Button> : null}</View>

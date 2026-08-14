@@ -10,11 +10,13 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { useAuth, useDestinations, useTravelProfile, useTrips } from '../../src/providers/AppProviders';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/ui/Button';
+import { OutingIcon } from '../../components/ui/OutingIcon';
 import { GlamourSelector } from '../../components/ui/GlamourSelector';
 import type {
   ActivityPace,
@@ -36,9 +38,11 @@ import { TripPathChooser } from '../../components/trip-wizard/TripPathChooser';
 import type { QuizAnswers } from '../quiz';
 import { AirportAutocomplete } from '../../components/trip-wizard/airport-autocomplete';
 import { DateField } from '../../components/trip-wizard/date-field';
+import { PlanningExitButton } from '../../components/trip-wizard/planning-exit-button';
+import { UnknownDestinationResults } from '../../components/destinations/unknown-destination-results';
 import { QUIZ_BUDDY_DRAFT_KEY, TravelBuddyPicker } from '../../components/trip-wizard/travel-buddy-picker';
 import { airports } from '../../src/content/airports';
-import { destinationPlanHref } from '../../src/lib/tripPlanningFlow';
+import { destinationPlanHref, suggestedTripEndDate } from '../../src/lib/tripPlanningFlow';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { loadIndicativeFlightDeals, loadTicketmasterEvents } from '../../src/lib/travel-api';
 import { nearestAirports } from '../../src/content/airports';
@@ -61,9 +65,12 @@ export default function NewTripScreen() {
   const params = useLocalSearchParams<{
     destinationSlug?: string;
     destinationName?: string;
+    destinationCandidateId?: string;
     lodgingAddress?: string;
     activityPace?: ActivityPace;
     quizAnswers?: string;
+    resumePlaceId?: string;
+    resumeQuery?: string;
   }>();
   let quizAnswers: Partial<QuizAnswers> = {};
   try { quizAnswers = params.quizAnswers ? JSON.parse(params.quizAnswers) : {}; } catch { /* ignore */ }
@@ -71,14 +78,15 @@ export default function NewTripScreen() {
 
   const [loading, setLoading] = useState(false);
   const [creationPath, setCreationPath] = useState<'choose' | 'destination' | 'manual'>(
-    params.destinationName || !featureFlags.tripWizardV2 ? 'manual' : 'choose',
+    params.resumePlaceId ? 'destination' : params.destinationName || !featureFlags.tripWizardV2 ? 'manual' : 'choose',
   );
-  const [destinationQuery, setDestinationQuery] = useState('');
+  const [destinationQuery, setDestinationQuery] = useState(params.resumeQuery ?? '');
   const primaryAirport = profile.homeAirports.find((airport) => airport.primary) ?? profile.homeAirports[0];
 
   const [form, setForm] = useState({
     name: params.destinationName ? `${params.destinationName} trip` : '',
     destinationSlug: params.destinationSlug ?? '',
+    destinationCandidateId: params.destinationCandidateId ?? '',
     destinationName: params.destinationName ?? '',
     startDate: '',
     endDate: '',
@@ -223,6 +231,7 @@ export default function NewTripScreen() {
       const trip = await createTrip({
         name: form.name || 'Untitled trip',
         destinationSlug: form.destinationSlug || undefined,
+        destinationCandidateId: form.destinationCandidateId || undefined,
         destinationName: form.destinationName || undefined,
         startDate: form.startDate || undefined,
         endDate: form.endDate || undefined,
@@ -250,6 +259,7 @@ export default function NewTripScreen() {
           avoidances: quizAnswers.avoidances ?? [],
           hallmarkIds: quizAnswers.hallmarkIds ?? [],
           hallmarkNames: quizAnswers.hallmarkNames ?? [],
+          customEssentials: quizAnswers.customEssentials ?? [],
           ...(quizAnswers.freeformWish?.trim()
             ? { freeformWish: quizAnswers.freeformWish.trim() }
             : {}),
@@ -296,7 +306,9 @@ export default function NewTripScreen() {
         if (selected) await SecureStore.setItemAsync(`gayi:pending-invites:${trip.tripId}`, selected);
         await SecureStore.deleteItemAsync(sourceKey);
       }
-      router.replace(form.groupType !== 'solo' && form.collaboratorChoice === 'now' ? `/trips/${trip.tripId}/invite` : `/trips/${trip.tripId}`);
+      router.replace(form.groupType !== 'solo' && form.collaboratorChoice === 'now'
+        ? { pathname: '/trips/[tripId]/invite', params: { tripId: trip.tripId, newTrip: '1' } }
+        : { pathname: '/trips/[tripId]', params: { tripId: trip.tripId, section: 'itinerary', building: '1' } });
     } catch (error) {
       track(ANALYTICS_EVENTS.OPERATION_FAILED, {
         operation: 'trip_create',
@@ -309,13 +321,218 @@ export default function NewTripScreen() {
     }
   };
 
+  if (fromQuiz) {
+    const duration = quizAnswers.duration ?? 7;
+    const travelers = form.travelers;
+    const tripShape = [
+      travelers === 1 ? 'Solo trip' : `${travelers} travelers`,
+      `${duration} ${duration === 1 ? 'day' : 'days'}`,
+      formatPace(form.activityPace),
+    ];
+
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerStyle={{
+            paddingTop: insets.top + spacing.md,
+            paddingHorizontal: spacing.base,
+            paddingBottom: insets.bottom + 148,
+            gap: spacing.xl,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Go back" hitSlop={12} onPress={() => router.back()} style={{ minWidth: 38, minHeight: 38, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text>
+            </Pressable>
+            <PlanningExitButton />
+          </View>
+
+          <View style={{ gap: spacing.sm }}>
+            <View
+              style={{
+                alignSelf: 'flex-start',
+                paddingHorizontal: spacing.sm,
+                paddingVertical: spacing.xs,
+                borderRadius: radius.full,
+                backgroundColor: colors.poolLight,
+              }}
+            >
+              <Text variant="labelMd" style={{ color: colors.pool }}>One last detail</Text>
+            </View>
+            <Text variant="displayMd">When should we go?</Text>
+            <Text variant="bodyLg" style={{ color: colors.textSecondary }}>
+              Your {form.destinationName || 'trip'} preferences are ready. Add dates and Outing will build the trip around them.
+            </Text>
+          </View>
+
+          <View
+            style={{
+              padding: spacing.base,
+              borderRadius: radius.xl,
+              backgroundColor: colors.plum,
+              gap: spacing.md,
+              overflow: 'hidden',
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' }}>
+                <OutingIcon name="spark" size={20} color={colors.plum} />
+              </View>
+              <View style={{ flex: 1, gap: spacing.xxs }}>
+                <Text variant="h3" style={{ color: colors.white }}>{form.destinationName || 'Your next outing'}</Text>
+                <Text variant="caption" style={{ color: colors.white, opacity: 0.78 }}>Questionnaire complete</Text>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+              {tripShape.map((label) => (
+                <View key={label} style={{ paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: radius.full, backgroundColor: 'rgba(255,255,255,0.14)' }}>
+                  <Text variant="caption" style={{ color: colors.white }}>{label}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {selectedCatalogDestination ? (
+            <View style={{ gap: spacing.sm }}>
+              <View style={{ gap: spacing.xxs }}>
+                <Text variant="h3">Good times to go</Text>
+                <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                  Personalized around your preferred months, events, and available fare signals.
+                </Text>
+              </View>
+              {dateRecommendationsLoading && dateRecommendations.length === 0 ? (
+                <View style={{ padding: spacing.base, borderRadius: radius.lg, backgroundColor: colors.backgroundSecondary }}>
+                  <Text variant="bodySm" style={{ color: colors.textSecondary }}>Comparing upcoming windows…</Text>
+                </View>
+              ) : null}
+              {dateRecommendations.slice(0, 3).map((recommendation) => {
+                const selected = form.startDate === recommendation.startDate && form.endDate === recommendation.endDate;
+                return (
+                  <Pressable
+                    key={recommendation.id}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    onPress={() => {
+                      if (process.env.EXPO_OS === 'ios') void Haptics.selectionAsync();
+                      setForm((current) => ({
+                        ...current,
+                        startDate: recommendation.startDate,
+                        endDate: recommendation.endDate,
+                      }));
+                    }}
+                    style={{
+                      padding: spacing.md,
+                      borderRadius: radius.lg,
+                      borderWidth: 1.5,
+                      borderColor: selected ? colors.accent : colors.border,
+                      backgroundColor: selected ? colors.accentLight : colors.cardBackground,
+                      gap: spacing.xs,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm }}>
+                      <Text variant="labelLg" style={{ flex: 1 }}>{recommendation.title}</Text>
+                      <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: selected ? colors.accent : colors.border, backgroundColor: selected ? colors.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                        {selected ? <Text variant="caption" style={{ color: colors.white }}>✓</Text> : null}
+                      </View>
+                    </View>
+                    <Text variant="bodyMd">
+                      {formatRecommendedDate(recommendation.startDate)} – {formatRecommendedDate(recommendation.endDate)}
+                    </Text>
+                    <Text variant="caption" style={{ color: colors.textSecondary }}>{recommendation.reason}</Text>
+                    <Pressable
+                      accessibilityRole="link"
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        track(ANALYTICS_EVENTS.EXTERNAL_LINK_OPENED, {
+                          linkType: 'flight_search',
+                          provider: 'google_flights',
+                          sourceScreen: '/trips/new',
+                        });
+                        void Linking.openURL(recommendation.googleFlightsUrl);
+                      }}
+                      style={{ alignSelf: 'flex-start', paddingVertical: spacing.xxs }}
+                    >
+                      <Text variant="labelMd" style={{ color: colors.accent }}>Check live flights ↗</Text>
+                    </Pressable>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
+
+          <View style={{ gap: spacing.sm }}>
+            <Text variant="h3">Your dates</Text>
+            <View style={{ gap: spacing.md }}>
+              <Field label="Arrive">
+                <DateField
+                  value={form.startDate}
+                  onChange={(value) => setForm((current) => ({
+                    ...current,
+                    startDate: value,
+                    endDate: suggestedTripEndDate(value, current.endDate, duration),
+                  }))}
+                  placeholder="Choose arrival date"
+                />
+              </Field>
+              <Field label="Head home">
+                <DateField
+                  value={form.endDate}
+                  onChange={(value) => set('endDate', value)}
+                  placeholder="Choose departure date"
+                  minimumDate={form.startDate || undefined}
+                />
+              </Field>
+            </View>
+            <Text variant="caption" style={{ color: colors.textTertiary }}>
+              Pick a start and we’ll automatically hold {duration} {duration === 1 ? 'day' : 'days'}. You can adjust either date.
+            </Text>
+          </View>
+        </ScrollView>
+
+        <View
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            paddingHorizontal: spacing.base,
+            paddingTop: spacing.md,
+            paddingBottom: insets.bottom + spacing.md,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+            backgroundColor: colors.background,
+            gap: spacing.xs,
+          }}
+        >
+          <Button
+            size="lg"
+            fullWidth
+            loading={loading}
+            disabled={!form.startDate || !form.endDate}
+            onPress={() => {
+              if (process.env.EXPO_OS === 'ios') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              void handleCreate();
+            }}
+          >
+            Build my trip
+          </Button>
+          <Button variant="ghost" fullWidth disabled={loading} onPress={() => void handleCreate()}>
+            Keep dates flexible
+          </Button>
+        </View>
+      </View>
+    );
+  }
+
   if (creationPath === 'choose') {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top + spacing.lg }}>
         <View style={{ paddingHorizontal: spacing.base, gap: spacing.xs }}>
-          <Pressable onPress={() => router.back()} style={{ paddingVertical: spacing.sm }}>
-            <Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Pressable onPress={() => router.back()} style={{ minWidth: 38, minHeight: 38, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text></Pressable>
+            <PlanningExitButton />
+          </View>
           <Text variant="displayMd">Start a new trip</Text>
           <Text variant="bodyLg" style={{ color: colors.textSecondary }}>
             Find your next destination, or begin with a flexible draft.
@@ -328,7 +545,7 @@ export default function NewTripScreen() {
               entryPoint: 'new_trip',
             });
             posthog.capture('trip_creation_path_selected', { path: 'recommendations', entry_point: 'new_trip' });
-            router.push('/quiz');
+            router.replace('/quiz');
           }}
           onManual={() => {
             track(ANALYTICS_EVENTS.TRIP_CREATION_PATH_SELECTED, {
@@ -354,9 +571,10 @@ export default function NewTripScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top + spacing.lg }}>
         <View style={{ paddingHorizontal: spacing.base, gap: spacing.md, flex: 1 }}>
-          <Pressable onPress={() => setCreationPath('choose')} style={{ paddingVertical: spacing.sm }}>
-            <Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Pressable onPress={() => setCreationPath('choose')} style={{ minWidth: 38, minHeight: 38, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text></Pressable>
+            <PlanningExitButton />
+          </View>
           <View style={{ gap: spacing.xs }}>
             <Text variant="displayMd">Where are you going?</Text>
             <Text variant="bodyLg" style={{ color: colors.textSecondary }}>
@@ -378,7 +596,7 @@ export default function NewTripScreen() {
                     path: 'manual',
                     entryPoint: 'new_trip',
                   });
-                  router.push(destinationPlanHref({
+                  router.replace(destinationPlanHref({
                     destinationSlug: destination.slug,
                     destinationName: destination.name,
                   }));
@@ -396,6 +614,11 @@ export default function NewTripScreen() {
                 <Text variant="caption" style={{ color: colors.textSecondary }}>{destination.country}</Text>
               </Pressable>
             ))}
+            <UnknownDestinationResults
+              query={destinationQuery}
+              enabled={featureFlags.globalDiscoveryV1 && needle.length >= 2 && destinationOptions.length === 0}
+              returnPath="/trips/new"
+            />
             <Button variant="ghost" onPress={() => setCreationPath('manual')}>
               My destination isn’t listed
             </Button>
@@ -424,11 +647,9 @@ export default function NewTripScreen() {
             justifyContent: 'space-between',
           }}
         >
-          <Pressable onPress={() => router.back()}>
-            <Text style={{ fontSize: 20, color: colors.textSecondary }}>✕</Text>
-          </Pressable>
+          <Pressable onPress={() => router.back()}><Text style={{ fontSize: 20, color: colors.textSecondary }}>←</Text></Pressable>
           <Text variant="h3">New trip</Text>
-          <View style={{ width: 32 }} />
+          <PlanningExitButton compact />
         </View>
 
         <ScrollView
@@ -519,7 +740,7 @@ export default function NewTripScreen() {
             ) : null}
             <View style={{ flex: 1 }}>
               <Field label="Start date" optional>
-                <DateField value={form.startDate} onChange={(value) => setForm((current) => ({ ...current, startDate: value, endDate: current.endDate && current.endDate >= value ? current.endDate : quizAnswers.duration ? addDays(value, Math.max(0, quizAnswers.duration - 1)) : '' }))} placeholder="Choose start date" />
+                <DateField value={form.startDate} onChange={(value) => setForm((current) => ({ ...current, startDate: value, endDate: suggestedTripEndDate(value, current.endDate, quizAnswers.duration) }))} placeholder="Choose start date" />
               </Field>
             </View>
             <View style={{ flex: 1 }}>
@@ -633,13 +854,6 @@ function StyledInput(props: React.ComponentProps<typeof TextInput>) {
   );
 }
 
-function addDays(iso: string, days: number): string {
-  const [year, month, day] = iso.split('-').map(Number);
-  const date = new Date(Date.UTC(year!, (month ?? 1) - 1, day ?? 1));
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
-}
-
 function formatRecommendedDate(iso: string): string {
   return new Date(`${iso}T12:00:00Z`).toLocaleDateString(undefined, {
     month: 'short',
@@ -647,6 +861,12 @@ function formatRecommendedDate(iso: string): string {
     year: 'numeric',
     timeZone: 'UTC',
   });
+}
+
+function formatPace(pace: ActivityPace | undefined): string {
+  if (pace === 'packed') return 'Full days';
+  if (pace === 'downtime') return 'Plenty of downtime';
+  return 'Balanced pace';
 }
 
 function futureIsoDate(days: number): string {

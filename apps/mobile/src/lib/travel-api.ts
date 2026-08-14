@@ -30,6 +30,10 @@ export interface ApiPlace {
   businessStatus?: string;
   openingHours?: unknown[];
   weekdayDescriptions?: string[];
+  currentWeekdayDescriptions?: string[];
+  openNow?: boolean;
+  accessibilityOptions?: Record<string, boolean>;
+  attributes?: Record<string, boolean>;
   photos: ApiPhoto[];
   googleMapsUri?: string;
   websiteUri?: string;
@@ -53,8 +57,25 @@ export interface ApiExperience {
   logistics?: unknown;
   cancellationPolicy?: unknown;
   tags?: unknown;
+  category?: 'bar' | 'club' | 'restaurant' | 'cafe' | 'museum' | 'park' | 'beach' | 'spa' | 'hotel' | 'tour' | 'event' | 'shop' | 'landmark' | 'other';
+  interestTags?: string[];
+  lat?: number;
+  lng?: number;
+  address?: string;
+  locationName?: string;
+  confirmationType?: string;
+  freeCancellation?: boolean;
+  flags?: string[];
   provider: 'viator';
   bookingMode: 'external' | 'none';
+}
+
+export interface ApiViatorDestination {
+  destinationId: string;
+  name: string;
+  type?: string;
+  distanceKm?: number;
+  matchScore: number;
 }
 
 export interface ApiAttributedImage {
@@ -82,16 +103,40 @@ export interface ApiLiveEvent { id: string; name: string; url: string; startDate
 export interface ApiPark { id: string; name: string; description?: string; designation?: string; states?: string; url: string; imageUrl?: string; imageAttribution?: string; lat?: number; lng?: number; source: 'nps' }
 export interface ApiBookingStay { id: string; name: string; url: string; imageUrls: string[]; reviewScore?: number; reviewCount?: number; price?: number; currency?: string; address?: string; travelProud?: boolean; source: 'booking_com' }
 export interface ApiFlightDeal { id: string; originIata?: string; destinationIata?: string; destinationName: string; destinationCountry?: string; departureDate?: string; returnDate?: string; price: number; currency: string; direct: boolean; observedAt: string; baselinePrice?: number; savingsPercent?: number; observationCount?: number; source: 'skyscanner_indicative' }
+export interface ApiScrappaFlightOption { price: number; currency: string; airlineName?: string; durationMinutes?: number; stops?: number; emissionsDifferencePercent?: number }
+export interface ApiRoundTripFlightEstimate {
+  originIata: string;
+  destinationIata: string;
+  departureDate: string;
+  returnDate: string;
+  adults: number;
+  currency: string;
+  lowPrice: number;
+  typicalPrice: number;
+  highPrice: number;
+  optionCount: number;
+  nonstopOptionCount: number;
+  observedAt: string;
+  source: 'scrappa_google_flights';
+  pricingScope: 'round_trip_search';
+  returnSelectionRequired: boolean;
+  priceIsPerTraveler: true;
+  googleFlightsUrl: string;
+  message: string;
+  options: ApiScrappaFlightOption[];
+}
 
 export async function invokeTravelApi<T>(
   operation: string,
   input: Record<string, unknown>,
+  signal?: AbortSignal,
 ): Promise<T> {
   if (operation.startsWith('viator') && !featureFlags.viatorV2) throw new TravelApiError('Viator v2 is disabled');
   if (!operation.startsWith('viator') && !featureFlags.smartItineraryV2) throw new TravelApiError('Smart itinerary v2 is disabled');
   if (!supabase) throw new TravelApiError('Live travel APIs are not configured', 'NOT_CONFIGURED');
   const { data, error } = await supabase.functions.invoke('travel-api', {
     body: { operation, ...input },
+    signal,
   });
   if (error) throw new TravelApiError(error.message);
   if (data && typeof data === 'object' && 'error' in data && typeof data.error === 'string') {
@@ -126,6 +171,9 @@ export const loadBookingStays = (input: { airportIata: string; checkin: string; 
 
 export const loadIndicativeFlightDeals = (input: { originIata: string; destinationIata?: string; currency?: string; market?: string; locale?: string; departureMonth?: string; returnMonth?: string; limit?: number }) =>
   invokeTravelApi<{ deals: ApiFlightDeal[]; observedAt: string; indicative: true }>('skyscannerIndicative', input);
+
+export const loadRoundTripFlightEstimate = (input: { originIata: string; destinationIata: string; departureDate: string; returnDate: string; adults: number }, signal?: AbortSignal) =>
+  invokeTravelApi<{ estimate: ApiRoundTripFlightEstimate | null; unavailableReason?: string }>('scrappaRoundTrip', input, signal);
 
 export function validateTravelApiResponse<T>(operation: string, data: unknown): T {
   try { return validateTravelApiContract<T>(operation, data); }

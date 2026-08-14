@@ -19,7 +19,7 @@ export default function LoginScreen() {
   const { colors, spacing, radius } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { signInWithMagicLink, signInWithApple } = useAuth();
+  const { signInWithMagicLink, signInWithApple, signInWithGoogle } = useAuth();
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
 
   const [email, setEmail] = useState('');
@@ -50,6 +50,19 @@ export default function LoginScreen() {
     setError(null);
     try {
       const res = await signInWithApple();
+      if (res.cancelled) return;
+      if (res.error) { setError(res.error); } else { router.replace((returnTo as never) || '/'); }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await signInWithGoogle();
+      if (res.cancelled) return;
       if (res.error) { setError(res.error); } else { router.replace((returnTo as never) || '/'); }
     } finally {
       setLoading(false);
@@ -129,6 +142,16 @@ export default function LoginScreen() {
             />
           </View>
         </> : null}
+
+        <Button
+          size="lg"
+          variant="secondary"
+          fullWidth
+          loading={loading}
+          onPress={handleGoogle}
+        >
+          Continue with Google
+        </Button>
 
         {/* Browse without account */}
         <Button variant="ghost" fullWidth onPress={() => router.back()}>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computePulse, PULSE_MIN_THRESHOLDS } from '@gayi/domain';
+import { computeCatalogPulse, computePulse, PULSE_MIN_THRESHOLDS } from '@gayi/domain';
 import type { PulseInputs } from '@gayi/domain';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -162,5 +162,43 @@ describe('computePulse - determinism', () => {
     const a = computePulse(inputs);
     const b = computePulse(inputs);
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+  });
+});
+
+describe('computeCatalogPulse - sourced fallback', () => {
+  it('describes public catalog evidence without claiming Outing activity', () => {
+    const result = computeCatalogPulse({
+      communityPlaceCount: 3,
+      communityEventCount: 2,
+      communitySourceCount: 3,
+      editoriallyReviewed: true,
+    });
+
+    expect(result.dataBasis).toBe('catalog_evidence');
+    expect(result.evidence).toEqual([
+      { key: 'places', label: 'community places', count: 3 },
+      { key: 'events', label: 'community events', count: 2 },
+      { key: 'sources', label: 'context sources', count: 3 },
+    ]);
+    expect(result.explanation).toContain('not a safety rating');
+    expect(result.explanation).toContain('measure of Outing-user activity');
+  });
+
+  it('scores richer sourced infrastructure above sparse evidence', () => {
+    const sparse = computeCatalogPulse({
+      communityPlaceCount: 0,
+      communityEventCount: 0,
+      communitySourceCount: 1,
+      editoriallyReviewed: false,
+    });
+    const rich = computeCatalogPulse({
+      communityPlaceCount: 6,
+      communityEventCount: 3,
+      communitySourceCount: 4,
+      editoriallyReviewed: true,
+    });
+
+    expect(rich.score).toBeGreaterThan(sparse.score);
+    expect(rich.confidence).toBeGreaterThan(sparse.confidence);
   });
 });

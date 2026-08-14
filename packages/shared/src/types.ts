@@ -13,6 +13,9 @@ export type LgbtqLegalStatus =
   | 'criminalized'
   | 'heavily_criminalized';
 
+export type DestinationType = 'city' | 'island' | 'resort_area';
+export type TravelerAdvisoryLevel = 'standard' | 'caution' | 'elevated' | 'severe';
+
 export type WeatherPreference = 'hot' | 'warm' | 'mild' | 'cool' | 'any';
 
 export type Interest =
@@ -59,6 +62,23 @@ export type VacationStyle =
   | 'spontaneous'
   | 'photogenic';
 
+export interface TripEssential {
+  id: string;
+  label: string;
+  kind: 'place' | 'activity';
+  source: 'google_places' | 'user';
+  providerPlaceId?: string;
+  address?: string;
+  lat?: number;
+  lng?: number;
+  category?: PlaceCategory;
+  summary?: string;
+  imageUrl?: string;
+  imageAttribution?: string;
+  googleMapsUri?: string;
+  verifiedAt?: string;
+}
+
 export interface TripPlanningPreferences {
   goals: TripGoal[];
   vacationStyles: VacationStyle[];
@@ -67,6 +87,7 @@ export interface TripPlanningPreferences {
   avoidances: string[];
   hallmarkIds: string[];
   hallmarkNames: string[];
+  customEssentials?: TripEssential[];
   freeformWish?: string;
 }
 
@@ -97,6 +118,7 @@ export interface UserTravelProfile {
   homeAirports: HomeAirport[];
   coarseHomeRegion?: string;
   defaultInterests: Interest[];
+  preferredTravelMonths?: number[];
   defaultGroupSize?: number;
   defaultTripLengthDays?: number;
   preferredTravelRanges: TravelRange[];
@@ -188,6 +210,8 @@ export interface Destination {
   slug: string;
   name: string;
   country: string;
+  destinationType?: DestinationType;
+  travelerAdvisoryLevel?: TravelerAdvisoryLevel;
   /** ISO 3166-1 alpha-2 continent shorthand e.g. "EU" */
   continentCode: string;
   /** IATA codes for nearest airports */
@@ -268,6 +292,8 @@ export interface BookableOffer {
 export interface Place {
   placeId: string;
   name: string;
+  /** Short factual explanation used when travelers review activity options. */
+  summary?: string;
   category: PlaceCategory;
   coords: { lat: number; lng: number };
   /** Typical visit duration in minutes */
@@ -290,6 +316,34 @@ export interface Place {
   fixedStartTimes?: string[];
   timezone?: string;
   bookingOffer?: BookableOffer;
+  /** Explainable-ranking metadata. Provider facts remain authoritative. */
+  fitReasons?: string[];
+  /** Confidence that identity and recommendation metadata are sufficient for planning. */
+  confidence?: number;
+  routeTimeMinutes?: number;
+  freshness?: 'live' | 'recent' | 'cached' | 'stale' | 'limited';
+  neighborhood?: string;
+  providerDisclosure?: string;
+}
+
+export type ActivityPreferenceChoice =
+  | 'very_interested'
+  | 'interested'
+  | 'neutral'
+  | 'uninterested'
+  | 'very_uninterested'
+  /** Legacy values accepted for backward-compatible decoding. */
+  | 'must_do'
+  | 'maybe'
+  | 'not_for_this_trip'
+  | 'not_interested';
+
+export interface ActivityPreferenceVote {
+  placeId: string;
+  memberId: string;
+  choice: ActivityPreferenceChoice;
+  category: string;
+  createdAt: string;
 }
 
 

@@ -35,7 +35,7 @@ const BALANCED_SLOTS: TimeSlot[] = [
 ];
 
 const DOWNTIME_SLOTS: TimeSlot[] = [
-  { time: '10:00', bias: ['cafe', 'park', 'beach', 'spa'], maxMinutes: 90 },
+  { time: '10:00', bias: ['cafe', 'park', 'beach', 'spa', 'tour', 'landmark'], maxMinutes: 120 },
   { time: '12:30', bias: ['restaurant', 'cafe', 'food'], maxMinutes: 75 },
   { time: '14:00', bias: [], maxMinutes: 120, freeBlock: true },
   { time: '16:30', bias: ['museum', 'shop', 'landmark', 'park'], maxMinutes: 90 },
@@ -44,6 +44,25 @@ const DOWNTIME_SLOTS: TimeSlot[] = [
 ];
 
 const NIGHTLIFE_BIAS = new Set(['bar', 'club', 'event']);
+const HOURS_SENSITIVE_CATEGORIES = new Set<string>([
+  'bar',
+  'cafe',
+  'club',
+  'landmark',
+  'museum',
+  'restaurant',
+  'shop',
+  'spa',
+]);
+const DAYTIME_CATEGORIES = new Set<string>([
+  'beach',
+  'landmark',
+  'museum',
+  'park',
+  'shop',
+  'spa',
+  'tour',
+]);
 
 function slotsForPace(prefs: TravelPreferences): TimeSlot[] {
   const pace = prefs.activityPace ?? 'balanced';
@@ -103,6 +122,19 @@ function scorePlaceForSlot(
   return score;
 }
 
+function categoryFitsSlot(place: Place, slot: TimeSlot): boolean {
+  if (slot.bias.length === 0) return true;
+  if (place.category === 'restaurant' || place.category === 'cafe') {
+    return slot.bias.some((category) => ['restaurant', 'cafe', 'food'].includes(category));
+  }
+  if (place.category === 'bar' || place.category === 'club') {
+    return slot.bias.some((category) => ['bar', 'club', 'event'].includes(category));
+  }
+  return slot.bias.includes(place.category)
+    || (place.category === 'tour' && slot.bias.includes('landmark'))
+    || (place.category === 'event' && slot.bias.includes('tour'));
+}
+
 function whySelected(place: Place, prefs: TravelPreferences): string {
   const interestHits = place.interests.filter((i) => prefs.interests.includes(i));
   if (place.lgbtqRelevance) return place.lgbtqRelevance;
@@ -127,6 +159,8 @@ export interface ItineraryInput {
   excludedPlaceIds?: string[];
   /** Feedback-derived score deltas keyed by placeId. */
   scoreAdjustments?: Record<string, number>;
+  /** User-declared must-sees. These outrank soft preferences but never hard exclusions. */
+  requiredPlaceIds?: string[];
 }
 
 export interface ItineraryRouteEstimate {
@@ -139,9 +173,16 @@ export interface ItineraryRouteEstimate {
   estimated?: boolean;
 }
 
+function parseClockMinutes(value: string): number | null {
+  const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value.trim());
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
 function minutesFromClock(value: string): number {
-  const [hour, minute] = value.split(':').map(Number);
-  return (Number.isFinite(hour) ? hour! : 0) * 60 + (Number.isFinite(minute) ? minute! : 0);
+  // Internal slots are valid HH:MM values. A safe daytime fallback prevents a
+  // malformed legacy/provider time from silently becoming midnight.
+  return parseClockMinutes(value) ?? 9 * 60;
 }
 
 function clockFromMinutes(value: number): string {
@@ -166,23 +207,65 @@ function isoAt(date: string | undefined, minute: number): string | undefined {
   return value.toISOString().replace(/Z$/, '');
 }
 
-function isOpenForVisit(place: Place, dayDate: string | undefined, start: number, end: number): boolean {
+function hasAuthoritativeFixedStart(place: Place): boolean {
+  return (place.fixedStartTimes ?? []).some((value) => {
+    const minute = parseClockMinutes(value);
+    if (minute === null) return false;
+    return !DAYTIME_CATEGORIES.has(place.category) || minute >= 6 * 60;
+  });
+}
+
+function needsVerifiedHours(place: Place, dayDate: string | undefined): boolean {
+  if (!dayDate) return false;
+  if (HOURS_SENSITIVE_CATEGORIES.has(place.category)) return true;
+  if (place.category === 'tour' || place.category === 'event') {
+    return !hasAuthoritativeFixedStart(place);
+  }
+  return false;
+}
+
+function plausibleStartForCategory(place: Place, start: number): boolean {
+  if (!DAYTIME_CATEGORIES.has(place.category)) return true;
+  return start >= 6 * 60;
+}
+
+export function isPlaceOpenForVisit(
+  place: Place,
+  dayDate: string | undefined,
+  start: number,
+  end: number,
+): boolean {
   if (place.businessStatus === 'closed_permanently' || place.businessStatus === 'closed_temporarily') {
     return false;
   }
-  if (!place.openingHours || place.openingHours.length === 0) return true;
+  if (!plausibleStartForCategory(place, start)) return false;
+  if (!place.openingHours || place.openingHours.length === 0) {
+    return !needsVerifiedHours(place, dayDate);
+  }
   const dayOfWeek = dayDate ? new Date(`${dayDate}T12:00:00Z`).getUTCDay() : undefined;
   const periods = place.openingHours.filter(
     (period) => period.dayOfWeek === undefined || dayOfWeek === undefined || period.dayOfWeek === dayOfWeek,
   );
   if (periods.length === 0) return false;
   return periods.some((period) => {
-    const open = minutesFromClock(period.open);
-    let close = minutesFromClock(period.close);
+    const open = parseClockMinutes(period.open);
+    const parsedClose = parseClockMinutes(period.close);
+    if (open === null || parsedClose === null) return false;
+    let close = parsedClose;
     if (close <= open) close += 24 * 60;
     const normalizedEnd = end < start ? end + 24 * 60 : end;
     return start >= open && normalizedEnd <= close;
   });
+}
+
+/** True for a machine-generated stop that should be rebuilt instead of shown. */
+export function hasImplausibleItineraryTime(item: ItineraryItem): boolean {
+  if (item.kind === 'downtime' || item.placeId.startsWith('free-') || item.placeId.startsWith('meal-')) {
+    return false;
+  }
+  const start = parseClockMinutes(item.time);
+  if (start === null) return true;
+  return !NIGHTLIFE_BIAS.has(item.category) && start < 5 * 60;
 }
 
 function fallbackTravelMinutes(from: { lat: number; lng: number }, to: { lat: number; lng: number }): number {
@@ -248,6 +331,7 @@ export function generateItinerary(input: ItineraryInput): ItineraryItem[] {
   const { places, preferences, tripDurationDays } = input;
   const used = new Set<string>();
   const excluded = new Set(input.excludedPlaceIds ?? []);
+  const required = new Set(input.requiredPlaceIds ?? []);
   const items: ItineraryItem[] = [];
   const slots = slotsForPace(preferences);
   const routeEstimates = input.routeEstimates ?? [];
@@ -259,6 +343,14 @@ export function generateItinerary(input: ItineraryInput): ItineraryItem[] {
   }
 
   for (let day = 1; day <= tripDurationDays; day++) {
+    const remainingCandidateCount = places.filter(
+      (place) => !used.has(place.placeId) && !excluded.has(place.placeId),
+    ).length;
+    const remainingDays = tripDurationDays - day + 1;
+    // Reserve scarce offline/editorial candidates for later days instead of
+    // exhausting the entire destination catalog on day one.
+    const newPlaceTarget = Math.max(1, Math.ceil(remainingCandidateCount / remainingDays));
+    let newPlacesScheduled = 0;
     const dayDate = dateForDay(input.startDate, day);
     const locked = (lockedByDay.get(day) ?? []).sort((a, b) => a.time.localeCompare(b.time));
     items.push(...locked);
@@ -297,9 +389,12 @@ export function generateItinerary(input: ItineraryInput): ItineraryItem[] {
         cursor = endMinute;
         continue;
       }
+      if (newPlacesScheduled >= newPlaceTarget) continue;
 
       const candidates = places
-        .filter((p) => !used.has(p.placeId) && !excluded.has(p.placeId))
+        .filter((p) => !used.has(p.placeId) && !excluded.has(p.placeId) && (
+          categoryFitsSlot(p, slot) || (required.has(p.placeId) && p.category === 'other')
+        ))
         .map((p) => {
           const route = routeBetween(
             previousId,
@@ -319,6 +414,7 @@ export function generateItinerary(input: ItineraryInput): ItineraryItem[] {
               ratingBoost +
               reviewBoost -
               travelPenalty +
+              (required.has(p.placeId) ? 1_000 : 0) +
               (input.scoreAdjustments?.[p.placeId] ?? 0),
           };
         })
@@ -336,13 +432,18 @@ export function generateItinerary(input: ItineraryInput): ItineraryItem[] {
           cursor + candidate.route.durationMinutes + arrivalBuffer,
         );
         if (candidate.place.fixedStartTimes && candidate.place.fixedStartTimes.length > 0) {
-          const fixed = candidate.place.fixedStartTimes.map(minutesFromClock).filter((minute) => minute >= start).sort((a, b) => a - b)[0];
+          const fixed = candidate.place.fixedStartTimes
+            .map(parseClockMinutes)
+            .filter((minute): minute is number => minute !== null)
+            .filter((minute) => plausibleStartForCategory(candidate.place, minute))
+            .filter((minute) => minute >= start)
+            .sort((a, b) => a - b)[0];
           if (fixed === undefined) return null;
           start = fixed;
         }
         const duration = Math.min(candidate.place.durationMinutes, slot.maxMinutes);
         start = avoidWindows(start, duration, lockedWindows);
-        return isOpenForVisit(candidate.place, dayDate, start, start + duration)
+        return isPlaceOpenForVisit(candidate.place, dayDate, start, start + duration)
           ? { ...candidate, scheduledStart: start, scheduledDuration: duration }
           : null;
       }).find((candidate): candidate is NonNullable<typeof candidate> => candidate !== null);
@@ -358,6 +459,7 @@ export function generateItinerary(input: ItineraryInput): ItineraryItem[] {
 
       const { place } = top;
       used.add(place.placeId);
+      newPlacesScheduled += 1;
 
       const confidence = Math.min(1, 0.5 + (top.score / 100) * 0.5);
       const arrivalBufferMinutes = place.bookingRequired ? 15 : 10;
@@ -369,6 +471,7 @@ export function generateItinerary(input: ItineraryInput): ItineraryItem[] {
         day,
         time: clockFromMinutes(startMinute),
         title: place.name,
+        ...(place.summary !== undefined && { summary: place.summary }),
         category: place.category,
         placeId: place.placeId,
         duration,

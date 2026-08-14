@@ -1,4 +1,5 @@
 import type {
+  CatalogPulseInputs,
   PulseComponentBreakdown,
   PulseInputs,
   PulseLabel,
@@ -48,6 +49,14 @@ function labelFromScore(score: number): PulseLabel {
   if (score >= 41) return 'Connected';
   if (score >= 21) return 'Emerging';
   return 'Quiet';
+}
+
+function catalogLabelFromScore(score: number): PulseLabel {
+  if (score >= 85) return 'Deep community footprint';
+  if (score >= 66) return 'Strong community footprint';
+  if (score >= 41) return 'Visible community footprint';
+  if (score >= 21) return 'Some community signals';
+  return 'Limited verified data';
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -113,10 +122,63 @@ export function computePulse(inputs: PulseInputs): PulseResult {
     label: labelFromScore(score),
     componentBreakdown: components,
     confidence,
+    dataBasis: 'outing_activity',
     explanation:
       'This score is a platform estimate based on aggregated community activity. ' +
       'Individual data points below minimum thresholds are not disclosed. ' +
       'The score reflects relative LGBTQ+ community presence on Outing and may not represent the full in-person scene.',
+  };
+}
+
+/**
+ * Build a destination-level pulse from public, sourced catalog evidence.
+ *
+ * Unlike `computePulse`, these inputs contain no Outing-user activity and do
+ * not need privacy suppression. This fallback keeps newer catalog entries
+ * useful while being explicit that visible infrastructure is not a safety
+ * rating or a claim about how busy a destination feels right now.
+ */
+export function computeCatalogPulse(inputs: CatalogPulseInputs): PulseResult {
+  const communityPlaceCount = Math.max(0, Math.floor(inputs.communityPlaceCount));
+  const communityEventCount = Math.max(0, Math.floor(inputs.communityEventCount));
+  const communitySourceCount = Math.max(0, Math.floor(inputs.communitySourceCount));
+
+  const components: PulseComponentBreakdown = {
+    venues: saturate(communityPlaceCount, 6),
+    events: saturate(communityEventCount, 4),
+    contributors: 0,
+    checkins: 0,
+    publicTrips: 0,
+    responseRate: inputs.editoriallyReviewed ? 100 : 50,
+    pride: communityEventCount > 0 ? 100 : 0,
+  };
+  const score = Math.min(100, Math.round(
+    components.venues * 0.48
+      + components.events * 0.27
+      + saturate(communitySourceCount, 4) * 0.15
+      + components.responseRate * 0.10,
+  ));
+  const evidenceKindsPresent = [communityPlaceCount, communityEventCount, communitySourceCount]
+    .filter((value) => value > 0).length;
+  const confidence = Math.min(0.95, Math.max(
+    0.2,
+    Math.round((evidenceKindsPresent / 3 * 0.7 + (inputs.editoriallyReviewed ? 0.25 : 0.1)) * 100) / 100,
+  ));
+
+  return {
+    score,
+    label: catalogLabelFromScore(score),
+    componentBreakdown: components,
+    confidence,
+    dataBasis: 'catalog_evidence',
+    evidence: [
+      { key: 'places', label: 'community places', count: communityPlaceCount },
+      { key: 'events', label: 'community events', count: communityEventCount },
+      { key: 'sources', label: 'context sources', count: communitySourceCount },
+    ],
+    explanation:
+      'This early read uses sourced LGBTQ+ places, events, and community context. ' +
+      'It is not a safety rating or a measure of Outing-user activity, and local experiences can vary.',
   };
 }
 
