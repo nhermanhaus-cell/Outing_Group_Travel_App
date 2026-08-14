@@ -26,4 +26,21 @@ describe('itinerary place detail experience', () => {
     expect(route).toContain('createItineraryItemEditProposal');
     expect(route).toContain('Ask Outing to narrow it down');
   });
+
+  it('applies a reviewed place through the durable plan path', () => {
+    expect(route).toContain('tripPlanChangeRequiresVote');
+    expect(route).toContain('lookupPlaceById');
+    expect(route).toContain('isPlaceOpenAtItineraryTime');
+    expect(route).toContain('itineraryItems: nextPlan.items');
+    expect(route).toContain('router.back()');
+  });
+
+  it('keeps the trip itinerary focused on the day-by-day timeline', () => {
+    expect(timeline).toContain('Tap any time to shape that part of the day.');
+    expect(timeline).toContain('Choose a restaurant');
+    expect(timeline).toContain('Add something here');
+    expect(timeline).not.toContain('Your group-first trip plan');
+    expect(timeline).not.toContain('Blended group preferences');
+    expect(timeline).not.toContain('View details and shape this stop');
+  });
 });

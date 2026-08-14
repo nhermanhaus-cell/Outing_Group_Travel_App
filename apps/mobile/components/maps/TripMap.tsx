@@ -3,6 +3,7 @@ import { Platform, View, StyleSheet } from 'react-native';
 import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTheme } from '../../src/theme/ThemeProvider';
 import { Text } from '../../components/ui/Text';
+import { clusterOverlappingMapMarkers, nextClusterMarker } from '../../src/lib/map-marker-overlap';
 
 export type TripMapMarker = {
   id: string;
@@ -48,6 +49,10 @@ export function TripMap({
       && Math.abs(marker.lng) <= 180
       && !(marker.lat === 0 && marker.lng === 0)),
     [markers],
+  );
+  const markerClusters = useMemo(
+    () => clusterOverlappingMapMarkers(validMarkers),
+    [validMarkers],
   );
 
   const region = useMemo(() => {
@@ -129,20 +134,39 @@ export function TripMap({
         showsCompass
         loadingEnabled
       >
-        {validMarkers.map((marker, index) => (
-          <Marker
-            key={marker.id}
-            coordinate={{ latitude: marker.lat, longitude: marker.lng }}
-            title={marker.label}
-            onPress={() => onSelectMarker?.(marker)}
-          >
-            <View style={{ width: selectedMarkerId === marker.id ? 38 : 32, height: selectedMarkerId === marker.id ? 38 : 32, borderRadius: 20, backgroundColor: PIN[marker.kind], borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
-              <Text variant="captionBold" style={{ color: '#fff' }}>
-                {marker.kind === 'lodging' ? '⌂' : index + 1}
-              </Text>
-            </View>
-          </Marker>
-        ))}
+        {markerClusters.map((cluster, clusterIndex) => {
+          const selectedMember = cluster.members.find((member) => member.id === selectedMarkerId);
+          const representative = selectedMember ?? cluster.members[0]!;
+          const hasLodging = cluster.members.some((member) => member.kind === 'lodging');
+          const label = cluster.members.length > 1
+            ? `${cluster.members.length} stops at this location`
+            : representative.label;
+          return (
+            <Marker
+              key={cluster.key}
+              coordinate={{ latitude: cluster.lat, longitude: cluster.lng }}
+              title={label}
+              tracksViewChanges={false}
+              zIndex={selectedMember ? 10_000 : markerClusters.length - clusterIndex}
+              onPress={() => onSelectMarker?.(nextClusterMarker(cluster, selectedMarkerId))}
+            >
+              <View style={{ width: 42, height: 42, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: PIN[representative.kind], borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text variant="captionBold" style={{ color: '#fff', fontVariant: ['tabular-nums'] }}>
+                    {hasLodging ? '⌂' : representative.originalIndex + 1}
+                  </Text>
+                </View>
+                {cluster.members.length > 1 ? (
+                  <View style={{ position: 'absolute', right: 0, top: 0, minWidth: 20, height: 20, borderRadius: 10, paddingHorizontal: 4, backgroundColor: colors.textPrimary, borderWidth: 1.5, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' }}>
+                    <Text variant="captionBold" style={{ color: colors.background, fontVariant: ['tabular-nums'] }}>
+                      {cluster.members.length}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </Marker>
+          );
+        })}
         {routeCoords && routeCoords.length > 1 ? (
           <Polyline
             coordinates={routeCoords}

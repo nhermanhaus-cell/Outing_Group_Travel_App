@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   destinationPlanHref,
   questionnaireCompletionHref,
@@ -16,6 +17,7 @@ import {
 } from '../../apps/mobile/src/lib/trip-hub-navigation';
 import {
   applyWrittenTravelIntent,
+  deriveNightlifeImportance,
   shouldIncludeQuestionnaireStep,
 } from '../../apps/mobile/src/lib/questionnaire-flow';
 import type { TravelPreferences } from '@gayi/shared';
@@ -24,6 +26,7 @@ const destination = {
   destinationSlug: 'barcelona',
   destinationName: 'Barcelona',
 };
+const quizSource = readFileSync(new URL('../../apps/mobile/app/quiz/index.tsx', import.meta.url), 'utf8');
 
 describe('trip planning flow', () => {
   it('asks for written intent and interests once before destination recommendations', () => {
@@ -62,6 +65,17 @@ describe('trip planning flow', () => {
     expect(enriched.interests).toEqual(expect.arrayContaining([
       'food', 'culture', 'history', 'beach', 'art', 'music',
     ]));
+  });
+
+  it('derives nightlife preference without a standalone questionnaire score', () => {
+    expect(deriveNightlifeImportance({ interests: ['nightlife'], socialPrefs: ['dancing'] })).toBe(0.75);
+    expect(deriveNightlifeImportance({ interests: ['nightlife'], avoidances: ['late_nights'] })).toBe(0.1);
+    expect(deriveNightlifeImportance({ legacyNightlifeScore: 4 })).toBe(0.8);
+  });
+
+  it('does not render a nightlife-importance control in trip onboarding', () => {
+    expect(quizSource).not.toContain('Nightlife importance');
+    expect(quizSource).not.toContain('NightlifeSlider');
   });
 
   it('starts the questionnaire when planning from a destination page', () => {

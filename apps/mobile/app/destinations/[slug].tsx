@@ -377,7 +377,7 @@ export default function DestinationDetailScreen() {
   const practical = (destination as unknown as { practical?: { gettingAround?: string; typicalStay?: string; costContext?: string } } | undefined)?.practical;
   const scoringDestination = useMemo(() => getScoringBySlug(slug ?? ''), [slug, getScoringBySlug]);
   const destinationExperiencesQuery = useQuery({
-    queryKey: ['destination-experiences-v4', destination?.slug, destination?.interests ?? []],
+    queryKey: ['destination-experiences-v5', destination?.slug, destination?.interests ?? []],
     queryFn: ({ signal }) => loadDestinationExperiences({
       destinationSlug: destination!.slug,
       destinationName: destination!.name,

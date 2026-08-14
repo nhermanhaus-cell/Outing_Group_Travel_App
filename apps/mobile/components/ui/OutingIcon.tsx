@@ -11,6 +11,7 @@ export type OutingIconName =
   | 'vote'
   | 'spark'
   | 'bookmark'
+  | 'calendar'
   | 'arrow'
   | 'close'
   | 'image'
@@ -80,6 +81,12 @@ export function OutingIcon({
       ) : null}
       {name === 'spark' ? <Path d="M12 2c.5 5.8 3.2 8.5 9 9-5.8.5-8.5 3.2-9 9-.5-5.8-3.2-8.5-9-9 5.8-.5 8.5-3.2 9-9z" {...common} /> : null}
       {name === 'bookmark' ? <Path d="M6 3.5h12v17l-6-4-6 4z" {...common} /> : null}
+      {name === 'calendar' ? (
+        <>
+          <Path d="M4 6.5h16v14H4zM4 10h16M8 3.5v5M16 3.5v5" {...common} />
+          <Path d="M8 14h2M14 14h2M8 17.5h2M14 17.5h2" {...common} />
+        </>
+      ) : null}
       {name === 'arrow' ? <Path d="m8 4 8 8-8 8M4 12h12" {...common} /> : null}
       {name === 'close' ? <Path d="m5 5 14 14M19 5 5 19" {...common} /> : null}
       {name === 'image' ? (

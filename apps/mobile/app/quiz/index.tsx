@@ -63,7 +63,8 @@ export interface QuizAnswers {
   groupSize: number;
   glamourLevel: GlamourLevel;
   interests: string[];
-  nightlife: number; // 0-5
+  /** Legacy-only; new questionnaires derive this from existing preference choices. */
+  nightlife?: number;
   socialPrefs: string[];
   collaboratorChoice?: 'now' | 'later';
   activityPace: 'packed' | 'balanced' | 'downtime';
@@ -100,7 +101,6 @@ const DEFAULT_ANSWERS: QuizAnswers = {
   groupSize: 2,
   glamourLevel: 'comfortably_fabulous',
   interests: [],
-  nightlife: 3,
   socialPrefs: [],
   activityPace: 'balanced',
   dayRhythm: 'flexible',
@@ -234,45 +234,6 @@ function ChipSelect<T extends string>({
           </Pressable>
         );
       })}
-    </View>
-  );
-}
-
-function NightlifeSlider({
-  value,
-  onChange,
-}: { value: number; onChange: (v: number) => void }) {
-  const { colors, spacing } = useTheme();
-  return (
-    <View style={{ gap: spacing.sm }}>
-      <View style={{ flexDirection: 'row', gap: spacing.sm, justifyContent: 'center' }}>
-        {[0, 1, 2, 3, 4, 5].map((n) => (
-          <Pressable
-            key={n}
-            onPress={() => onChange(n)}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              borderWidth: 1.5,
-              borderColor: n <= value ? colors.accent : colors.border,
-              backgroundColor: n <= value ? colors.accentLight : colors.cardBackground,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text
-              variant="h3"
-              style={{ color: n <= value ? colors.accent : colors.textTertiary }}
-            >
-              {n}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-      <Text variant="caption" style={{ color: colors.textTertiary, textAlign: 'center' }}>
-        {value === 0 ? 'Not important' : value <= 2 ? 'Some nightlife' : value <= 4 ? 'Important' : 'Central to the trip'}
-      </Text>
     </View>
   );
 }
@@ -1076,11 +1037,6 @@ export default function QuizScreen() {
       subtitle: null,
       content: (
         <View style={{ gap: spacing['2xl'] }}>
-          <View style={{ gap: spacing.md }}>
-            <Text variant="h3">Nightlife importance</Text>
-            <NightlifeSlider value={answers.nightlife} onChange={(v) => set('nightlife', v)} />
-          </View>
-
           <View style={{ gap: spacing.md }}>
             <Text variant="h3">Looking for…</Text>
             <ChipSelect

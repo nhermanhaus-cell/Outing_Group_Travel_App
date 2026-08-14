@@ -21,7 +21,7 @@ export function ProgressBar({
   style,
 }: ProgressBarProps) {
   const { colors, spacing, radius } = useTheme();
-  const clamped = Math.max(0, Math.min(100, value));
+  const clamped = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
 
   return (
     <View style={[{ gap: spacing.xs }, style]}>

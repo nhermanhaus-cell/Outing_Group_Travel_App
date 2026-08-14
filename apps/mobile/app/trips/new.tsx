@@ -50,6 +50,7 @@ import {
   buildTripDateRecommendations,
   upcomingCandidateMonths,
 } from '../../src/lib/dateRecommendations';
+import { deriveNightlifeImportance } from '../../src/lib/questionnaire-flow';
 
 const NEW_TRIP_BUDDY_DRAFT_KEY = 'gayi:new-trip-travel-buddies';
 
@@ -205,7 +206,15 @@ export default function NewTripScreen() {
         interests: quizAnswers.interests ?? [],
         goals: quizAnswers.tripGoals ?? [],
         hallmarkIds: quizAnswers.hallmarkIds ?? [],
-        nightlife: quizAnswers.nightlife ?? 0,
+        nightlife: Math.round(deriveNightlifeImportance({
+          legacyNightlifeScore: quizAnswers.nightlife,
+          interests: quizAnswers.interests,
+          socialPrefs: quizAnswers.socialPrefs,
+          tripGoals: quizAnswers.tripGoals,
+          dayRhythm: quizAnswers.dayRhythm,
+          avoidances: quizAnswers.avoidances,
+          freeformWish: quizAnswers.freeformWish,
+        }) * 5),
         preferredMonths: quizAnswers.months ?? [],
       },
     });
@@ -219,6 +228,10 @@ export default function NewTripScreen() {
     quizAnswers.interests,
     quizAnswers.months,
     quizAnswers.nightlife,
+    quizAnswers.socialPrefs,
+    quizAnswers.dayRhythm,
+    quizAnswers.avoidances,
+    quizAnswers.freeformWish,
     quizAnswers.tripGoals,
     recommendationMonths,
     selectedCatalogDestination,
@@ -247,9 +260,15 @@ export default function NewTripScreen() {
           : quizAnswers.mealPreferences?.some((preference) => preference !== 'food_low_priority')
             ? Array.from(new Set([...(quizAnswers.interests ?? []), 'food'])) as never[]
             : quizAnswers.interests as never[] | undefined,
-        nightlifeImportance: quizAnswers.nightlife !== undefined
-          ? Math.max(0, Math.min(1, quizAnswers.nightlife / 5))
-          : undefined,
+        nightlifeImportance: deriveNightlifeImportance({
+          legacyNightlifeScore: quizAnswers.nightlife,
+          interests: quizAnswers.interests,
+          socialPrefs: quizAnswers.socialPrefs,
+          tripGoals: quizAnswers.tripGoals,
+          dayRhythm: quizAnswers.dayRhythm,
+          avoidances: quizAnswers.avoidances,
+          freeformWish: quizAnswers.freeformWish,
+        }),
         lookingFor: deriveLookingForFromQuiz(quizAnswers),
         planningPreferences: {
           goals: quizAnswers.tripGoals ?? [],

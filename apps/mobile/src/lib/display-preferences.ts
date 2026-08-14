@@ -2,7 +2,7 @@ import 'expo-sqlite/localStorage/install';
 import { useSyncExternalStore } from 'react';
 import {
   DEFAULT_DISPLAY_PREFERENCES,
-  DISPLAY_CURRENCIES,
+  normalizeDisplayCurrency,
   type DisplayPreferences,
 } from './display-format';
 
@@ -17,9 +17,7 @@ function readStoredPreferences(): DisplayPreferences {
     return {
       timeFormat: value.timeFormat === '24h' ? '24h' : '12h',
       temperatureUnit: value.temperatureUnit === 'celsius' ? 'celsius' : 'fahrenheit',
-      currency: DISPLAY_CURRENCIES.includes(value.currency as DisplayPreferences['currency'])
-        ? value.currency as DisplayPreferences['currency']
-        : 'USD',
+      currency: normalizeDisplayCurrency(value.currency),
     };
   } catch {
     return DEFAULT_DISPLAY_PREFERENCES;
@@ -38,7 +36,12 @@ function getSnapshot(): DisplayPreferences {
 }
 
 export function setDisplayPreferences(updates: Partial<DisplayPreferences>): void {
-  snapshot = { ...snapshot, ...updates };
+  const next = { ...snapshot, ...updates };
+  snapshot = {
+    timeFormat: next.timeFormat === '24h' ? '24h' : '12h',
+    temperatureUnit: next.temperatureUnit === 'celsius' ? 'celsius' : 'fahrenheit',
+    currency: normalizeDisplayCurrency(next.currency),
+  };
   try { globalThis.localStorage?.setItem(STORAGE_KEY, JSON.stringify(snapshot)); } catch { /* Keep the in-memory preference. */ }
   listeners.forEach((listener) => listener());
 }

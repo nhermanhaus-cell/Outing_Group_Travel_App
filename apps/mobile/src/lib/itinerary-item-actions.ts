@@ -108,6 +108,7 @@ export function isPlaceOpenAtItineraryTime(
   startDate: string | undefined,
   day: number,
   time: string,
+  durationMinutes = 1,
 ): boolean | undefined {
   const dayOfWeek = tripDayOfWeek(startDate, day);
   const minute = minutesFromClock(time);
@@ -121,12 +122,16 @@ export function isPlaceOpenAtItineraryTime(
     return opens === undefined || closes === undefined ? [] : [{ dayOfWeek: period.dayOfWeek, opens, closes }];
   });
   if (!periods.length) return undefined;
+  const visitStarts = dayOfWeek * 1_440 + minute;
+  const visitEnds = visitStarts + Math.max(1, durationMinutes);
   return periods.some((period) => {
-    if (period.dayOfWeek !== dayOfWeek) return false;
-    if (period.opens === period.closes) return true;
-    return period.closes > period.opens
-      ? minute >= period.opens && minute < period.closes
-      : minute >= period.opens || minute < period.closes;
+    const periodStarts = period.dayOfWeek * 1_440 + period.opens;
+    const periodEnds = period.opens === period.closes
+      ? periodStarts + 1_440
+      : period.dayOfWeek * 1_440 + period.closes + (period.closes < period.opens ? 1_440 : 0);
+    return [-10_080, 0, 10_080].some((weekOffset) =>
+      visitStarts >= periodStarts + weekOffset && visitEnds <= periodEnds + weekOffset,
+    );
   });
 }
 
@@ -143,8 +148,14 @@ export function rankItineraryPlaceRecommendations(
     : 0;
 
   return places.flatMap((place) => {
-    if (/closed_permanently/i.test(place.businessStatus ?? '')) return [];
-    const openAtSlot = isPlaceOpenAtItineraryTime(place, preferences.startDate, target.day, target.time);
+    if (/closed_(?:permanently|temporarily)/i.test(place.businessStatus ?? '')) return [];
+    const openAtSlot = isPlaceOpenAtItineraryTime(
+      place,
+      preferences.startDate,
+      target.day,
+      target.time,
+      target.duration,
+    );
     if (openAtSlot === false) return [];
     const coords = { lat: place.lat, lng: place.lng };
     const fromPreviousMinutes = context.previous
@@ -171,7 +182,7 @@ export function rankItineraryPlaceRecommendations(
     if (avoidances.has('too_many_reservations') && place.attributes?.reservable) score -= 2;
 
     const fitReasons = [
-      openAtSlot ? `Open around ${target.time}` : undefined,
+      openAtSlot ? `Open for this ${target.duration}-minute window` : undefined,
       detourMinutes <= 8 ? 'Fits naturally into this route' : detourMinutes <= 18 ? 'A manageable detour' : undefined,
       mealPreferences.has('casual_gems') && price !== undefined && price <= 2 ? 'Matches your casual-gems preference' : undefined,
       mealPreferences.has('fine_dining') && price !== undefined && price >= 3 ? 'Matches your destination-dining preference' : undefined,

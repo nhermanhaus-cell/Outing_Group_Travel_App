@@ -25,7 +25,7 @@ import { useAnalytics } from '../../src/analytics/analytics-provider';
 import { destinationPlanHref } from '../../src/lib/tripPlanningFlow';
 import { parseQuizResultsAnswers } from '../../src/lib/quizResultsState';
 import { PlanningExitButton } from '../../components/trip-wizard/planning-exit-button';
-import { applyWrittenTravelIntent } from '../../src/lib/questionnaire-flow';
+import { applyWrittenTravelIntent, deriveNightlifeImportance } from '../../src/lib/questionnaire-flow';
 
 const RECOVERY_ANSWERS: QuizAnswers = {
   originAirport: '',
@@ -38,7 +38,6 @@ const RECOVERY_ANSWERS: QuizAnswers = {
   groupSize: 1,
   glamourLevel: 'comfortably_fabulous',
   interests: [],
-  nightlife: 3,
   socialPrefs: [],
   activityPace: 'balanced',
   dayRhythm: 'flexible',
@@ -70,7 +69,15 @@ function mapAnswersToPrefs(answers: QuizAnswers): TravelPreferences {
     groupSize: answers.groupSize,
     interests: answers.interests as TravelPreferences['interests'],
     accessibilityNeeds: [],
-    nightlifeImportance: answers.nightlife / 5,
+    nightlifeImportance: deriveNightlifeImportance({
+      legacyNightlifeScore: answers.nightlife,
+      interests: answers.interests,
+      socialPrefs: answers.socialPrefs,
+      tripGoals: answers.tripGoals,
+      dayRhythm: answers.dayRhythm,
+      avoidances: answers.avoidances,
+      freeformWish: answers.freeformWish,
+    }),
     weatherPreference: 'any',
     lgbtqSafetyPriority: 0.8,
     soloTravel: answers.groupType === 'solo',

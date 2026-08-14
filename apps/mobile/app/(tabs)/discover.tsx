@@ -173,7 +173,7 @@ export default function DiscoverScreen() {
   }, [catalog, debouncedQuery, parsedIntent.interests.length, visibleResults]);
   const experienceSearch = useQuery({
     queryKey: [
-      'discover-viator-experiences-v2',
+      'discover-viator-experiences-v3',
       experienceDestination?.slug,
       debouncedQuery,
       parsedIntent.interests,
