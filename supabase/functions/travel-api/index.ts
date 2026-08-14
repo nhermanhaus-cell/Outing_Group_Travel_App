@@ -16,6 +16,7 @@ import {
   normalizeScrappaRoundTrip,
   type ScrappaRoundTripRequest,
 } from '../_shared/scrappa-flights.ts';
+import { dedupeSimilarViatorProducts } from '../_shared/viator-deduplication.ts';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -1043,7 +1044,7 @@ async function viatorSearch(body: JsonRecord): Promise<Response> {
     return json({ products: [], resolvedDestination: null, source: 'viator_live' });
   }
 
-  const cacheKey = await providerCacheKey('viator-city-experiences-v4', {
+  const cacheKey = await providerCacheKey('viator-city-experiences-v5', {
     destinationId: resolved.destinationId,
     interests: interests.map((interest) => interest.toLowerCase()).sort(),
     searchTerm: searchTerm?.toLowerCase(),
@@ -1094,7 +1095,7 @@ async function viatorSearch(body: JsonRecord): Promise<Response> {
     : record(data?.products) && Array.isArray(record(data?.products)?.results)
       ? record(data?.products)!.results as unknown[]
       : [];
-  const rankedProducts = rawProducts
+  const rankedProducts = dedupeSimilarViatorProducts(rawProducts
     .map(normalizeViatorProduct)
     .filter((product): product is JsonRecord => Boolean(product))
     .sort((left, right) => {
@@ -1102,9 +1103,11 @@ async function viatorSearch(body: JsonRecord): Promise<Response> {
         - viatorProductRank(left, interests, searchTerm, preferFreeCancellation, maxPrice);
       if (rankDelta !== 0) return rankDelta;
       return (number(right.rating) ?? 0) - (number(left.rating) ?? 0);
-    })
+    }))
     .slice(0, limit);
-  const products = await enrichViatorProductsForPlanning(rankedProducts, Math.min(6, limit));
+  const products = dedupeSimilarViatorProducts(
+    await enrichViatorProductsForPlanning(rankedProducts, Math.min(6, limit)),
+  ).slice(0, limit);
   await writeProviderCache(
     cacheKey,
     'viator',

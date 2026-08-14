@@ -58,7 +58,34 @@ describe('itinerary item actions', () => {
       startDate: '2026-08-17', mealPreferences: ['casual_gems'], preferredTransportMode: 'walking',
     });
     expect(ranked.map((entry) => entry.place.placeId)).toEqual(['open-place']);
-    expect(ranked[0]?.fitReasons).toContain('Open around 12:00');
+    expect(ranked[0]?.fitReasons).toContain('Open for this 60-minute window');
+  });
+
+  it('excludes places reported temporarily closed', () => {
+    const target = item('open', '12:00', 'Open meal time', 40, -74, 'meal');
+    const context = itinerarySearchContext([target], target);
+    const place = {
+      placeId: 'closed-place', name: 'Closed Place', category: 'restaurant', lat: 40, lng: -74,
+      imageUrls: [], source: 'google_places' as const, businessStatus: 'CLOSED_TEMPORARILY',
+    };
+    expect(rankItineraryPlaceRecommendations([place], target, context)).toEqual([]);
+  });
+
+  it('rejects places that close before the itinerary stop ends', () => {
+    const place = {
+      openingHours: [{ dayOfWeek: 1, open: '11:00', close: '12:30' }],
+    };
+    expect(isPlaceOpenAtItineraryTime(place, '2026-08-17', 1, '12:00', 60)).toBe(false);
+    expect(isPlaceOpenAtItineraryTime(place, '2026-08-17', 1, '12:00', 30)).toBe(true);
+  });
+
+  it('supports visits inside opening periods that cross midnight', () => {
+    const place = {
+      openingHours: [{ dayOfWeek: 6, open: '20:00', close: '02:00' }],
+    };
+    expect(isPlaceOpenAtItineraryTime(place, '2026-08-22', 1, '23:30', 90)).toBe(true);
+    expect(isPlaceOpenAtItineraryTime(place, '2026-08-22', 2, '01:00', 45)).toBe(true);
+    expect(isPlaceOpenAtItineraryTime(place, '2026-08-22', 2, '01:30', 60)).toBe(false);
   });
 
   it('shifts times safely across midnight', () => {

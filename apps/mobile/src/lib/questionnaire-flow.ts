@@ -21,6 +21,38 @@ export function shouldIncludeQuestionnaireStep(
   return phase !== 'personalization';
 }
 
+type NightlifePreferenceInput = {
+  /** Kept only so saved questionnaire links from older app versions still work. */
+  legacyNightlifeScore?: number;
+  interests?: string[];
+  socialPrefs?: string[];
+  tripGoals?: string[];
+  dayRhythm?: string;
+  avoidances?: string[];
+  freeformWish?: string;
+};
+
+/**
+ * Derive a modest itinerary signal from choices the traveler already made,
+ * instead of asking for a separate nightlife-importance score.
+ */
+export function deriveNightlifeImportance(input: NightlifePreferenceInput): number {
+  if (input.avoidances?.includes('late_nights') || /\b(no|avoid|skip) nightlife\b/i.test(input.freeformWish ?? '')) {
+    return 0.1;
+  }
+  if (Number.isFinite(input.legacyNightlifeScore)) {
+    return Math.max(0, Math.min(1, Number(input.legacyNightlifeScore) / 5));
+  }
+
+  let importance = 0.3;
+  if (input.interests?.includes('nightlife')) importance += 0.3;
+  if (input.socialPrefs?.includes('dancing')) importance += 0.15;
+  if (input.tripGoals?.includes('celebrate')) importance += 0.1;
+  if (input.dayRhythm === 'late') importance += 0.1;
+  if (/\b(nightlife|clubs?|bars?|dancing|late nights?)\b/i.test(input.freeformWish ?? '')) importance += 0.15;
+  return Math.max(0, Math.min(1, Math.round(importance * 100) / 100));
+}
+
 const INTEREST_TERMS: Array<{ interest: Interest; terms: RegExp }> = [
   { interest: 'beach', terms: /\b(beach|beaches|coast|coastal|ocean|seaside)\b/i },
   { interest: 'hiking', terms: /\b(hike|hiking|trail|trails|mountain|mountains|outdoors|nature)\b/i },

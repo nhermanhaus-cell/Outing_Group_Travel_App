@@ -250,14 +250,14 @@ export async function searchPlacesNearContext(input: {
   query: string;
   limit?: number;
   radiusMeters?: number;
-}): Promise<NearbyPlaceResult[]> {
+}, signal?: AbortSignal): Promise<NearbyPlaceResult[]> {
   const data = await invokeTravelApi<{ places: ApiPlace[] }>('placeIntelligenceSearch', {
     query: input.query.trim(),
     lat: input.lat,
     lng: input.lng,
     limit: Math.min(20, input.limit ?? 12),
     radiusMeters: input.radiusMeters ?? 3_500,
-  });
+  }, signal);
   return uniqueByPlaceId(data.places.map(mapApiPlace)).sort(
     (left, right) => (right.rating ?? 0) - (left.rating ?? 0) ||
       (right.userRatingsTotal ?? 0) - (left.userRatingsTotal ?? 0),

@@ -20,6 +20,7 @@ import {
   itinerarySearchContext,
   itineraryItemRouteId,
   itineraryTimingConflicts,
+  isPlaceOpenAtItineraryTime,
   rankItineraryPlaceRecommendations,
   clearTripPlanItemToOpenSlot,
   createItineraryItemEditProposal,
@@ -31,10 +32,12 @@ import {
   type ItineraryPlaceRecommendation,
 } from '../../../../src/lib/itinerary-item-actions';
 import {
+  lookupPlaceById,
   lookupPlaceByName,
   searchPlacesNearContext,
   type NearbyPlaceResult,
 } from '../../../../src/lib/googlePlaces';
+import { tripPlanChangeRequiresVote } from '../../../../src/lib/tripPermissions';
 import { Text } from '../../../../components/ui/Text';
 import { Badge } from '../../../../components/ui/Badge';
 import { Button } from '../../../../components/ui/Button';
@@ -148,20 +151,26 @@ export default function ItineraryItemScreen() {
       : `${cuisine} ${preferenceHint} restaurant`.trim()
     : freeWindowWish.trim() || (activitySearch === 'Highlights' ? 'top things to do' : activitySearch);
   const nearby = useQuery({
-    queryKey: ['itinerary-context-search', tripId, itemId, searchQuery, price, context?.center.lat, context?.center.lng],
-    queryFn: () => searchPlacesNearContext({
+    queryKey: ['itinerary-context-search', tripId, itemId, searchQuery, context?.center.lat, context?.center.lng],
+    queryFn: ({ signal }) => searchPlacesNearContext({
       lat: context!.center.lat,
       lng: context!.center.lng,
       query: `${searchQuery} in ${trip?.destinationName ?? destination?.name ?? ''}`,
       limit: 16,
       radiusMeters: 4_000,
-    }),
+    }, signal),
     enabled: Boolean(mode === 'replace' && context && trip),
     staleTime: 10 * 60_000,
   });
   const recommendations = useMemo(() => {
     if (!item || !context) return [];
-    const priceMatches = (nearby.data ?? []).filter((place) =>
+    const categoryMatches = (nearby.data ?? []).filter((place) => {
+      if (item.kind === 'meal') return place.category === 'restaurant' || place.category === 'cafe';
+      if (freeWindowWish) return true;
+      if (activitySearch === 'Coffee') return place.category === 'cafe';
+      return place.category !== 'restaurant' && place.category !== 'cafe';
+    });
+    const priceMatches = categoryMatches.filter((place) =>
       price === 'any' || priceNumber(place.priceLevel) === Number(price));
     return rankItineraryPlaceRecommendations(priceMatches, item, context, {
       startDate: trip?.startDate,
@@ -169,7 +178,7 @@ export default function ItineraryItemScreen() {
       avoidances: trip?.planningPreferences?.avoidances ?? [],
       preferredTransportMode: trip?.preferredTransportMode,
     }).slice(0, 10);
-  }, [context, item, nearby.data, price, trip?.planningPreferences?.avoidances, trip?.preferredTransportMode, trip?.startDate, tripMealPreferences]);
+  }, [activitySearch, context, freeWindowWish, item, nearby.data, price, trip?.planningPreferences?.avoidances, trip?.preferredTransportMode, trip?.startDate, tripMealPreferences]);
 
   if (!trip || !plan || !item || !context) {
     return (
@@ -195,9 +204,7 @@ export default function ItineraryItemScreen() {
     action: TripPlanItemEditAction,
     changeSummary: string,
   ): Promise<boolean> => {
-    const role = trip.members?.find((member) => member.id === user?.id)?.role;
-    const groupSize = Math.max(trip.travelers, trip.members?.length ?? 0);
-    const requiresVote = groupSize > 1 && role !== 'owner' && role !== 'organizer';
+    const requiresVote = tripPlanChangeRequiresVote(trip, user?.id);
     if (requiresVote) {
       const proposal = createItineraryItemEditProposal(
         plan,
@@ -272,7 +279,29 @@ export default function ItineraryItemScreen() {
     if (process.env.EXPO_OS === 'ios') void Haptics.selectionAsync();
   };
 
-  const choosePlace = (place: NearbyPlaceResult) => {
+  const choosePlace = async (recommendation: ItineraryPlaceRecommendation) => {
+    setSaving(true);
+    const placeDetails = recommendation.openAtSlot === undefined
+      ? await lookupPlaceById(recommendation.place.placeId)
+      : null;
+    const place = placeDetails ?? recommendation.place;
+    const openForWindow = recommendation.openAtSlot ?? isPlaceOpenAtItineraryTime(
+      place,
+      trip.startDate,
+      item.day,
+      item.time,
+      item.duration,
+    );
+    setSaving(false);
+    if (openForWindow === false) {
+      Alert.alert(
+        'This place is closed then',
+        `${place.name} is not open for the full ${item.duration}-minute window. Choose another option or change the itinerary time first.`,
+      );
+      setMode('replace');
+      setSelectedRecommendation(undefined);
+      return;
+    }
     const apply = () => void saveUpdates({
       title: place.name,
       summary: [place.category ? formatCategory(place.category) : undefined, place.vicinity].filter(Boolean).join(' · '),
@@ -287,11 +316,11 @@ export default function ItineraryItemScreen() {
       ...((item.slotRole ?? (item.kind === 'meal' ? 'meal' : item.kind === 'downtime' ? 'free_time' : undefined))
         ? { slotRole: item.slotRole ?? (item.kind === 'meal' ? 'meal' as const : 'free_time' as const) }
         : {}),
-      scheduleStatus: 'verified',
+      scheduleStatus: openForWindow ? 'verified' : 'estimated',
     }, openSlot ? 'fill_open_slot' : 'replace_item', `${openSlot ? 'Add' : 'Replace with'} ${place.name} at ${formatClockTime(item.time, displayPreferences.timeFormat)} on Day ${item.day}`).then((applied) => {
       if (!applied) return;
       setSelectedRecommendation(undefined);
-      setMode('details');
+      router.back();
     });
     if (openSlot) apply();
     else Alert.alert(`Replace ${item.title}?`, `${place.name} will use the same place in your itinerary.`, [
@@ -506,7 +535,11 @@ export default function ItineraryItemScreen() {
               )) : (
                 <View style={{ padding: spacing.lg, borderRadius: radius.xl, backgroundColor: colors.backgroundSecondary, gap: spacing.sm }}>
                   <Text variant="h3">No exact matches yet</Text>
-                  <Text variant="bodySm" style={{ color: colors.textSecondary }}>Try another cuisine or price point, or add the place you already have in mind.</Text>
+                  <Text variant="bodySm" style={{ color: colors.textSecondary }}>
+                    {item.kind === 'meal'
+                      ? 'Try another cuisine or price point, or add the restaurant you already have in mind.'
+                      : 'Try another category or describe what you want, or add the place you already have in mind.'}
+                  </Text>
                   <Button variant="secondary" onPress={() => setMode('custom')}>Add your own idea</Button>
                 </View>
               )}
@@ -532,7 +565,7 @@ export default function ItineraryItemScreen() {
               slotTime={formatClockTime(item.time, displayPreferences.timeFormat)}
               saving={saving}
               onBack={() => setMode('replace')}
-              onChoose={() => choosePlace(selectedRecommendation.place)}
+              onChoose={() => void choosePlace(selectedRecommendation)}
             />
           ) : null}
 
@@ -680,7 +713,7 @@ function PlaceReview({
             {place.rating ? <Badge label={`${place.rating.toFixed(1)} ★`} variant="success" /> : null}
             {place.userRatingsTotal ? <Badge label={`${place.userRatingsTotal.toLocaleString()} reviews`} variant="default" /> : null}
             {priceLabel(place.priceLevel) ? <Badge label={priceLabel(place.priceLevel)!} variant="default" /> : null}
-            <Badge label={recommendation.openAtSlot ? `Open around ${slotTime}` : 'Confirm hours'} variant={recommendation.openAtSlot ? 'success' : 'warning'} />
+            <Badge label={recommendation.openAtSlot ? `Open for this time` : 'Confirm hours'} variant={recommendation.openAtSlot ? 'success' : 'warning'} />
           </View>
           <View style={{ padding: spacing.md, borderRadius: radius.xl, backgroundColor: colors.backgroundSecondary, gap: spacing.sm, borderCurve: 'continuous' }}>
             <Text variant="labelMd">How it fits the day</Text>
