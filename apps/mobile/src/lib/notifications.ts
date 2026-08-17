@@ -10,14 +10,16 @@ const PREFERENCES_KEY = 'outing:notification-preferences:v1';
 const DEVICE_ID_KEY = 'outing:notification-device-id:v1';
 const REMINDER_IDS_KEY = 'outing:active-trip-reminder-ids:v1';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
+if (process.env.EXPO_OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 export function defaultNotificationPreferences(): NotificationPreferences {
   return {

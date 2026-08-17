@@ -160,6 +160,7 @@ function NotificationNavigationHandler() {
   const router = useRouter();
   const handled = useRef<string | undefined>(undefined);
   useEffect(() => {
+    if (process.env.EXPO_OS === 'web') return;
     const open = (response: Notifications.NotificationResponse) => {
       if (handled.current === response.notification.request.identifier) return;
       const path = response.notification.request.content.data?.path ?? response.notification.request.content.data?.route;

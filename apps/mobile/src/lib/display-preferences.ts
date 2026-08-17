@@ -1,4 +1,4 @@
-import 'expo-sqlite/localStorage/install';
+import './polyfill-localstorage';
 import { useSyncExternalStore } from 'react';
 import {
   DEFAULT_DISPLAY_PREFERENCES,
