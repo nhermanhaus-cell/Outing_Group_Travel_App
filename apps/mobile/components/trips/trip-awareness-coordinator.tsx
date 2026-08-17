@@ -8,6 +8,7 @@ export function TripAwarenessCoordinator() {
   const { user } = useAuth();
 
   useEffect(() => {
+    if (process.env.EXPO_OS === 'web') return;
     const reconcile = async () => {
       await cleanupExpiredTripAwareness(trips, user?.id);
       await refreshTripAwareness(trips);

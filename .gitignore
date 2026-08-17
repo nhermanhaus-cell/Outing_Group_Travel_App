@@ -15,4 +15,6 @@ apps/mobile/.expo
 apps/mobile/dist
 *.tsbuildinfo
 .pnpm-store
+docs/screenshots/*-raw.png
+__pycache__/
 supabase/.temp

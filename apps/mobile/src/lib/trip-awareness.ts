@@ -68,45 +68,47 @@ function pendingVisit(stop: MonitoredStop, event: PendingVisit['event']): Pendin
   };
 }
 
-if (!TaskManager.isTaskDefined(OUTING_GEOFENCE_TASK)) {
-  TaskManager.defineTask<{ eventType: Location.LocationGeofencingEventType; region: Location.LocationRegion }>(
-    OUTING_GEOFENCE_TASK,
-    async ({ data, error }) => {
-      if (error || !data?.region.identifier) return;
-      const stops = await loadJson<MonitoredStop[]>(MONITORED_STOPS_KEY, []);
-      const stop = stops.find((candidate) => candidate.itemId === data.region.identifier);
-      if (!stop) return;
-      await enqueueVisit(pendingVisit(
-        stop,
-        data.eventType === Location.LocationGeofencingEventType.Enter ? 'arrived' : 'departed',
-      ));
-    },
-  );
-}
+if (process.env.EXPO_OS !== 'web') {
+  if (!TaskManager.isTaskDefined(OUTING_GEOFENCE_TASK)) {
+    TaskManager.defineTask<{ eventType: Location.LocationGeofencingEventType; region: Location.LocationRegion }>(
+      OUTING_GEOFENCE_TASK,
+      async ({ data, error }) => {
+        if (error || !data?.region.identifier) return;
+        const stops = await loadJson<MonitoredStop[]>(MONITORED_STOPS_KEY, []);
+        const stop = stops.find((candidate) => candidate.itemId === data.region.identifier);
+        if (!stop) return;
+        await enqueueVisit(pendingVisit(
+          stop,
+          data.eventType === Location.LocationGeofencingEventType.Enter ? 'arrived' : 'departed',
+        ));
+      },
+    );
+  }
 
-if (!TaskManager.isTaskDefined(OUTING_LOCATION_TASK)) {
-  TaskManager.defineTask<{ locations: Location.LocationObject[] }>(
-    OUTING_LOCATION_TASK,
-    async ({ data, error }) => {
-      if (error || !data?.locations?.length) return;
-      const stops = await loadJson<MonitoredStop[]>(MONITORED_STOPS_KEY, []);
-      const state = await loadJson<Record<string, boolean>>(GEOFENCE_STATE_KEY, {});
-      for (const location of data.locations) {
-        // Coordinates are used only in memory for on-device matching and are never persisted.
-        for (const stop of stops) {
-          const inside = distanceMeters(
-            { latitude: location.coords.latitude, longitude: location.coords.longitude },
-            stop,
-          ) <= stop.radius;
-          const prior = state[stop.itemId] === true;
-          if (inside && !prior) await enqueueVisit(pendingVisit(stop, 'arrived'));
-          if (!inside && prior) await enqueueVisit(pendingVisit(stop, 'departed'));
-          state[stop.itemId] = inside;
+  if (!TaskManager.isTaskDefined(OUTING_LOCATION_TASK)) {
+    TaskManager.defineTask<{ locations: Location.LocationObject[] }>(
+      OUTING_LOCATION_TASK,
+      async ({ data, error }) => {
+        if (error || !data?.locations?.length) return;
+        const stops = await loadJson<MonitoredStop[]>(MONITORED_STOPS_KEY, []);
+        const state = await loadJson<Record<string, boolean>>(GEOFENCE_STATE_KEY, {});
+        for (const location of data.locations) {
+          // Coordinates are used only in memory for on-device matching and are never persisted.
+          for (const stop of stops) {
+            const inside = distanceMeters(
+              { latitude: location.coords.latitude, longitude: location.coords.longitude },
+              stop,
+            ) <= stop.radius;
+            const prior = state[stop.itemId] === true;
+            if (inside && !prior) await enqueueVisit(pendingVisit(stop, 'arrived'));
+            if (!inside && prior) await enqueueVisit(pendingVisit(stop, 'departed'));
+            state[stop.itemId] = inside;
+          }
         }
-      }
-      await AsyncStorage.setItem(GEOFENCE_STATE_KEY, JSON.stringify(state));
-    },
-  );
+        await AsyncStorage.setItem(GEOFENCE_STATE_KEY, JSON.stringify(state));
+      },
+    );
+  }
 }
 
 function tripClock(trip: LocalTrip, now = new Date()): { date: string; minute: number } {
@@ -234,6 +236,7 @@ export async function enableTripAwareness(
 }
 
 export async function disableTripAwareness(tripId: string, ownerId: string): Promise<void> {
+  if (process.env.EXPO_OS === 'web') return;
   if (await Location.hasStartedGeofencingAsync(OUTING_GEOFENCE_TASK)) await Location.stopGeofencingAsync(OUTING_GEOFENCE_TASK);
   if (await Location.hasStartedLocationUpdatesAsync(OUTING_LOCATION_TASK)) await Location.stopLocationUpdatesAsync(OUTING_LOCATION_TASK);
   await AsyncStorage.removeItem(MONITORED_STOPS_KEY);
@@ -242,6 +245,7 @@ export async function disableTripAwareness(tripId: string, ownerId: string): Pro
 }
 
 export async function cleanupExpiredTripAwareness(trips: LocalTrip[], ownerId?: string): Promise<void> {
+  if (process.env.EXPO_OS === 'web') return;
   const monitored = await loadJson<MonitoredStop[]>(MONITORED_STOPS_KEY, []);
   const active = trips.find((trip) => trip.tripId === monitored[0]?.tripId);
   if (active && tripActive(active)) return;
@@ -257,6 +261,7 @@ export async function cleanupExpiredTripAwareness(trips: LocalTrip[], ownerId?: 
 }
 
 export async function refreshTripAwareness(trips: LocalTrip[]): Promise<void> {
+  if (process.env.EXPO_OS === 'web') return;
   const settings = await loadJson<Record<string, TripAwarenessSettings>>(SETTINGS_KEY, {});
   const trip = trips.find((candidate) => settings[candidate.tripId]?.enabled && tripActive(candidate));
   if (!trip || !settings[trip.tripId]?.backgroundLocationEnabled) return;
