@@ -6,6 +6,8 @@ Outing is an iOS-first Expo application for deciding where to go, aligning a gro
 
 > **Portfolio project · active pre-release product prototype.** The repository contains complete mobile, domain, database, Edge Function, evaluation, and native-journey code. Live results depend on server-side provider credentials; core flows retain seeded, cached, or offline fallbacks.
 
+**In this README:** [UI walkthrough](#product-walkthrough) · [How groups sync into a shared itinerary](#from-individual-interests-to-a-shared-itinerary) · [Mistral integration](#how-mistral-powers-outing) · [APIs](#apis-and-data-integrations) · [Architecture](#system-architecture)
+
 ## At a glance
 
 | Area | Current implementation |
@@ -15,7 +17,7 @@ Outing is an iOS-first Expo application for deciding where to go, aligning a gro
 | Backend | Supabase Auth, Postgres, RLS, Storage, Realtime, 18 migrations, and 12 Edge Functions |
 | AI | Mistral Small orchestration, customized Studio Agent support, embeddings, OCR, structured tools, and direct-model fallback |
 | Travel data | Google Maps Platform, Viator, Scrappa/Google Flights, Booking.com, Skyscanner, Ticketmaster, Open-Meteo, NPS, Pexels, Wikimedia, and cited public datasets |
-| Planning | Preference matching, Taste Deck, explainable itinerary v2, open-slot editing, maps, budget, flights, group polls, and Today mode |
+| Planning | Preference matching, Taste Deck group tallies, shared anchors vs. free-window minority favorites, explainable itinerary v2, polls, maps, budget, flights, and Today mode |
 | Quality | 50 unit-test files, assistant evaluation fixtures, and 14 Maestro mobile journeys |
 
 ## Product walkthrough
@@ -69,6 +71,108 @@ The core journey is: **express intent → understand the fit → shape the trip 
 
 <sub>These screenshots were captured from the current local build on August 14, 2026 using public seed content, an empty local profile, and a fictional New York trip. No production account or traveler data is shown.</sub>
 
+## From individual interests to a shared itinerary
+
+Outing does not average a group into one bland compromise. It separates **shared anchors** (what the whole group does together) from **free-window ideas** (solo or subgroup time), and it never overwrites an accepted itinerary without a preview, poll, or organizer decision.
+
+```mermaid
+flowchart TD
+  A[Questionnaire + invites] --> B[Preference snapshots]
+  B --> C[Taste Deck reactions]
+  C --> D{Group tally}
+  D -->|Majority interested or must-see| E[Shared day anchors]
+  D -->|Split or tied| F[Group poll]
+  D -->|Minority must-see| G[Solo or subgroup free window]
+  D -->|Majority pass| H[Exclude from the shared spine]
+  E --> I[Explainable day-by-day itinerary]
+  F --> I
+  G --> I
+  I --> J[Preview / vote / organizer tie-break]
+  J --> K[Accepted shared plan]
+```
+
+### 1. Capture constraints before taste
+
+The planning questionnaire collects origin, dates, budget, pace, meals, accessibility, avoidances, safety priority, and group shape **before** anyone swipes on activities. Hard requirements stay authoritative: a wheelchair-access need, a criminalization constraint, or an explicit “no nightlife” request is not diluted by later likes.
+
+When the trip is a group, Outing asks whether to invite travel buddies now or later. Guest planning stays local; signing in synchronizes members, polls, proposals, and inspiration through Supabase Realtime.
+
+### 2. Blend each person’s snapshot without exposing private signals
+
+Each member can save a **preference snapshot**: interests, activity pace, nightlife importance, and what they are looking for. Outing blends those snapshots deterministically:
+
+| Dimension | How the group plan uses it |
+| --- | --- |
+| Interests | Prefer the **intersection** when everyone shares at least one. If there is no overlap, use a frequency-weighted union (the most commonly chosen interests, capped) so the plan still has a spine. |
+| Activity pace | Average packed / balanced / downtime into one shared pace. |
+| Nightlife importance | Average the group’s scores. |
+| Looking-for tags | Union, so community, dancing, rest, or exploration stay available. |
+| Accessibility, safety, avoidances, budget, travel range | Owner/explicit constraints win. Members do not override hard requirements. |
+| What stays private | Individual behavioral signals, sensitive traits, comments, lodging addresses, and raw coordinates never appear in the public group payload. The Group tab shows aggregate snapshots, not a vote-by-vote personality profile. |
+
+The result is a shared planning context: “this group agrees on food and culture, wants a balanced pace, and still has nightlife as a secondary signal”—not a dump of each person’s private quiz.
+
+### 3. Taste Deck: fast, comparable reactions
+
+Taste Deck is the high-resolution layer on top of those snapshots. Each person swipes the same candidate pool:
+
+- **Pass** (left) — not for this trip
+- **Interested** (right) — happy to include it
+- **Must-see** (star / up) — treat as a personal favorite
+
+Cards include imagery, a short explanation, price, duration, provider, cancellation, and why it might fit. After someone has responded, they can see a running group tally (`must-see · interested · passed`) without seeing who voted which way beyond the aggregate counts. Undo and “review all choices” keep the session recoverable.
+
+Outing does not wait for a complete deck from every member. The planner uses the latest vote per person per place, and a session is complete when the pool is finished or enough categories have been covered.
+
+### 4. Turn reactions into planner inputs
+
+Outing converts those votes into itinerary instructions. Majority is `floor(members / 2) + 1`.
+
+| Group signal | Effect on the shared itinerary |
+| --- | --- |
+| Majority interested or must-see, with a positive weighted score | **Anchor candidate.** The day is built around this stop; nearby meals, transit, and downtime are spaced around it. |
+| Positive and negative reactions cancel out | **Poll candidate.** Outing will not guess. The option is queued for a group poll instead of being silently added or dropped. |
+| At least one must-see, but not a majority | **Minority favorite.** Kept out of the shared spine and offered as a **solo or subgroup free-window suggestion** during open time, labeled for the people who starred it. |
+| Majority pass (and more passes than interest) | **Hard exclusion** from the shared plan. A single person’s pass cannot veto a group option. |
+| Solo traveler pass | **Hard exclusion**, because there is no group to outvote them. |
+| Weighted score | Bounded ranking boost or penalty so popular options surface earlier without erasing catalog fit, hours, or geography. |
+
+Minority favorites are intentionally **not** forced onto everyone else. Generate-plan logic excludes them from the shared day spine, then ranks them into free windows only when they fit the open time, walking/transit budget, and the people who wanted them.
+
+### 5. Build days that stay readable
+
+The itinerary engine then produces a schema-v2 plan:
+
+- Each day gets a theme, rationale, pace, estimated travel, reservation risk, and backups.
+- Shared anchors become the day’s spine (“Built around X and Y, with flexible time between group plans”).
+- Meals and downtime remain first-class slots, so the group can fill a restaurant window from live Google Places without rebuilding the whole day.
+- Open free-time slots accept natural-language intent, provider recommendations, or someone’s own idea.
+- Fit reasons and tradeoffs stay visible, so “why is this here?” is an itinerary property rather than a chat explanation.
+
+### 6. Resolve disagreement in the Group tab, not by silent mutation
+
+Every rebuild or item edit creates a **previewable proposal**. On a group trip:
+
+- Members vote. Majority accept adds the change; majority dismiss drops it.
+- Ties wait for an **owner or organizer** rather than flipping randomly.
+- Ask Outing proposals appear as polls with an “Ask Outing proposal” badge, so AI-suggested changes use the same human workflow as a member-created poll.
+- Organizers can add ad-hoc polls for dates, neighborhoods, or “this restaurant vs that one.”
+- Roles are owner / organizer / member, enforced with RLS. Destructive controls stay organizer-only.
+
+Realtime sync keeps members, polls, and the accepted itinerary aligned across devices once everyone is signed in.
+
+### 7. Where Mistral helps the group—without becoming the group
+
+Mistral never votes, books, or writes the itinerary directly. On a group trip it:
+
+- **Summarizes agreement**, not people. `summarize_group_decision` returns shared interests, popular-but-not-universal interests, blended pace, nightlife, and how many polls are still open. It does not expose who wanted what.
+- **Offers two or three shared anchors**, then reserves solo/subgroup ideas for free windows—the same policy the deterministic planner uses.
+- **Drafts a reviewable trip change.** Saying “add this museum” calls `draft_trip_change`; the proposal goes to a poll for members and to explicit review for organizers.
+- **Audits the current plan** for walking load, pace, accessibility, avoidances, reservation risk, repetition, and missing hours.
+- **Turns screenshots and links into candidates.** Inspiration import runs Mistral OCR + structured extraction, Google Places validation, then a human confirm-before-save step. Confirmed places can inform later recommendations; raw uploads and OCR text are deleted after processing.
+
+The source of truth for ranking, hours, prices, availability, and the accepted itinerary remains Outing’s deterministic engines and travel-provider adapters.
+
 ## Complete product functionality
 
 ### Personalized discovery
@@ -98,8 +202,7 @@ The core journey is: **express intent → understand the fit → shape the trip 
 - Schema-v2 itinerary plans with day themes, rationale, pace, estimated travel, fit reasons, tradeoffs, backups, reservation risk, freshness, and schema-v1 recovery.
 - Multi-day generation that fills later days while preserving realistic meal, downtime, transit, and reservation spacing.
 - Place opening hours and route context used when available; unverified timing is labeled rather than presented as certain.
-- Taste Deck reactions: pass, interested, and must-see, with undo, progress, concise activity explanations, imagery, price, duration, provider, cancellation, and booking context.
-- Group preference aggregation turns majority-positive choices into anchors, ties into polls, and minority favorites into solo or partial-group free-window ideas.
+- Taste Deck reactions: pass, interested, and must-see, with undo, progress, concise activity explanations, imagery, price, duration, provider, cancellation, and booking context. See [From individual interests to a shared itinerary](#from-individual-interests-to-a-shared-itinerary) for the full group-sync path.
 - Open meal slots launch restaurant discovery using cuisine, price, opening hours, rating, current itinerary location, and travel time.
 - Open free-time slots accept natural-language intent, provider recommendations, or a traveler’s own idea.
 - Dedicated itinerary-item pages support changing timing, replacing a stop, filling a slot, clearing an item, or adding a custom place.
@@ -122,9 +225,11 @@ The core journey is: **express intent → understand the fit → shape the trip 
 
 ### Collaboration and decision making
 
+The group-sync pipeline above is the product behavior. Implementation details:
+
 - Local guest trips plus authenticated Supabase synchronization and realtime trip updates.
 - Owner, organizer, and member roles with RLS-backed permissions.
-- Group preference snapshots that avoid exposing private behavioral signals or individual sensitive preferences.
+- Preference snapshots plus Taste Deck tallies; public trip payloads never include private behavioral signals or individual sensitive preferences.
 - Majority voting for assistant/activity proposals, organizer resolution for ties, and safe concurrent vote handling.
 - Private or trip-shared assistant conversations; visibility becomes immutable after the first message.
 - Private proposals can be shared without revealing the underlying private conversation.
@@ -154,7 +259,23 @@ The core journey is: **express intent → understand the fit → shape the trip 
 
 ## How Mistral powers Outing
 
-Mistral is an orchestration, explanation, extraction, and comparison layer—not the factual database and not an autonomous travel agent.
+Mistral is an orchestration, explanation, extraction, and comparison layer—not the factual database and not an autonomous travel agent. Outing pins **Mistral Small** (`mistral-small-2603`) as the conversational model, with optional **Mistral Studio Agent** orchestration, **embeddings**, and **OCR**. Provider-backed facts and the itinerary engine stay in control; Mistral decides which tools to call, how to explain tradeoffs, and how to package a change the group can accept or reject.
+
+Ask Outing is the in-app surface. It is account-required, streams through the authenticated `travel-assistant` Edge Function, and never ships model or travel-provider credentials in the mobile bundle.
+
+### What Mistral is used for
+
+| Traveler job | What Mistral actually does | What remains deterministic / provider-backed |
+| --- | --- | --- |
+| “Where should we go?” | Translates free-text intent into tool calls, explains fit and tradeoffs, and can compare two to four catalog options | Destination ranking, climate eligibility, hard constraints, and catalog scores |
+| “What should this group do together?” | Calls `summarize_group_decision`, then proposes two or three shared anchors and leaves minority favorites for free windows | Preference blending, Taste Deck tallies, majority/tie rules |
+| “Change Saturday afternoon” | Drafts a structured `draft_trip_change` proposal with sources and a review card | Preview, poll, organizer tie-break, and the accepted itinerary document |
+| “Is this day too packed / too much walking?” | Runs `audit_itinerary` and explains issues in plain language | Hours, route matrices, pace math, and reservation flags |
+| “We saved a bunch of Instagram and Maps links” | OCR + structured extraction of candidates from screenshots, PDFs, and URLs | Google Places identity, deduplication, and the traveler’s confirm/save/attach step |
+| “This city is not in the catalog” | After Google validates the place, drafts a **provisional** overview for reuse | Publication into the editorial catalog, which stays human-reviewed |
+| “Remind us why this destination fits” | Cached Decision Briefs, comparisons, and group summaries via `assistant-insights` | Fit scores, sources, freshness, and offline last-known-good cards |
+
+On group trips the Studio Agent instructions are explicit: lead with the answer, keep chat prose short, put detail in structured cards, never silently relax climate/accessibility/safety constraints, never invent hours or prices, and send itinerary mutations through review or voting.
 
 ### Runtime models and services
 
@@ -185,15 +306,15 @@ Ask Outing can call structured tools for:
 - destination research and reusable provisional-guide creation;
 - itinerary audits for timing, route efficiency, pace, accessibility, avoidances, reservations, repetition, and missing data;
 - explicit one-dimension constraint-relaxation suggestions;
-- privacy-preserving group-decision summaries;
-- reviewable trip-change proposals.
+- privacy-preserving group-decision summaries (`summarize_group_decision` returns shared vs. merely popular interests, blended pace, and open poll count—never who voted);
+- reviewable trip-change proposals (`draft_trip_change` is required when the traveler says add, choose, use, put, or schedule a recommended place).
 
 The function caps tool rounds and parallel calls, validates inputs and outputs with Zod, strips untrusted markup, retains cited sources, supports cancellation and rate limits, and records provider failures without exposing conversation content.
 
 ### Mutation and privacy boundaries
 
 - Mistral cannot book, purchase, vote, or directly change a trip.
-- Solo travelers and organizers review proposals; group members send them to a poll.
+- Solo travelers and organizers review proposals; group members send them to a poll. Ties wait for an owner or organizer.
 - Provider results and Outing’s deterministic engines remain the source of truth for ranking, hours, prices, availability, safety context, and trip mutations.
 - Conversations and proposals live only in RLS-protected Supabase tables. Mistral Conversations run with `store: false`; Supabase is the persistent conversation store.
 - Model context excludes contacts, comments, lodging addresses, import media, private visit history, and raw coordinates.
